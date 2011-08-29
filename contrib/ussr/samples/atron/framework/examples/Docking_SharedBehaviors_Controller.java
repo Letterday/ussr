@@ -32,13 +32,13 @@ public class Docking_SharedBehaviors_Controller extends ATRONFramework {
     public class EvasionBehavior extends Collaboration {
         private ModuleSelector<CarModule> car;
         public final Script searchingBehavior = makeAtomicScript(
-                    car.all(IWheel.class).forwards(),
+                    car.all(IWheel.class).forwards()/*,
                     car.some(Driver.class).IF(self(Driver.class).inDockingPosition(),
                             seq(
                                     car.all(IWheel.class).dockingMotion(),
                                     par(
                                             car.all(Driver.class).connectorClose(1),
-                                            car.all(Driver.class).connectorClose(3))))
+                                            car.all(Driver.class).connectorClose(3))))*/
                                     
                                     
                     );
