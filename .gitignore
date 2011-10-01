@@ -1,0 +1,26 @@
+
+# /
+/frames*
+/debug.txt.*
+/benchmark.bat
+/benchmark-full.bat
+/Online Learning
+/bat files
+
+# /lib/
+/lib/*.jnilib
+
+# /native/
+/native/.depends
+/native/makefile_local_config
+
+# /native/eightToCar/
+/native/eightToCar/.depends
+/native/eightToCar/nativeController.jnilib
+
+# /native/examples/
+/native/examples/.depends
+/native/examples/nativeController.jnilib
+
+# /bin
+/bin/*
