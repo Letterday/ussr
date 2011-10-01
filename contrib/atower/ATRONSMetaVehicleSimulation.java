@@ -27,6 +27,8 @@ import ussr.samples.atron.GenericATRONSimulation;
  */
 public class ATRONSMetaVehicleSimulation extends GenericATRONSimulation {
 	
+    public static final float lateral_misalignment = 0.0f; // current limit between 0.1 and 0.2
+    
 	public static void main( String[] args ) {
         new ATRONSMetaVehicleSimulation().main();
     }
@@ -57,7 +59,7 @@ public class ATRONSMetaVehicleSimulation extends GenericATRONSimulation {
 	 */
 	protected ArrayList<ModulePosition> buildRobot() {
         ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>();
-        makeMetaVehicle(mPos, new VectorDescription(3f,-0.25f,0f));
+        makeMetaVehicle(mPos, new VectorDescription(3f,-0.25f,lateral_misalignment));
         makeMetaVehicle(mPos, new VectorDescription(2f,-0.25f,0f));
 		return mPos;
 	}
