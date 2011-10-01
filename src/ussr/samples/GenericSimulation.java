@@ -96,4 +96,9 @@ public abstract class GenericSimulation {
         /* Start simulation */
         simulation.start();
     }
+    
+    public void setRobot(Robot robot, String type) {
+        simulation.setRobot(robot, type);
+    }
+ 
 }

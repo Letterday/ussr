@@ -104,8 +104,8 @@ public class JMEATRONFactory implements ModuleFactory {
 		southNode.getMaterial().putContactHandlingDetails(simulation.getStaticPlane().getMaterial(), getDefaultATRONContactDetails());
 		northNode.getMaterial().putContactHandlingDetails(simulation.getStaticPlane().getMaterial(), getDefaultATRONContactDetails());
 		if(robot.getDescription().getType().contains("rubberRing")||module_name.contains("wheel")) { //TODO not a pretty hack "wheel"
-			northNode.setLocalScale(1.05f);
-			southNode.setLocalScale(0.95f);
+			northNode.setLocalScale(1.01f);
+			southNode.setLocalScale(0.99f);
 			northNode.generatePhysicsGeometry(true);
 			//southNode.generatePhysicsGeometry(true);
 

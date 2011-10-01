@@ -50,5 +50,5 @@ public abstract class GenericATRONSimulation extends GenericSimulation {
     protected abstract Robot getRobot(); 
 
     protected abstract ArrayList<ModulePosition> buildRobot();
- 
+
 }
