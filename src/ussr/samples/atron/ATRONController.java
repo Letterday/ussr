@@ -397,6 +397,7 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	 * @see ussr.samples.atron.IATRONAPI#isOtherConnectorNearby(int)
 	 */
     public boolean isOtherConnectorNearby(int connector) {
+        if(!(connector<=7)) return false;
     	if(module.getConnectors().get(connector).isConnected()) {
     		return true;
     	}
@@ -428,7 +429,7 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	 */
     public byte sendMessage(byte[] message, byte messageSize, byte connector) 
 	{
-    	if(isOtherConnectorNearby(connector)&&connector<8) {
+    	if(connector<8 && isOtherConnectorNearby(connector)) {
 			module.getTransmitters().get(connector).send(new Packet(message));
 			if(packetCountingActive) incPacketsSentCount();
 			return 1;
