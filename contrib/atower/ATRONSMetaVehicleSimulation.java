@@ -39,45 +39,33 @@ public class ATRONSMetaVehicleSimulation extends GenericATRONSimulation {
 	protected Robot getRobot() {
         ATRON wheel = new ATRON() {
             public Controller createController() {
-                return new ATRONMetaVehicleController1();
+                return new ATRONSimpleVehicleController();
             }
         };
         wheel.setRubberRing();
         wheel.setGentle();
-        ATRON normal = new ATRON() {
+        /*ATRON normal = new ATRON() {
             public Controller createController() {
                 return new ATRONMetaVehicleController1();
             }
         };
         super.setRobot(wheel,"wheel");
         super.setRobot(normal,"normal");
-        return Robot.NO_DEFAULT;
+        return Robot.NO_DEFAULT;*/
+        return wheel;
     }
 
 	/**
 	 * Delegate to library of builder helpers
 	 */
 	protected ArrayList<ModulePosition> buildRobot() {
-        ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>();
-        makeMetaVehicle(mPos, new VectorDescription(3f,-0.25f,lateral_misalignment));
-        makeMetaVehicle(mPos, new VectorDescription(2f,-0.25f,0f));
-		return mPos;
+	    ATRONBuilder builder = new ATRONBuilder("normal");
+	    builder.setWheelModuleName("wheel");
+	    builder.buildAsLattice(20, 3, 1, 5);
+	    builder.buildCar(2, new VectorDescription(-0.4f,-0.25f,0.135f));
+		return builder.getPositions();
 	}
 
-	private int meta_id = 0;
-    private void makeMetaVehicle(ArrayList<ModulePosition> mPos, VectorDescription position) {
-        float Xoffset = position.getX();
-        float Yoffset = position.getY();
-        float Zoffset = position.getZ();
-        String id = "id"+(meta_id++)+".";
-        mPos.add(new ModulePosition("centerForward_"+id, "normal", new VectorDescription(-2*ATRON.UNIT+Xoffset,-2*ATRON.UNIT+Yoffset,0*ATRON.UNIT+Zoffset), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("left_center_wheel_"+id, "wheel", new VectorDescription(-1*ATRON.UNIT+Xoffset,-2*ATRON.UNIT+Yoffset,1*ATRON.UNIT+Zoffset), ATRON.ROTATION_SN));
-        mPos.add(new ModulePosition("right_forward_wheel_"+id, "wheel", new VectorDescription(-3*ATRON.UNIT+Xoffset,-2*ATRON.UNIT+Yoffset,-1*ATRON.UNIT+Zoffset), ATRON.ROTATION_NS));
-        mPos.add(new ModulePosition("centerBackward_"+id, "normal", new VectorDescription(0*ATRON.UNIT+Xoffset,-2*ATRON.UNIT+Yoffset,0*ATRON.UNIT+Zoffset), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("left_backward_wheel_"+id, "wheel", new VectorDescription(1*ATRON.UNIT+Xoffset,-2*ATRON.UNIT+Yoffset,1*ATRON.UNIT+Zoffset), ATRON.ROTATION_SN));
-        mPos.add(new ModulePosition("right_center_wheel_"+id, "wheel", new VectorDescription(-1*ATRON.UNIT+Xoffset,-2*ATRON.UNIT+Yoffset,-1*ATRON.UNIT+Zoffset), ATRON.ROTATION_NS));
-    }
-    
 	/**
 	 * Add obstacle
 	 */

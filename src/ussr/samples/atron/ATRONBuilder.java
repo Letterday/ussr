@@ -24,6 +24,7 @@ public class ATRONBuilder {
 
     private ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>();
     private float connection_acceptance_range = 0.001f;
+    private String normalName, wheelName;
     
     /**
      * Function for naming individual modules being assembled by the builder
@@ -34,6 +35,35 @@ public class ATRONBuilder {
         public String name(int number, VectorDescription pos, RotationDescription rot, int lx, int ly, int lz);
     }
 
+    /**
+     * Default constructor: use default module everywhere 
+     */
+    public ATRONBuilder() {
+    }
+    
+    /**
+     * Constructor for building robots with different module types, argument is the name for a "normal" module
+     */
+    public ATRONBuilder(String normalModule) {
+        this.normalName = normalModule;
+    }
+    
+    /**
+     * The name used for modules that are wheels 
+     * @param name
+     */
+    public void setWheelModuleName(String name) {
+        this.wheelName = name;
+    }
+    
+    /**
+     * Get positions of all modules instantiated by this builder
+     * @return
+     */
+    public ArrayList<ModulePosition> getPositions() {
+        return mPos;
+    }
+    
     /**
      * Function for selecting what specific type of module to insert at a given place
      * 
@@ -75,10 +105,11 @@ public class ATRONBuilder {
     public ArrayList<ModulePosition> buildCar(int numberOfWheels, VectorDescription position) {
         float Xoffset = position.getX();
         float Yoffset = position.getY();
+        float Zoffset = position.getZ();
         if(numberOfWheels==2) {
-            mPos.add(new ModulePosition("driver0", new VectorDescription(-2*ATRON.UNIT+Xoffset,-2*ATRON.UNIT+Yoffset,0*ATRON.UNIT), ATRON.ROTATION_EW));
-            mPos.add(new ModulePosition("RearRightWheel1", new VectorDescription(-1*ATRON.UNIT+Xoffset,-2*ATRON.UNIT+Yoffset,1*ATRON.UNIT), ATRON.ROTATION_SN));
-            mPos.add(new ModulePosition("RearLeftWheel2", new VectorDescription(-1*ATRON.UNIT+Xoffset,-2*ATRON.UNIT+Yoffset,-1*ATRON.UNIT), ATRON.ROTATION_NS));
+            mPos.add(new ModulePosition("driver0", new VectorDescription(-2*ATRON.UNIT+Xoffset,-2*ATRON.UNIT+Yoffset,0*ATRON.UNIT+Zoffset), ATRON.ROTATION_EW));
+            mPos.add(new ModulePosition("RearRightWheel1", new VectorDescription(-1*ATRON.UNIT+Xoffset,-2*ATRON.UNIT+Yoffset,1*ATRON.UNIT+Zoffset), ATRON.ROTATION_SN));
+            mPos.add(new ModulePosition("RearLeftWheel2", new VectorDescription(-1*ATRON.UNIT+Xoffset,-2*ATRON.UNIT+Yoffset,-1*ATRON.UNIT+Zoffset), ATRON.ROTATION_NS));
         } else if(numberOfWheels==4) {
             System.out.println("4 wheeler");
             mPos.add(new ModulePosition("driver0", new VectorDescription(2*0*ATRON.UNIT+Xoffset,0*ATRON.UNIT+Yoffset,0*ATRON.UNIT), ATRON.ROTATION_EW));

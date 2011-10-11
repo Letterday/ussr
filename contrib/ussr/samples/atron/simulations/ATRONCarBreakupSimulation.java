@@ -48,6 +48,7 @@ public class ATRONCarBreakupSimulation extends GenericATRONSimulation {
             }
         };
         robot.setGentle();
+        robot.setRubberRing();
         return robot;
     }
 	

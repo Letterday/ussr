@@ -518,4 +518,14 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
         if(packetsSentCount>Integer.MAX_VALUE) throw new Error("Count exceeds maxint");
         return (int)packetsSentCount;
     }
+
+    public void sendMessageAll(byte[] msg, int length) {
+        for(byte c=0; c<8; c++)
+            sendMessage(msg,(byte)length,c);
+    }
+
+    public void sendMessageExcept(byte[] message, int messageSize, int channel) {
+        for(byte c=0; c<8; c++)
+            if(c!=channel) sendMessage(message,(byte)messageSize,c);
+    }
 }
