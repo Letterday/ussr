@@ -5,8 +5,17 @@ import java.util.Map;
 public abstract class Entity {
 
     private int integerID = createNewIntegerID();
+    private RoCoProgram program;
     
-    public abstract void runBehaviors(SharedState sharedState);
+    public Entity(RoCoProgram program) {
+		this.program = program;
+	}
+    
+    public RoCoProgram getProgram() {
+    	return program;
+    }
+
+	public abstract void runBehaviors(SharedState sharedState);
 
     public abstract boolean verifyRequirements(Context context);
 
