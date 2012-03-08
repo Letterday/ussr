@@ -21,7 +21,7 @@ public abstract class RoCoProgram {
     public RoCoRole findMatchingRole(Context context, SharedState sharedState) {
         Entity candidate = RoCoRole.NONE;
         for(Entity entity: allEntities) {
-            if(entity instanceof RoCoRole && entity.isPrimaryRole() && entity.verifyRequirements(context))
+            if(entity instanceof RoCoRole && entity.isPrimaryRole() && entity.verifyRequirements(context,sharedState))
                 if(entity.specializes(candidate)) candidate = entity;
         }
         return (RoCoRole)candidate;

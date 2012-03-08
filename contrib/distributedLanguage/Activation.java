@@ -36,13 +36,13 @@ public class Activation {
      * @param localState
      */
     public void verifyRequirements(Context context, SharedState sharedState) {
-        if(!activeEntities.get(0).verifyRequirements(context)) {
+        if(!activeEntities.get(0).verifyRequirements(context,sharedState)) {
             activeEntities.set(0,program.findMatchingRole(context,sharedState));
         }
         Iterator<Entity> entities = activeEntities.iterator();
         while(entities.hasNext()) {
             Entity entity = entities.next();
-            if(!entity.verifyRequirements(context)) entities.remove();
+            if(!entity.verifyRequirements(context,sharedState)) entities.remove();
         }
         sharedState.cleanup(activeEntities);
     }
@@ -55,7 +55,7 @@ public class Activation {
      */
     public void addNewEntities(Context context, SharedState sharedState) {
         for(Entity entity: program.getAllSecondaryEntities()) {
-            if(entity.verifyRequirements(context) && !activeEntities.contains(entity))
+            if(entity.verifyRequirements(context,sharedState) && !activeEntities.contains(entity))
                 activeEntities.add(entity);
         }
     }

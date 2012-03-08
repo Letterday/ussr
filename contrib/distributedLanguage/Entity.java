@@ -1,5 +1,6 @@
 package distributedLanguage;
 
+import java.util.List;
 import java.util.Map;
 
 public abstract class Entity {
@@ -17,7 +18,7 @@ public abstract class Entity {
 
 	public abstract void runBehaviors(SharedState sharedState);
 
-    public abstract boolean verifyRequirements(Context context);
+    public abstract boolean verifyRequirements(Context context, SharedState sharedState);
 
     public abstract void update(ContextManager tracker, SharedState sharedState);
 
@@ -28,6 +29,10 @@ public abstract class Entity {
     public abstract int sizeof(SharedMemberID member);
     
     public boolean isPrimaryRole() { return false; }
+    public abstract boolean isAbstract();
+    public abstract String getName();
+    public String getEnsembleName() { return RoCoEnsemble.GLOBAL; }
+    public abstract List<String> getFieldNames();
 
     public boolean specializes(Entity candidate) {
         return candidate.getClass().isAssignableFrom(this.getClass());
