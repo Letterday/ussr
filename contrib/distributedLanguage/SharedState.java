@@ -1,8 +1,11 @@
 package distributedLanguage;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class SharedState {
 
@@ -14,24 +17,44 @@ public class SharedState {
      * @param all
      */
     public void cleanup(List<Entity> all) {
-        throw new Error("foo");
+    	// Compute active fields
+        Set<SharedMemberID> allSharedIDs = new HashSet<SharedMemberID>();
+        Set<String> allLocalIDs = new HashSet<String>();
+        for(Entity e: all) {
+    		List<String> fields = e.getFieldNames();
+    		for(String f: fields) {
+    			if(e instanceof RoCoEnsemble)
+    				allSharedIDs.add(new SharedMemberID(e.getName(),f));
+    			else
+    				allLocalIDs.add(mkLocalID(e.getName(),f));
+    		}
+        }
+        // Remove others
+        for(SharedMemberID s: shared.keySet()) {
+        	if(!allSharedIDs.contains(s)) shared.remove(s);
+        }
+        for(String s: local.keySet()) {
+        	if(!allLocalIDs.contains(s)) local.remove(s);
+        }
     }
 
-    public List<SharedMemberID> getSharedMemberIDs() {
-        // TODO Auto-generated method stub
-        // return null;
-        throw new Error("Method not implemented");
+    private static String mkLocalID(String name, String f) {
+    	return name+"."+f;
+	}
+
+	public List<SharedMemberID> getSharedMemberIDs() {
+		return new ArrayList<SharedMemberID>(shared.keySet());
     }
 
     public List<Integer> getSerializedData(SharedMemberID id) {
-        // TODO Auto-generated method stub
-        // return null;
-        throw new Error("Method not implemented");
+    	List<Integer> data = shared.get(id).data;
+    	if(data==null) throw new Error("Unknown member id");
+    	return data;
     }
 
     private class SharedData {
-        private List<Integer> data;
-        private boolean isLocallyAssigned;
+    	List<Integer> data;
+    	boolean isLocallyAssigned;
     }
     
 }
