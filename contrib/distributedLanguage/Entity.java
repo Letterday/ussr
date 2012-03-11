@@ -18,7 +18,7 @@ public abstract class Entity {
 
 	public abstract void runBehaviors(SharedState sharedState);
 
-    public abstract boolean verifyRequirements(Context context, SharedState sharedState);
+    public boolean verifyRequirements(Context context, SharedState sharedState) { return true; }
 
     public abstract void update(ContextManager tracker, SharedState sharedState);
 
@@ -26,7 +26,7 @@ public abstract class Entity {
         return integerID;
     }
 
-    public abstract int sizeof(SharedMemberID member);
+    public int sizeof(SharedMemberID member) { return 1; }
     
     public boolean isPrimaryRole() { return false; }
     public abstract boolean isAbstract();
