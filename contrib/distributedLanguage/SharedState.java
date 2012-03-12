@@ -8,9 +8,15 @@ import java.util.Map;
 import java.util.Set;
 
 public class SharedState {
+	
+    private class SharedData {
+    	List<Integer> data;
+    	boolean isLocallyAssigned;
+    }
 
     private Map<SharedMemberID,SharedData> shared = new HashMap<SharedMemberID,SharedData>();
     private Map<String,List<Integer>> local = new HashMap<String,List<Integer>>();
+    private Map<String,SharedMemberID> fieldName2id = new HashMap<String,SharedMemberID>(); // note: memory leak
     
     /**
      * Remove any state not described by the given set of entities
@@ -52,9 +58,16 @@ public class SharedState {
     	return data;
     }
 
-    private class SharedData {
-    	List<Integer> data;
-    	boolean isLocallyAssigned;
-    }
+	public void updateFieldIfNotAssigned(String field, ContextManager tracker) {
+		SharedMemberID id = fieldName2id.get(field);
+		if(id==null) throw new Error("No field def'n");
+		SharedData data = shared.get(id);
+		if(data==null) throw new Error("No data for field");
+		if(!data.isLocallyAssigned) {
+			List<Integer> maybe = tracker.getSharedMemberData(id);
+			if(maybe!=null) data.data = maybe;
+		}
+		
+	}
     
 }

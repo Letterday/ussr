@@ -33,6 +33,8 @@ public class ContextManager implements Message.Subscriber {
         public void updateSharedState(Time arrivalTime, SharedMemberID member, List<Integer> value) {
             sharedState.put(member, value);
         }
+        
+        public List<Integer> get(SharedMemberID id) { return sharedState.get(id); }
 
     }
 
@@ -110,5 +112,12 @@ public class ContextManager implements Message.Subscriber {
     private void checkCreateModuleEntry(ModuleID id) {
         if(context.get(id)==null) context.put(id, new ContextInformation(id));
     }
+
+	public List<Integer> getSharedMemberData(SharedMemberID id) {
+		for(ContextInformation ci: context.values()) {
+			if(ci.get(id)!=null) return ci.get(id);
+		}
+		return null;
+	}
 
 }

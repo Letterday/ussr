@@ -1,9 +1,11 @@
 package distributedLanguage;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class Activation {
     /**
@@ -25,8 +27,14 @@ public class Activation {
      * @param localState 
      */
     public void runBehaviors(SharedState sharedState) {
+    	Set<String> allBehaviorNames = new HashSet<String>();
         for(Entity entity: activeEntities)
-            entity.runBehaviors(sharedState);
+        	allBehaviorNames.addAll(entity.getActiveBehaviorNames());
+        nameLoop: for(String behaviorName: allBehaviorNames) {
+        	for(Entity entity: activeEntities)
+        		if(entity.runBehavior(behaviorName,sharedState)) continue nameLoop;
+        	throw new Error("Internal error: behavior name not handled");
+        }
     }
 
     /**
@@ -56,7 +64,7 @@ public class Activation {
     public void addNewEntities(Context context, SharedState sharedState) {
         for(Entity entity: program.getAllSecondaryEntities()) {
             if(entity.verifyRequirements(context,sharedState) && !activeEntities.contains(entity))
-                activeEntities.add(entity);
+                activeEntities.add(0,entity); // newest entities at beginning, priority for dispatches
         }
     }
 
@@ -67,8 +75,16 @@ public class Activation {
      * @param localState
      */
     public void update(ContextManager tracker, SharedState sharedState) {
+    	// Find the complete set of fields that needs to be updated
+    	Set<String> allSharedFields = new HashSet<String>();
         for(Entity entity: activeEntities)
-            entity.update(tracker,sharedState);
+        	allSharedFields.addAll(entity.getSharedFieldNames());
+        // Update one field at a time
+        fieldLoop: for(String field: allSharedFields) {
+        	for(Entity entity: activeEntities)
+        		if(entity.update(field,tracker,sharedState)) continue fieldLoop;
+        	sharedState.updateFieldIfNotAssigned(field,tracker);
+        }
     }
 
     public List<Entity> getEntities() {
