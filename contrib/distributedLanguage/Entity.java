@@ -1,6 +1,7 @@
 package distributedLanguage;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -8,16 +9,26 @@ import java.util.Set;
 
 public abstract class Entity {
 
+	interface UpdateFunction {
+
+		void update(String name, ContextManager tracker, SharedState sharedState);
+		
+	}
+	
     private int integerID = createNewIntegerID();
     private RoCoProgram program;
     private Set<String> activeBehaviors = new HashSet<String>();
+    protected Map<String,UpdateFunction> updateFunctions = new HashMap<String,UpdateFunction>();
     
     public Entity(RoCoProgram program) {
 		this.program = program;
 		getInitialActiveBehaviors(activeBehaviors);
+		initializeUpdateFunctions();
 	}
     
-    public RoCoProgram getProgram() {
+    protected abstract void initializeUpdateFunctions();
+
+	public RoCoProgram getProgram() {
     	return program;
     }
 
@@ -25,7 +36,13 @@ public abstract class Entity {
 
     public boolean verifyRequirements(Context context, SharedState sharedState) { return true; }
 
-    public abstract boolean update(String name, ContextManager tracker, SharedState sharedState);
+    public boolean update(String name, ContextManager tracker, SharedState sharedState) {
+    	if(getSharedFieldNames().contains(name)) {
+    		updateFunctions.get(name).update(name,tracker,sharedState);
+    		return true;
+    	}
+    	return false;
+    }
 
     public int getIntegerID() {
         return integerID;
