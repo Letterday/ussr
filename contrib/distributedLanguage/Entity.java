@@ -43,7 +43,7 @@ public abstract class Entity {
     
     public abstract List<String> getFieldNames();
 
-    protected abstract void getInitialActiveBehaviors(Collection<String> storage);
+    protected void getInitialActiveBehaviors(Collection<String> storage) { ; }
     
     public Set<String> getActiveBehaviorNames() {
     	return activeBehaviors;
