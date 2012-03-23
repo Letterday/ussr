@@ -216,10 +216,13 @@ public class JMEATRONFactory implements ModuleFactory {
         }
 	}
 
+	public void setConnectorMaxAlignmentForce(float force) { maxAlignmentForce = force; }
+	public void setConnectorMaxAlignmentDistance(float distance) { maxAlignmentDistance = distance; }
+	public void setConnectorEpsilonAlignmentDistance(float distance) { epsilonAlignmentDistance = distance; }
+	private static float maxAlignmentForce = 10;
+    private static float maxAlignmentDistance = 0.02f;
+    private static float epsilonAlignmentDistance = 0.01f;
 	private void updateConnectors(Module module) {
-        float maxAlignmentForce = 10;
-        float maxAlignmentDistance = 0.02f;
-        float epsilonAlignmentDistance = 0.01f;
         JMEModuleComponent northComponent =  (JMEModuleComponent) module.getComponent(0);
         Vector3f[] northAlignPos1 = new Vector3f[]{new Vector3f(0.0377124f,0.0377124f,-0.0266667f),new Vector3f(-0.0377124f,0.0377124f,-0.0266667f),new Vector3f(-0.0377124f,-0.0377124f,-0.0266667f),new Vector3f(0.0377124f,-0.0377124f,-0.0266667f)};
         Vector3f[] northAlignPos2 = new Vector3f[]{new Vector3f(0.0226274f,0.0226274f,-0.048f),new Vector3f(-0.0226274f,0.0226274f,-0.048f),new Vector3f(-0.0226274f,-0.0226274f,-0.048f),new Vector3f(0.0226274f,-0.0226274f,-0.048f)};
