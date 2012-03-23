@@ -28,7 +28,7 @@ import ussr.samples.atron.GenericATRONSimulation;
 public class EightToCarSimulationJ extends GenericATRONSimulation {
 
     public static final boolean USE_BLOCKING_ROTATE = true;
-    public static final boolean CORRECT_CAR_WHEELS = true;
+    public static final boolean CORRECT_CAR_WHEELS = false;
     public static final boolean VERIFY_OPERATIONS = false;
 
     public static void main(String argv[]) {

@@ -35,7 +35,7 @@ public class PhysicsParameters {
     private float physicsSimulationStepSize = 0.005f;
     private float physicsSimulationControllerStepFactor = 0.1f;//the bigger, the more computationally powerful each module is
     private boolean realisticCollision = true; // true = less likely to cause trouble, more user friendly
-    private float gravity =-9.82f;
+    private float gravity = -9.82f;
     private Material planeMaterial = Material.RUBBER;
     private boolean maintainRotationalJointPositions = true; // true = more user friendly
     private boolean hasMechanicalConnectorSpringiness = false;
@@ -46,7 +46,7 @@ public class PhysicsParameters {
     private float worldDampingLinearVelocity = 0.0f;
     private float worldDampingAngularVelocity = 0.0f;
     private long maxPhysicsIterations = Long.MAX_VALUE;
-    private int resolutionFactor = 2; // Modules not as pretty but more scalable in terms of #modules
+    private int resolutionFactor = 3; // Modules not as pretty but more scalable in terms of #modules
     private boolean useModuleEventQueue = /*true*/ false ;
     private boolean syncWithControllers = /*true*/ false ;
     

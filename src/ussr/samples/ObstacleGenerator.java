@@ -34,6 +34,7 @@ public class ObstacleGenerator {
     private int numberOfLineObstacles = 20;
     private float lineObstacleDistance = 0.2f;
     private float lineObstacleCenter = 0;
+	private boolean gap;
     
     public void obstacalize(ObstacleType type, WorldDescription world) {
         if(type==ObstacleType.LINE) {
@@ -48,13 +49,25 @@ public class ObstacleGenerator {
             BoxDescription[] obstacles = new BoxDescription[numberOfCircleObstacles*numberOfCircleLayers];
             int index = 0;
             float y = obstacleY;
+            double rnd = Math.random();
             VectorDescription size = new VectorDescription(obstacleSize,obstacleSize,obstacleSize);
             for(int layers=0; layers<numberOfCircleLayers; layers++) {
                 for(int i=0; i<numberOfCircleObstacles; i++) {
+                	int offset = 0;
+   
+                	
+                	if (gap && (int)(numberOfCircleObstacles *rnd) == i || (int)(numberOfCircleObstacles *rnd) == i-1) {
+                		offset = 10000000;
+                	}
+                	else {
+                		offset = 0;
+                	}
+                		
+                		
                     VectorDescription position = new VectorDescription(
-                            ((float)(circleObstacleRadius*Math.cos(((double)i)/numberOfCircleObstacles*Math.PI*2+y))),
-                            y,
-                            ((float)(circleObstacleRadius*Math.sin(((double)i)/numberOfCircleObstacles*Math.PI*2+y)))
+                            ((float)(circleObstacleRadius*Math.cos(((double)i)/numberOfCircleObstacles*Math.PI*2+y+offset))),
+                            y+offset,
+                            ((float)(circleObstacleRadius*Math.sin(((double)i)/numberOfCircleObstacles*Math.PI*2+y+offset)))
                     );
                     obstacles[index++] = new BoxDescription(position,size,new RotationDescription(),100f); 
                 }
@@ -126,5 +139,10 @@ public class ObstacleGenerator {
     public void setLineObstacleCenter(float lineObstacleCenter) {
         this.lineObstacleCenter = lineObstacleCenter;
     }
+
+	public void activateCircleGap() {
+		gap = true;
+		
+	}
 
 }

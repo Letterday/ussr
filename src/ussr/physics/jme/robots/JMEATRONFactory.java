@@ -40,6 +40,10 @@ public class JMEATRONFactory implements ModuleFactory {
     private JMESimulation simulation;
     float pi = (float)Math.PI;
     
+    public static float maxAlignmentForce = 10;
+    public static float maxAlignmentDistance = 0.02f;
+    public static float epsilonAlignmentDistance = 0.01f;
+    
 //create ATRON
     public void createModule(int module_id, Module module, Robot robot, String module_name) {
         if(!robot.getDescription().getType().startsWith("ATRON")) throw new Error("Illegal module type: "+robot.getDescription().getType());
@@ -217,9 +221,7 @@ public class JMEATRONFactory implements ModuleFactory {
 	}
 
 	private void updateConnectors(Module module) {
-        float maxAlignmentForce = 10;
-        float maxAlignmentDistance = 0.02f;
-        float epsilonAlignmentDistance = 0.01f;
+        
         JMEModuleComponent northComponent =  (JMEModuleComponent) module.getComponent(0);
         Vector3f[] northAlignPos1 = new Vector3f[]{new Vector3f(0.0377124f,0.0377124f,-0.0266667f),new Vector3f(-0.0377124f,0.0377124f,-0.0266667f),new Vector3f(-0.0377124f,-0.0377124f,-0.0266667f),new Vector3f(0.0377124f,-0.0377124f,-0.0266667f)};
         Vector3f[] northAlignPos2 = new Vector3f[]{new Vector3f(0.0226274f,0.0226274f,-0.048f),new Vector3f(-0.0226274f,0.0226274f,-0.048f),new Vector3f(-0.0226274f,-0.0226274f,-0.048f),new Vector3f(0.0226274f,-0.0226274f,-0.048f)};
@@ -258,5 +260,7 @@ public class JMEATRONFactory implements ModuleFactory {
     public void setSimulation(PhysicsSimulation simulation) {
         this.simulation = (JMESimulation)simulation;
     }
+
+
 
 }

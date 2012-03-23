@@ -149,7 +149,61 @@ public class ATRONBuilder {
         return mPos;
     }
     
+    public ArrayList<ModulePosition> buildEight(VectorDescription position) {
+        mPos.add(new ModulePosition("x0", aPos(0,0,0,position), ATRON.ROTATION_EW));
+        mPos.add(new ModulePosition("x1", aPos(1,0,-1,position), ATRON.ROTATION_NS));
+        mPos.add(new ModulePosition("x2", aPos(-1,0,-1,position), ATRON.ROTATION_NS));
+        mPos.add(new ModulePosition("x3", aPos(0,0,-2,position), ATRON.ROTATION_EW));
+        mPos.add(new ModulePosition("x4", aPos(1,0,-3,position), ATRON.ROTATION_NS));
+        mPos.add(new ModulePosition("x5", aPos(-1,0,-3,position), ATRON.ROTATION_NS));
+        mPos.add(new ModulePosition("x6", aPos(0,0,-4,position), ATRON.ROTATION_EW));
+        return mPos;
+    }
+    
+    
+    
     public ArrayList<ModulePosition> buildCrawler() {
+    	float Yoffset = 0.25f;
+    	ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
+    	mPos.add(new ModulePosition("x1", new VectorDescription(0*ATRON.UNIT,0*ATRON.UNIT-Yoffset,0*ATRON.UNIT), ATRON.ROTATION_EW));
+    	mPos.add(new ModulePosition("x2", new VectorDescription(1*ATRON.UNIT,0*ATRON.UNIT-Yoffset,-1*ATRON.UNIT), ATRON.ROTATION_NS));
+    	mPos.add(new ModulePosition("x3", new VectorDescription(1*ATRON.UNIT,0*ATRON.UNIT-Yoffset,1*ATRON.UNIT), ATRON.ROTATION_SN));
+    	mPos.add(new ModulePosition("x4", new VectorDescription(2*ATRON.UNIT,0*ATRON.UNIT-Yoffset,0*ATRON.UNIT), ATRON.ROTATION_WE));
+    	mPos.add(new ModulePosition("y1", new VectorDescription(-1*ATRON.UNIT,-1*ATRON.UNIT-Yoffset,0*ATRON.UNIT), ATRON.ROTATION_DU));
+    	mPos.add(new ModulePosition("y2", new VectorDescription(1*ATRON.UNIT,-1*ATRON.UNIT-Yoffset,-2*ATRON.UNIT), ATRON.ROTATION_DU));
+    	mPos.add(new ModulePosition("y3", new VectorDescription(1*ATRON.UNIT,-1*ATRON.UNIT-Yoffset,2*ATRON.UNIT), ATRON.ROTATION_DU));
+    	mPos.add(new ModulePosition("y4", new VectorDescription(3*ATRON.UNIT,-1*ATRON.UNIT-Yoffset,0*ATRON.UNIT), ATRON.ROTATION_DU));
+        return mPos;
+	}
+    
+    
+    public ArrayList<ModulePosition> buildRectangle (int width, int height,VectorDescription pos) {
+    	ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
+    	
+    	// Build floor
+    	int i = 0;
+    	for (int w = 0; w < width; w++) {
+    		for (int h = 0; h < height; h++) {
+				if (w%2==0 && h%2==1) {
+					mPos.add(new ModulePosition("f" + i++, aPos ((float)w,0,(float)h, pos ), ATRON.ROTATION_NS ));
+				}
+				else if (w%2==1 && h%2==0) {
+					mPos.add(new ModulePosition("f" + i++, aPos ((float)w,0,(float)h, pos), ATRON.ROTATION_EW ));
+				}
+    		}
+    	}
+    	
+    	// Add module to it
+//    	mPos.add(new ModulePosition("m1", aPos (0,1,0, pos ), ATRON.ROTATION_UD ));
+//    	mPos.add(new ModulePosition("m2", aPos (0,2,1, pos ), ATRON.ROTATION_NS ));
+//    	mPos.add(new ModulePosition("m3", aPos (0,1,2, pos ), ATRON.ROTATION_UD ));
+    	
+        return mPos;
+	}
+    
+    
+    
+    public ArrayList<ModulePosition> build() {
     	float Yoffset = 0.25f;
     	ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
     	mPos.add(new ModulePosition("x1", new VectorDescription(0*ATRON.UNIT,0*ATRON.UNIT-Yoffset,0*ATRON.UNIT), ATRON.ROTATION_EW));
