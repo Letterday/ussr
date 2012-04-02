@@ -12,7 +12,7 @@ import ussr.samples.ObstacleGenerator;
 import ussr.samples.atron.ATRON;
 import ussr.samples.atron.ATRONBuilder;
 import ussr.samples.atron.GenericATRONSimulation;
-
+/*
 public class ATRONEscapeSimulation extends GenericATRONSimulation {
 
 	protected int wheelCount;
@@ -28,9 +28,7 @@ public class ATRONEscapeSimulation extends GenericATRONSimulation {
 	
 	
 	
-	/**
-	 * Default robot
-	 */
+	
 	protected Robot getRobot() {
         ATRON a = new ATRON() {
             public Controller createController() {
@@ -62,4 +60,4 @@ public class ATRONEscapeSimulation extends GenericATRONSimulation {
         world.setPlaneTexture(WorldDescription.GRASS_TEXTURE);
     }
 	
-}
+} */

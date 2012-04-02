@@ -18,8 +18,8 @@ public class ATRONMetaModuleSimulation extends GenericATRONSimulation {
 	
 	public static void main( String[] args ) {
 		PhysicsParameters.get().setRealisticCollision(true);
-		ussr.physics.jme.robots.JMEATRONFactory.maxAlignmentForce = 40f;
-		ussr.physics.jme.robots.JMEATRONFactory.maxAlignmentDistance = 0.02f;
+		ussr.physics.jme.robots.JMEATRONFactory.maxAlignmentForce = 10f;
+		ussr.physics.jme.robots.JMEATRONFactory.maxAlignmentDistance = 2f;
 		ussr.physics.jme.robots.JMEATRONFactory.epsilonAlignmentDistance = 0.01f;
 		//PhysicsParameters.get().setGravity(0);
         new ATRONMetaModuleSimulation().main();

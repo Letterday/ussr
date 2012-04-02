@@ -2,7 +2,7 @@ package ussr.samples.atron.simulations.wouter;
 
 import ussr.model.Sensor;
 import ussr.samples.atron.ATRONController;
-
+/*
 public class ATRONEscapeControllerTwoWheels extends ATRONController {
 
 	public static void main(String[] args) {
@@ -31,7 +31,7 @@ public class ATRONEscapeControllerTwoWheels extends ATRONController {
 				if (s.getName().startsWith("Proximity")) {
 					float v = s.readValue();
 					if (v > 0.1f)
-						bus.printLimited(bus.moduleName + ".v-" + s.getName()
+						bus.printLimited(2,bus.moduleName + ".v-" + s.getName()
 								+ " = " + v);
 
 				}
@@ -111,8 +111,9 @@ public class ATRONEscapeControllerTwoWheels extends ATRONController {
 
 	}
 
-	public void handleMessage(byte[] message, int messageLength, int connector) {
+	public void handleMessage(byte[] message, byte messageLength, byte connector) {
 		bus.handleMessage(message, messageLength, connector);
 	}
 
 }
+*/

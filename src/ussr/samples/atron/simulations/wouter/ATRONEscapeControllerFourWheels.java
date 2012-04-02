@@ -4,7 +4,7 @@ package ussr.samples.atron.simulations.wouter;
 import ussr.model.Sensor;
 import ussr.samples.atron.ATRONController;
 
-
+/*
 
 class State implements IState {
 	static final int FORWARD = 0;
@@ -59,7 +59,7 @@ public class ATRONEscapeControllerFourWheels extends ATRONController {
 		bus = new ATRONBus(this);
 		bus.state = State.FORWARD;
 		
-		if (bus.moduleName.contains("right"))
+		if (bus.moduleMatcher("right"))
 			dir = -dir;
 		
 		while (true) {
@@ -72,14 +72,14 @@ public class ATRONEscapeControllerFourWheels extends ATRONController {
 	             if(s.getName().startsWith("Proximity")) {
 	                 float v = s.readValue();
 	                 if (v> 0.1f)
-	                	 bus.printLimited(bus.moduleName + ".v-" + s.getName() + " = " + v);
+	                	 bus.print.limited(2,bus.getName() + ".v-" + s.getName() + " = " + v);
 			
 	             }
 			}
 			
-			bus.printState();
+			bus.print.state();
 			
-			if (bus.moduleName.contains("axleone")) {
+			if (bus.moduleMatcher("axleone")) {
 				
 				for(Sensor s: module.getSensors()) {
 		           
@@ -100,7 +100,7 @@ public class ATRONEscapeControllerFourWheels extends ATRONController {
 		             }
 		         }
 				}
-				
+			
 				if (bus.state == State.TURNING_LEFT && bus.waitedFor(turnaroundTime))
 				{
 					bus.broadcastState(State.BACKWARD);
@@ -193,10 +193,10 @@ public class ATRONEscapeControllerFourWheels extends ATRONController {
 		
 	}
 	
-	public void handleMessage(byte[] message, int messageLength, int connector) {
+	public void handleMessage(byte[] message, byte messageLength, byte connector) {
 		bus.handleMessage(message, messageLength, connector);
 	}
 	
 	
 
-}
+}*/

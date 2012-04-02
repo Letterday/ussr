@@ -16,86 +16,95 @@ public class ATRONMetaModuleController extends ATRONController {
 
 	public void activate() {
 		setup();
-		bus = new ATRONBus(this);
+		bus = new ATRONBus(this,ATRONBusPrinter.ALL - ATRONBusPrinter.STATE_MESSAGE);// Printer.ACTION + Printer.STATE_UPDATE);
 
 		bus.state = 0;
 
-		
-
-		//bus.disconnect("!m", 0);
 		bus.initBaseTime();
 
 		assignRoles(true);
 		
 		while (true) {
-			colorize ();
-			
-			
+
 			bus.maintainConnection();
-			bus.printState();
-
+			bus.getPrint().state();
 			
-			bus.execAt("f0",1).disconnect(0).disconnect(6).bcNextState();
+			
+			bus.execAt("m3",1).con.disconnect("f0").next();
+			bus.execAt("f2",2).con.disconnect("f0").next();
+			
+			bus.execAt("f0",3).rotateDegrees(90).next();
+			
+			bus.execAt("m2",4).rotateDegrees(90).next();
+			bus.execAt("m3",5).con.connect("f2").next();
+			
+			
+			//bus.execAt("f2",1).con.disconnect("f0").next();
+			//bus.execAt("f3",2).connect("f1").connect("f2").connect("f4").connect("f5");
+			//bus.execAt("f6",3).connect("f4").connect("f5");
+			
+			//bus.execAt("f0",1).disconnect(0).disconnect(6).next();
 	
-			bus.execAt("f0",2).rotateDegrees(90);
+			//bus.execAt("f0",2).rotateDegrees(90).next();
 			
-			bus.execAt("m2",3).rotateDegrees(90);
+			//bus.execAt("m2",3).rotateDegrees(90).next();
 			
-			bus.execAt("m3",4).connect(6,false).bcNextState();
+			//bus.execAt("m3",4).connect(6,true).next();
 			
-			bus.execAt("f0",5).disconnect(4).bcNextState();
-			
-			bus.execAt("m2",6).disconnect(6).bcNextState();
-		
-			bus.execAt("m3",7).rotateDegrees(180);
-		
-			bus.execAt("m2",8).rotateDegrees(90);
-
-			bus.execAt("m2",9).connect(6,false).bcNextState();
-
-			
-			bus.execAt("m3",10).disconnect(6).bcNextState();
-			
-			bus.execAt("m2",11).rotateDegrees(90);
-
-			
-		
-			bus.execAt("f6",12).disconnect(4).bcNextState();
-			bus.execAt("f6",13).rotateDegrees(90);
-			
-			
-			
-			bus.execAt("f0",14).rotateDegrees(90);
-			bus.execAt("f0",15).connect(4,false).bcNextState();
-			
-			bus.execAt("f5",16).rotateDegrees(90);
-			bus.execAt("f5",17).connect(4,false).bcNextState();
-			
-			bus.execAt("f6",18).connect(2,false).bcNextState();
-			
-			if(bus.state==19) {
-				assignRoles(false);
-			}
-			
-			if(bus.state==20) {
-				bus.state = 1;
-			}
-			
+//			bus.execAt("f0",5).con.disconnect(4).next();
+//			
+//			bus.execAt("m2",6).con.disconnect(6).next();
+//		
+//			bus.execAt("m3",7).rotateDegrees(180).next();
+//		
+//
+//			bus.execAt("m2",8).con.connect(6,true).next();
+//
+//			bus.execAt("m3",9).con.disconnect(6).next();
+//			
+//			bus.execAt("m2",10).rotateDegrees(90).next();
+//			
+//			bus.execAt("f6",11).con.disconnect(4).next(); // 6 for second round
+//			bus.execAt("f6",12).con.disconnect(6).next();
+//			bus.execAt("f6",13).rotateDegrees(90).next();
+//			
+//			
+//			bus.execAt("f0",14).rotateDegrees(90).next();
+//			bus.execAt("f0",15).con.connect(4,true).next();
+//			
+//			bus.execAt("f5",16).rotateDegrees(90).next();
+//			bus.execAt("f5",17).con.connect(4,true).next();
+//			
+//			bus.execAt("f6",18).con.connect(2,true).next();
+//			
+//			if(bus.state==19) {
+//				assignRoles(false);
+//			}
+//			
+//			if(bus.state==20) {
+//				bus.state = 1;
+//				if (bus.moduleMatcher("f0")) {
+//					System.out.println("===================");
+//					System.out.println("===================");
+//					System.out.println("===================");
+//				}
+//			}
+			colorizeConnectors();
 			yield();
 		}
 	}
 
-	private void colorize() {
+	public void colorize() {
 		
-		if (bus.containsModule("m1")) {
+		if (bus.moduleMatcher("m1")) {
 			getModule().getComponent(0).setModuleComponentColor(Color.decode("#00FFFF"));
 			getModule().getComponent(1).setModuleComponentColor(Color.decode("#FFFF00"));
 		}
-		else if (bus.containsModule("m2")) {
+		else if (bus.moduleMatcher("m2")) {
 			getModule().getComponent(0).setModuleComponentColor(Color.decode("#008888"));
 			getModule().getComponent(1).setModuleComponentColor(Color.decode("#888800"));
 		}
-		else if (bus.containsModule("m3")) {
+		else if (bus.moduleMatcher("m3")) {
 			getModule().getComponent(0).setModuleComponentColor(Color.decode("#003333"));
 			getModule().getComponent(1).setModuleComponentColor(Color.decode("#333300"));
 		}
@@ -103,8 +112,10 @@ public class ATRONMetaModuleController extends ATRONController {
 			getModule().getComponent(0).setModuleComponentColor(Color.decode("#0000FF"));
 			getModule().getComponent(1).setModuleComponentColor(Color.decode("#FF0000"));
 		}
-			
-		
+		colorizeConnectors();
+	}
+
+	private void colorizeConnectors() {
 		module.getConnectors().get(0).setColor(Color.RED);
 		module.getConnectors().get(1).setColor(Color.BLACK);
 		module.getConnectors().get(2).setColor(Color.BLUE);
@@ -113,10 +124,10 @@ public class ATRONMetaModuleController extends ATRONController {
 		module.getConnectors().get(5).setColor(Color.BLACK);
 		module.getConnectors().get(6).setColor(Color.BLUE);
 		module.getConnectors().get(7).setColor(Color.WHITE);
+		
 	}
 
 	private void assignRoles(boolean firstTime) {
-		
 		
 		Map <String,String> trans = new HashMap<String,String>();
 		trans.put("f0", "m1");
@@ -134,15 +145,15 @@ public class ATRONMetaModuleController extends ATRONController {
 			trans.put("f9", "f6");
 		}
 		else {
-			trans.put("m1", "f4");
+			trans.put("m1", "f6");
 			trans.put("m2", "f5");
-			trans.put("m3", "f6");
+			trans.put("m3", "f4");
 			
 		}
 		
 		for (Map.Entry<String, String> entry : trans.entrySet()) {
-		   if (bus.containsModule(entry.getKey())) {
-			   System.out.println(entry.getKey() + "->" + entry.getValue());
+		   if (bus.moduleMatcher(entry.getKey())) {
+			   System.out.println(entry.getKey() + " renamed to " + entry.getValue());
 			   bus.setName(entry.getValue());
 			   
 				 
@@ -154,15 +165,16 @@ public class ATRONMetaModuleController extends ATRONController {
 		   
 		}
 
+		colorize();
 		
 		
 		
 		
-		
-	}
+	} 
 
 	public void handleMessage(byte[] message, int messageLength, int connector) {
-		bus.handleMessage(message, messageLength, connector);
+		bus.handleMessage(message, (byte)messageLength, (byte)connector);
+		colorize ();
 	}
 
 }
