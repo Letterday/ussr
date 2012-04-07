@@ -58,7 +58,7 @@ public class EightToCarSimulationJ extends GenericATRONSimulation {
         PhysicsParameters.get().setPhysicsSimulationStepSize(0.001f); // before: 0.0005f
         PhysicsParameters.get().setWorldDampingLinearVelocity(0.9f);
         PhysicsParameters.get().setUseModuleEventQueue(true);
-        PhysicsFactory.setDebugProviderFactory(ConsoleInformationProvider.getFactory(true));
+        PhysicsFactory.setDebugProviderFactory(ConsoleInformationProvider.getFactory(false));
     }
     
     @Override

@@ -39,6 +39,16 @@ public class ConsoleInformationProvider implements DebugInformationProvider {
         for(Map.Entry<String,Object> entry: stateInformation.entrySet())
             System.out.print("["+entry.getKey()+"="+entry.getValue().toString()+"] ");
         System.out.println();
+        if(module.getController() instanceof ControllerInformationProvider)
+            System.out.print(((ControllerInformationProvider)module.getController()).getModuleInformation());
+        else
+            printModuleInformation();
+        System.out.println("Log information:");
+        for(String line: allMessages) System.out.println(line);
+        System.out.println("---------------------------");
+    }
+
+    private void printModuleInformation() {
         System.out.print(" actuators: ");
         for(Actuator actuator: module.getActuators())
             System.out.print(actuator.getEncoderValue()+' ');
@@ -47,9 +57,6 @@ public class ConsoleInformationProvider implements DebugInformationProvider {
         for(Sensor sensor: module.getSensors())
             System.out.print(sensor.readValue()+' ');
         System.out.println();
-        System.out.println("Log information:");
-        for(String line: allMessages) System.out.println(line);
-        System.out.println("---------------------------");
     }
 
     @Override

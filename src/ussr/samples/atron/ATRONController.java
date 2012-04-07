@@ -19,6 +19,7 @@ import ussr.model.ControllerImpl;
 import ussr.model.Module;
 import ussr.model.Sensor;
 import ussr.model.ModuleEventQueue.Event;
+import ussr.model.debugging.ControllerInformationProvider;
 import ussr.physics.PhysicsLogger;
 import ussr.physics.PhysicsObserver;
 import ussr.physics.PhysicsParameters;
@@ -29,7 +30,7 @@ import ussr.physics.PhysicsSimulation;
  * 
  * @author Modular Robots @ MMMI
  */
-public abstract class ATRONController extends ControllerImpl implements PacketReceivedObserver, PhysicsObserver, IATRONAPI {
+public abstract class ATRONController extends ControllerImpl implements PacketReceivedObserver, PhysicsObserver, IATRONAPI, ControllerInformationProvider {
 
     private float targetPos, targetVel, zeroPos;
     protected static enum CenterStates {STOPPED, BRAKED, POSCONTROL, VELCONTROL, POSVELCONTROL}
@@ -528,4 +529,15 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
         for(byte c=0; c<8; c++)
             if(c!=channel) sendMessage(message,(byte)messageSize,c);
     }
+
+    public String getModuleInformation() {
+        StringBuffer result = new StringBuffer();
+        result.append("Center actuator: "+this.getAngularPositionDegrees()+"\n");
+        result.append("Connectors:");
+        for(int i=0; i<8; i++)
+            result.append(" "+i+"="+(this.isConnected(i) ? "connected" : "disconnected"));
+        result.append("\n");
+        return result.toString();
+    }
+
 }
