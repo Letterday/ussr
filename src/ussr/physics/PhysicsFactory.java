@@ -269,4 +269,8 @@ public class PhysicsFactory {
     public static DebugInformationProvider getDebugProvider(Module module) {
         return debugProviderFactory.getDebugProvider(module);
     }
+    
+    public static void setDebugProviderFactory(DebugProviderFactory factory) {
+        debugProviderFactory = factory;
+    }
 }
