@@ -528,4 +528,6 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
         for(byte c=0; c<8; c++)
             if(c!=channel) sendMessage(message,(byte)messageSize,c);
     }
+
+	
 }

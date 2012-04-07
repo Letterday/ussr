@@ -126,6 +126,10 @@ public abstract class ControllerImpl implements Controller {
     public String getName() {
         return module.getProperty("name");
     }
+    
+    public void setName(String name) {
+         module.setProperty("name",name);
+    }
 
     /**
      * @see ussr.samples.atron.IATRONAPI#getTime()

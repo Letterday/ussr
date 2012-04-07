@@ -25,8 +25,7 @@ public class ATRONCommSimulator extends GenericATRONSimulation {
                 return new ATRONCommController();
             }
         };
-        a.setRubberRing();
-        a.setGentle();
+
         return a;
     }
 
@@ -35,15 +34,7 @@ public class ATRONCommSimulator extends GenericATRONSimulation {
 	 * Delegate to library of builder helpers
 	 */
 	protected ArrayList<ModulePosition> buildRobot() {
-		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>();
-		 mPos.add(new ModulePosition("driver", new VectorDescription(2*0*ATRON.UNIT,0*ATRON.UNIT,0*ATRON.UNIT), ATRON.ROTATION_EW));
-         mPos.add(new ModulePosition("axle1", new VectorDescription(1*ATRON.UNIT,-1*ATRON.UNIT,0*ATRON.UNIT), ATRON.ROTATION_UD));
-         mPos.add(new ModulePosition("axle2", new VectorDescription(-1*ATRON.UNIT,-1*ATRON.UNIT,0*ATRON.UNIT), ATRON.ROTATION_UD));
-         mPos.add(new ModulePosition("wheel1", new VectorDescription(-1*ATRON.UNIT,-2*ATRON.UNIT,1*ATRON.UNIT), ATRON.ROTATION_SN));
-         mPos.add(new ModulePosition("wheel2", new VectorDescription(-1*ATRON.UNIT,-2*ATRON.UNIT,-1*ATRON.UNIT), ATRON.ROTATION_NS));
-         mPos.add(new ModulePosition("wheel3", new VectorDescription(1*ATRON.UNIT,-2*ATRON.UNIT,1*ATRON.UNIT), ATRON.ROTATION_SN));
-         mPos.add(new ModulePosition("wheel4", new VectorDescription(1*ATRON.UNIT,-2*ATRON.UNIT,-1*ATRON.UNIT), ATRON.ROTATION_NS));
-		return mPos;
+		return new ATRONBuilder().buildRectangle(7,3,new VectorDescription(0,-5*ATRON.UNIT,0));
         //return new ATRONBuilder().buildCar(4, new VectorDescription(3f,-0.25f,0f));
 	}
 
