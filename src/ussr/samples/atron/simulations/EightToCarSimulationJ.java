@@ -14,8 +14,8 @@ import ussr.description.geometry.VectorDescription;
 import ussr.description.setup.ModulePosition;
 import ussr.description.setup.WorldDescription;
 import ussr.model.Controller;
-import ussr.model.DebugInformationProvider;
 import ussr.model.debugging.ConsoleInformationProvider;
+import ussr.model.debugging.DebugInformationProvider;
 import ussr.model.debugging.SimpleWindowedInformationProvider;
 import ussr.physics.PhysicsFactory;
 import ussr.physics.PhysicsLogger;
@@ -59,9 +59,13 @@ public class EightToCarSimulationJ extends GenericATRONSimulation {
         PhysicsParameters.get().setPhysicsSimulationStepSize(0.001f); // before: 0.0005f
         PhysicsParameters.get().setWorldDampingLinearVelocity(0.9f);
         PhysicsParameters.get().setUseModuleEventQueue(true);
+        // Add a debugging interface to enable the user to trace what is happening
         PhysicsFactory.setDebugProviderFactory(SimpleWindowedInformationProvider.getFactory(false));
     }
     
+    /**
+     *  Install a click-based activator for debug information 
+     */
     @Override
     protected void simulationHook(PhysicsSimulation simulation) {
         DebugInformationPicker.install(simulation);
