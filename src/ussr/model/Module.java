@@ -21,6 +21,7 @@ import ussr.description.geometry.RotationDescription;
 import ussr.description.geometry.VectorDescription;
 import ussr.description.robot.RobotDescription;
 import ussr.description.setup.ModulePosition;
+import ussr.model.debugging.DebugInformationProvider;
 import ussr.physics.PhysicsEntity;
 import ussr.physics.PhysicsFactory;
 import ussr.physics.PhysicsModuleComponent;

@@ -1,6 +1,5 @@
 package ussr.model.debugging;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,11 +7,15 @@ import java.util.Map;
 import java.util.Observable;
 
 import ussr.model.Actuator;
-import ussr.model.DebugInformationProvider;
 import ussr.model.Module;
 import ussr.model.Sensor;
 import ussr.physics.PhysicsFactory.DebugProviderFactory;
 
+/**
+ * A debug information provider that displays information on the console.
+ * Inherits standard java.util.Observable behavior
+ * @author ups
+ */
 public class ConsoleInformationProvider extends Observable implements DebugInformationProvider {
 
     private Module module;
@@ -20,15 +23,26 @@ public class ConsoleInformationProvider extends Observable implements DebugInfor
     private Map<String,Object> stateInformation = new HashMap<String,Object>();
     private List<String> allMessages = new ArrayList<String>();
     
+    /**
+     * Create information provider attached to given module
+     * @param module to report debug information from
+     * @param verbose if true all notification are immediately echoed on the console
+     */
     protected ConsoleInformationProvider(Module module, boolean verbose) {
         this.module = module;
         this.verbose = verbose;
     }
     
+    /**
+     * Hook method called when debug information is updated, default behavior is to notify all observers
+     */
     protected void notificationHook() {
         super.notifyObservers();
     }
     
+    /**
+     * @see DebugInformationProvider#addNotification(String)
+     */
     @Override
     public void addNotification(String text) {
         allMessages.add(text);
@@ -36,12 +50,20 @@ public class ConsoleInformationProvider extends Observable implements DebugInfor
         if(verbose) System.out.println(text);
     }
 
+    /**
+     * Display information on console
+     * @see DebugInformationProvider#displayInformation()
+     */
     @Override
     public void displayInformation() {
         System.out.println("---------------------------");
         System.out.print(getInformation());
     }
 
+    /**
+     * Get a textual representation of the information contained within this provider
+     * @return
+     */
     public String getInformation() {
         StringBuffer out = new StringBuffer();
         String name = module.getProperty("name");
@@ -60,6 +82,10 @@ public class ConsoleInformationProvider extends Observable implements DebugInfor
         return out.toString();
     }
 
+    /**
+     * Get generic module status information on actuators and sensors
+     * @param out
+     */
     private void getModuleInformation(StringBuffer out) {
         out.append(" actuators: ");
         for(Actuator actuator: module.getActuators())
@@ -71,12 +97,20 @@ public class ConsoleInformationProvider extends Observable implements DebugInfor
         out.append("\n");
     }
 
+    /**
+     * @see DebugInformationProvider#putStateInformation(String, Object)
+     */
     @Override
     public void putStateInformation(String key, Object value) {
         stateInformation.put(key, value);
         notificationHook();
     }
 
+    /**
+     * Return factory instantiating ConsoleInformationProvider objects with the given verboseness level
+     * @param verbose if true echo all notifications to console
+     * @return the factory
+     */
     public static DebugProviderFactory getFactory(final boolean verbose) {
         return new DebugProviderFactory() {
             @Override

@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Set;
 
 import ussr.comm.CommunicationMonitor;
-import ussr.model.DebugInformationProvider;
 import ussr.model.Module;
+import ussr.model.debugging.DebugInformationProvider;
 import ussr.physics.jme.JMESimulation;
 import ussr.physics.jme.robots.JMEATRONFactory;
 import ussr.physics.jme.robots.JMEDefaultFactory;
