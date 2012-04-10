@@ -220,6 +220,10 @@ public class JMEATRONFactory implements ModuleFactory {
         }
 	}
 
+	public void setConnectorMaxAlignmentForce(float force) { maxAlignmentForce = force; }
+	public void setConnectorMaxAlignmentDistance(float distance) { maxAlignmentDistance = distance; }
+	public void setConnectorEpsilonAlignmentDistance(float distance) { epsilonAlignmentDistance = distance; }
+
 	private void updateConnectors(Module module) {
         
         JMEModuleComponent northComponent =  (JMEModuleComponent) module.getComponent(0);

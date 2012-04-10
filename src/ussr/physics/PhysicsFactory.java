@@ -14,6 +14,7 @@ import java.util.Set;
 
 import ussr.comm.CommunicationMonitor;
 import ussr.model.Module;
+import ussr.model.debugging.DebugInformationProvider;
 import ussr.physics.jme.JMESimulation;
 import ussr.physics.jme.robots.JMEATRONFactory;
 import ussr.physics.jme.robots.JMEDefaultFactory;
@@ -198,12 +199,23 @@ public class PhysicsFactory {
 		}
 
 	}
+	
+	public interface DebugProviderFactory {
+	    public DebugInformationProvider getDebugProvider(Module module);
+	}
 
 	private static final ModuleFactory[] INITIAL_FACTORIES = new ModuleFactory[] { new JMEATRONFactory(), new JMEOdinFactory(), new JMEMTRANFactory(), new JMECKBotFactory() };
 
 	private static ArrayList<ModuleFactory> factories = new ArrayList<ModuleFactory>(Arrays.asList(INITIAL_FACTORIES));
 
 	private static final Options options = new Options();
+	
+	private static DebugProviderFactory debugProviderFactory = new DebugProviderFactory() {
+        @Override public DebugInformationProvider getDebugProvider(Module module) {
+            return DebugInformationProvider.DEFAULT;
+        }
+	    
+	};
 
 	/**
 	 * Register a factory such that it can be used to create modules. 
@@ -253,4 +265,12 @@ public class PhysicsFactory {
 	public static Options getOptions() {
 		return options;
 	}
+
+    public static DebugInformationProvider getDebugProvider(Module module) {
+        return debugProviderFactory.getDebugProvider(module);
+    }
+    
+    public static void setDebugProviderFactory(DebugProviderFactory factory) {
+        debugProviderFactory = factory;
+    }
 }

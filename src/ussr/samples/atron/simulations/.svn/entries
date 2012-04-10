@@ -1,0 +1,94 @@
+8
+
+dir
+3733
+https://svn.mip.sdu.dk/mpl/ussr-home/home/ups/meta2d
+https://svn.mip.sdu.dk/mpl
+
+
+
+2009-08-05T21:05:39.377259Z
+3733
+ups
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+28b87580-9f2b-0410-a12a-a82c34044d52
+
+Meta2DSimulation.java
+file
+
+
+
+
+2008-06-05T12:17:38.000000Z
+101df8785e37da74f902a39480478f13
+2009-08-05T21:05:39.377259Z
+3733
+ups
+
+MetaController.java
+file
+
+
+
+
+2008-06-05T12:13:52.000000Z
+ff44e19d6a433843e1bdf4cd6206eb7c
+2009-08-05T21:05:39.377259Z
+3733
+ups
+
+MetaGadget.java
+file
+
+
+
+
+2007-12-18T20:41:13.000000Z
+376b90710deb808f1fe8c4de8bee2f98
+2009-08-05T21:05:39.377259Z
+3733
+ups
+
+Program.java
+file
+
+
+
+
+2007-12-12T15:40:29.000000Z
+95e6cb6f2919634610fea9e026cf20e5
+2009-08-05T21:05:39.377259Z
+3733
+ups
+
+Statement.java
+file
+
+
+
+
+2007-12-20T08:49:16.000000Z
+db712b862d93cfcd5753cde760fcc45d
+2009-08-05T21:05:39.377259Z
+3733
+ups
+
+junit
+dir
+
+statements
+dir
+

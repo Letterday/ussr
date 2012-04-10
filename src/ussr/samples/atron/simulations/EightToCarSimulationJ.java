@@ -7,15 +7,22 @@
 package ussr.samples.atron.simulations;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import ussr.description.Robot;
 import ussr.description.geometry.VectorDescription;
 import ussr.description.setup.ModulePosition;
 import ussr.description.setup.WorldDescription;
 import ussr.model.Controller;
+import ussr.model.debugging.ConsoleInformationProvider;
+import ussr.model.debugging.DebugInformationProvider;
+import ussr.model.debugging.SimpleWindowedInformationProvider;
+import ussr.physics.PhysicsFactory;
 import ussr.physics.PhysicsLogger;
 import ussr.physics.PhysicsParameters;
 import ussr.physics.PhysicsSimulation;
+import ussr.physics.jme.DebugInformationPicker;
+import ussr.samples.GenericSimulation;
 import ussr.samples.atron.ATRON;
 import ussr.samples.atron.ATRONController;
 import ussr.samples.atron.GenericATRONSimulation;
@@ -52,6 +59,17 @@ public class EightToCarSimulationJ extends GenericATRONSimulation {
         PhysicsParameters.get().setPhysicsSimulationStepSize(0.001f); // before: 0.0005f
         PhysicsParameters.get().setWorldDampingLinearVelocity(0.9f);
         PhysicsParameters.get().setUseModuleEventQueue(true);
+        // Add a debugging interface to enable the user to trace what is happening
+        PhysicsFactory.setDebugProviderFactory(SimpleWindowedInformationProvider.getFactory(false));
+    }
+    
+    /**
+     *  Install a click-based activator for debug information 
+     */
+    @Override
+    protected void simulationHook(PhysicsSimulation simulation) {
+        DebugInformationPicker.install(simulation);
+
     }
     
     protected void changeWorldHook(WorldDescription world) {
@@ -86,6 +104,8 @@ public class EightToCarSimulationJ extends GenericATRONSimulation {
         byte lastConnectorTry = 0;
         int retries = 0;
 
+        DebugInformationProvider info;
+        
         private void sendMessage(int[] message, int size, int channel) {
             if(VERIFY_OPERATIONS && !this.isConnected(channel)) { 
                 System.out.println("WARNING: module "+this.getMyID()+" unable to deliver on "+channel); System.out.flush(); 
@@ -95,7 +115,7 @@ public class EightToCarSimulationJ extends GenericATRONSimulation {
             }
             int state = message[1];
             int moduleNumber = message[2];
-            System.out.println("Module "+getMyID()+" setting module "+moduleNumber+" to state "+state+" through channel "+channel);
+            info.addNotification("Module "+getMyID()+" setting module "+moduleNumber+" to state "+state+" through channel "+channel);
             byte[] bmsg = new byte[message.length];
             for(int i=0;i<message.length;i++)
                 bmsg[i] = (byte)message[i];
@@ -107,6 +127,7 @@ public class EightToCarSimulationJ extends GenericATRONSimulation {
         @Override
         public void activate() {
             this.yield();
+            info = this.getModule().getDebugInformationProvider();
             if(USE_BLOCKING_ROTATE) this.setBlocking(true);
             this.delay(10);
             setup();
@@ -125,14 +146,18 @@ public class EightToCarSimulationJ extends GenericATRONSimulation {
                 token[i]=255;
             for(i=0;i<7;i++)
                 moduleTranslator[i] = i;
+            info.putStateInformation("module translator", Arrays.toString(moduleTranslator));
             if(getMyID()==0) token[0] = 0;
+            info.putStateInformation("ID", getMyID());
             while(eight2car_active)
             {
                 super.yield();
                 if(token[0]!=255 && token[0]!=-1) {
-                    System.out.println("Module "+this.getName()+" in state "+token[0]);
+                    info.addNotification("Module "+this.getName()+" in state "+token[0]);
+                    info.putStateInformation("last token", token[0]);
                     //delay(500);
                 }
+                info.putStateInformation("current token", token[0]);
                 switch(token[0])
                 {
                 case 0:

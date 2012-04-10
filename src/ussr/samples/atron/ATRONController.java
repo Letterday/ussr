@@ -530,4 +530,15 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
     }
 
 	
+
+    public String getModuleInformation() {
+        StringBuffer result = new StringBuffer();
+        result.append("Center actuator: "+this.getAngularPositionDegrees()+"\n");
+        result.append("Connectors:");
+        for(int i=0; i<8; i++)
+            result.append(" "+i+"="+(this.isConnected(i) ? "connected" : "disconnected"));
+        result.append("\n");
+        return result.toString();
+    }
+
 }
