@@ -41,6 +41,8 @@ public class ATRONBusPrinter {
 	}
 	
 	public void limited (int identifier, int type, String s){
+		
+		
 		if (!printLimiter.containsKey(identifier)) {
 			printLimiter.put(identifier,0f);
 		}
@@ -52,7 +54,7 @@ public class ATRONBusPrinter {
 	}
 	
 	public void state () {
-		limited(0,STATE_INFO,".state = " + bus.getState() + " ,nb=" + bus.con.getNeighbors().toString());
+		
 	}
 	
 	public void stateSwitch () {
@@ -60,7 +62,8 @@ public class ATRONBusPrinter {
 	}
 	
 	public void stateSwitch (int newstate) {
-		print(STATE_UPDATE, ".state = " + bus.getState() + " -> " + newstate);
+		//print(STATE_UPDATE, ".state = " + bus.getState() + " -> " + newstate);
+		
 	}
 
 	public void stateBroadcast(int stateNew) {

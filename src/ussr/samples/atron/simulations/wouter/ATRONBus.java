@@ -2,15 +2,11 @@ package ussr.samples.atron.simulations.wouter;
 
 
 import java.awt.Color;
-
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 
-import java.util.Set;
+import com.jmex.model.collada.schema.common_color_or_texture_type;
 
 import ussr.physics.PhysicsSimulation;
-import ussr.samples.atron.ATRONController;
 
 enum MessageType {MSG_STATECHANGE, MSG_REQ_CANROTATE, MSG_ACK_CANROTATE, MSG_ACK_CANNOTROTATE, MSG_CONNECT, MSG_ACK_WHICHMODULE, MSG_REQ_WHICHMODULE, MSG_DISCONNECT;
 	public byte ord (){return (byte)this.ordinal();}}
@@ -24,33 +20,31 @@ enum Task {ROTATE, CONNECT, DISCONNECT}
 
 public class ATRONBus {
 	ATRONBusPrinter print;
-	ATRONController ctrl;
-	ATRONBusConnector con;
+	ATRONMetaModuleController ctrl;
+	public ATRONBusConnector con;
 	
 	int state;
 	
 	
-	private int stateCheck;
+	private int execAtState;
+	private Module execAtId;
 	private int angle = 0;
 	
 	private int destination;
 	TransmissionState transmissionState = TransmissionState.WAITING_CONNECT;
-	
+	HashMap <Module,Msg> buffer = new HashMap <Module,Msg>(); 
 	private Task currentTask;
-	private String moduleNameCheck;
-	private float baseTime;
 	
-	public ATRONBus (ATRONController c, int visibleMessages) {
+	float baseTime;
+	
+	public ATRONBus (ATRONMetaModuleController c) {
 		ctrl = c;
-		print = new ATRONBusPrinter(this,visibleMessages);
+		print = new ATRONBusPrinter(this,255);
 		con = new ATRONBusConnector(this);
 	}
+
 	
-	public void setName(String name) {
-		ctrl.getModule().setProperty("name",name);
-	}
-	
-	public void maintainConnection () {
+	public void maintainPosition () {
 		ctrl.rotateToDegreeInDegrees(angle);
 	}
 	
@@ -65,11 +59,11 @@ public class ATRONBus {
 	
 	public void next () {
 		if (!checkForActiveModule()) return;
-		if (con.getDisconnecting().isEmpty() && con.getConnecting().isEmpty() && !isRotating()) {
-			broadcastNextState();
+		if (!con.isDisconnecting() && !con.isConnecting() && !isRotating()) {
+			nextState();
 		}
 		else {
-			print.limited(345,ATRONBusPrinter.STATE_INFO,"Waiting for:" + con.getConnecting().size() + " - " + con.getDisconnecting().size() + " - " + isRotating());
+			
 			
 		}
 	}
@@ -78,73 +72,25 @@ public class ATRONBus {
 		return ctrl.getModule().getActuators().get(0).isActive();
 	}
 	
-	
-	
-	
-	
-	public void broadcastState (int stateNew) {
-		print.stateBroadcast(stateNew);
-		if (state != stateNew) {
-			for(byte c=0; c<8; c++) send(
-					new byte[]{
-							MessageType.MSG_STATECHANGE.ord(),
-							getID(),
-							(byte)stateNew,
-							(byte)state
-							},	c);
-			state = stateNew;
-		}
-		
-	}
-	
-	public void broadcastNextState () {
-		destination = Integer.MAX_VALUE;
-		broadcastState (state + 1);
-		
-	}
-	
-	
 
-	
-	
-	
-	public byte getID (){
-		byte id = (byte)Integer.parseInt(getName().substring(1));
-		
-		if (id >= 192) {
-			System.err.println("ID number too big!");
-		}
-		else if (getName().startsWith("m")) {
-			id = (byte) (0-id);
-		}
-		else if (getName().startsWith("f")) {
-			id += 0;
-		}
-		else {
-			System.err.println("Unknown name!");
-		}
-		
-		return id;
-		
-	}
-	
-	private String idToName (byte id) {
-		if (id < 0) {
-			return "m" + (-id);
-		}
-		else {
-			return "f" + id;
-		}
+	public void setId(Module id) {
+		ctrl.info.addNotification(getId() + " renamed to " + id);
+		ctrl.getModule().setProperty("name",id.name());
 	}
 	
 	
-	public void send(byte[] bs, byte connector) {
-		if (bs[0] == MessageType.MSG_STATECHANGE.ord()) {
-			print.print (ATRONBusPrinter.STATE_MESSAGE, ".send(" + MessageType.values()[bs[0]].toString() + ") over " + connector);
-		}
-		else {
-			print.print (ATRONBusPrinter.MESSAGE, ".send(" + MessageType.values()[bs[0]].toString() + ") over " + connector);
-		}
+	
+	public void nextState () {
+		System.out.println(getName() + ".nextState(curr="+state+")");
+		state++;
+		broadcast (new Msg(state).setType(Msg.Type.STATE));
+	}
+	
+	
+	
+	
+	private void send(byte[] bs, byte connector) {
+		
 		
 //		if (!ctrl.isObjectNearby(connector) && MessageType.MSG_STATECHANGE.ord() != bs[0]) {
 //			System.err.println("no neighbor at " + connector);
@@ -160,9 +106,7 @@ public class ATRONBus {
 	}
 	
 	
-	public boolean moduleMatcher (String module) {
-		return getName().contains(module);
-	}
+	
 
 	public ATRONBus rotateDegrees(int d) {
 		// setMaintainRotationalJointPositions
@@ -174,7 +118,7 @@ public class ATRONBus {
 			ctrl.rotateToDegreeInDegrees(d + angle);
 			angle = d + angle;
 			destination = d;
-			printTask(Task.ROTATE,d);
+			ctrl.info.addNotification("Rotating to " + d);
 		}
 		
 		return this;
@@ -182,21 +126,7 @@ public class ATRONBus {
 	
 	
 	
-	public void printTask(Task t, int d) {
-		if (t != currentTask) {
-			currentTask = t;
-			if (t == Task.ROTATE) {
-				print.print(ATRONBusPrinter.ACTION, "ROTATing " + d + "deg");
-			} 
-			else if (t == Task.DISCONNECT) {
-				print.print(ATRONBusPrinter.ACTION, "DISCONNECTING CONNECTOR " + d);
-			}
-			else if (t == Task.CONNECT) {
-				print.print(ATRONBusPrinter.ACTION, "CONNECTING CONNECTOR " + d);
-			}
-		} 
-		
-	}
+	
 
 	public void rotateToDegreeInDegrees(int d) {
 		if (!checkForActiveModule()) return;
@@ -205,10 +135,13 @@ public class ATRONBus {
 		
 	}
 	
+	public Module getId() {
+		return Module.valueOf(getName());
+	}
 	
 
 	public boolean checkForActiveModule() {
-		return getName() == moduleNameCheck && state == stateCheck;
+		return getId() == execAtId && state == execAtState;
 	}
 
 	public ATRONBus markModule() {
@@ -218,14 +151,14 @@ public class ATRONBus {
 		return this;
 	}
 
-	public ATRONBus execAt(String mod, int state) {
-		this.moduleNameCheck = mod;
-		this.stateCheck = state;
+	public ATRONBus execAt(Module id, int state) {
+		this.execAtId = id;
+		this.execAtState = state;
 		return this;
 	}
 
 	public String getName() {
-		return ctrl.getModule().getProperty("name").toLowerCase();
+		return ctrl.getModule().getProperty("name").toUpperCase();
 	}
 
 	public PhysicsSimulation getSimulation() {
@@ -241,13 +174,14 @@ public class ATRONBus {
 		
 	}
 	
-	
+	/*
 	public void handleMessage(byte[] message, int messageLength, byte connector) {
-		con.getNeighbors().put(idToName(message[1]), connector);
+		
 		if (message[0] == MessageType.MSG_STATECHANGE.ord()) {
-			print.print(ATRONBusPrinter.STATE_MESSAGE, ".received " + MessageType.values()[message[0]].toString() + " along " + connector + " (" + idToName(message[1]) + ")");
+			print.print(ATRONBusPrinter.STATE_MESSAGE, ".received " + MessageType.values()[message[0]].toString() + " along " + connector + " (from " + Module.values()[message[1]] + ")");
 		} else {
-			print.print(ATRONBusPrinter.MESSAGE, ".received " + MessageType.values()[message[0]].toString() + " along " + connector + " (" + idToName(message[1]) + ")");
+			ctrl.info().addNotification(".received " + MessageType.values()[message[0]].toString() + " along " + connector + " (" + Module.values()[message[1]] + ")");
+			con.addNeighbor(Module.values()[message[1]], connector);
 		}
 		
         switch (MessageType.values()[message[0]]) {
@@ -255,11 +189,13 @@ public class ATRONBus {
         		
         		if (state == message[3])
                 {
+        			// Neighborhood is likely to change at next state!
+        			con.clearNeighbors();
                 	// printStateSwitch(message[1]);
                 	
                 	if (state != message[2]) {
                 		state = message[2];
-                		print.print(ATRONBusPrinter.STATE_UPDATE, ".state=" + state);
+                		//print.print(ATRONBusPrinter.STATE_UPDATE, ".state=" + state);
         	        	for(byte c=0; c<8; c++) 
         	        	{
         	        		//System.out.println("c="+connector);
@@ -275,17 +211,17 @@ public class ATRONBus {
             break;
         		
         	case MSG_REQ_WHICHMODULE:
-        		send(new byte[]{MessageType.MSG_ACK_WHICHMODULE.ord(),getID()},connector);
+        		send(new byte[]{MessageType.MSG_ACK_WHICHMODULE.ord(),getId().ord()},connector);
         		 
         	break;  
         	
         	case MSG_ACK_WHICHMODULE:
-        		con.getNeighbors().put(idToName(message[1]), connector);
+        		con.getNeighbors().put(Module.values()[message[1]], connector);
         	break;  
         		
         	case MSG_REQ_CANROTATE:
         		if (canRotateFree()) {
-        			print.limited(1820,ATRONBusPrinter.ACTION,"Request for rotating - GRANTED");
+        			ctrl.info.addNotification("Request for rotating - GRANTED");
     				rotateDegrees(90);
     				while (isRotating()) {ctrl.yield();}
     				
@@ -293,12 +229,12 @@ public class ATRONBus {
     					ctrl.connect(connector);
     				}
     				else {
-    					send(new byte[]{MessageType.MSG_ACK_CANROTATE.ord(),getID()},connector);
+    					send(new byte[]{MessageType.MSG_ACK_CANROTATE.ord(),getId().ord()},connector);
     				}
     			}
     			else {
-    				print.limited(1821,ATRONBusPrinter.ACTION,"Request for rotating - DENIED");
-    				send(new byte[]{MessageType.MSG_ACK_CANNOTROTATE.ord(),getID()},connector);
+    				ctrl.info.addNotification("Request for rotating - DENIED");
+    				send(new byte[]{MessageType.MSG_ACK_CANNOTROTATE.ord(),getId().ord()},connector);
     			}
         		
         	break;
@@ -308,14 +244,16 @@ public class ATRONBus {
         	break;
         	
         	case MSG_CONNECT:	
-        		con.connectIt(connector);
-        		broadcastNextState(); 
+        		con.connectConnector(connector);
+        		con.connecting.remove(connector);
+        		nextState(); 
         		
         	break;
         	
         	case MSG_DISCONNECT:	
-        		con.disconnectIt(connector);
-        		broadcastNextState(); 
+        		con.disconnectConnector(connector);
+        		con.disconnecting.remove(connector);
+        		nextState(); 
         	break;
         	
         	// Request to rotate
@@ -323,5 +261,65 @@ public class ATRONBus {
         }
 		
     }
+*/
+
+	public void receive(Msg m, byte connector) {
+		if (m.type == Msg.Type.DISCOVER && m.dir == Msg.Dir.REQ) {
+			send (new Msg(0).setDir(Msg.Dir.ACK).setType(Msg.Type.DISCOVER),m.getSource());
+		}
+		
+		if (m.type == Msg.Type.STATE && state < m.content[0]) {
+			// state update, so broadcast
+			System.out.println(getName() + ".receive state " + m.content[0]);
+			state = m.content[0];
+			for (byte i=0; i<8; i++) {
+				if (i != connector) {
+					send (m.setSource(getName()).getBytes(),i);
+					
+				}
+			}
+		}
+		
+	}
 	
+	public Msg send (Msg m, Module dest) {
+		m.setDest(dest);
+		m.setSource(getName());
+
+		if (con.getNeighbors().containsKey(dest)) {
+			send (m.getBytes(),con.getNeighbors().get(dest));
+		}
+		else {
+			broadcast(m.getBytes());
+		}
+		
+		
+		if(m.dir == Msg.Dir.REQ) {
+			while (!buffer.containsKey(dest)) {
+				ctrl.yield();
+			}
+
+			Msg msg = buffer.get(dest);
+		
+			return msg;
+		}
+		return null;
+	}
+	
+	
+	
+	public void broadcast(Msg m) {
+		for (byte c=0; c<8; c++) {
+			send (m.setSource(getName()).setDest(Module.ALL).getBytes(),c);
+		}
+	}
+	
+	public void broadcast (byte[] bs) {
+		ctrl.info().addNotification(".broadcast(" + bs[0] + ") ");
+		for (byte c=0; c<8; c++) {
+			send (bs,c);
+		}
+	}
+
+
 }

@@ -2,15 +2,20 @@ package ussr.samples.atron.simulations.wouter;
 
 import java.io.Serializable;
 
+
+
+
 class Msg implements Serializable {
 	private static final long serialVersionUID = 1L;
 	enum Type {ROTATE,CONNECT,DISCONNECT,STATE, DISCOVER, FINISHED}
 	enum Dir {REQ, ACK}
 	
-
+	
+	final int HEADER_LENGTH = 4;
+	
 	Type type;
-	private String source = "";
-	private String dest = "";
+	private Module source = null;
+	private Module dest = null;
 	Dir dir;
 	byte[] content;
 	
@@ -30,39 +35,35 @@ class Msg implements Serializable {
 	public Msg (byte[] b) {		
 		type = Type.values()[b[0]];
 		dir = Dir.values()[b[1]];
-		for (int i=0; i<10; i++) {
-			if (b[i+2] > 0)
-				source += (char)b[i+2];
-			if (b[i+12] > 0)
-				dest += (char)b[i+12];
-		}
+		source = Module.values()[b[2]];
+		dest = Module.values()[b[3]];
 		
-		content = new byte[b.length - 22];
-		for (int i=0; i<b.length-22; i++) {
-			content[i] = b[i + 22];
+		content = new byte[b.length - HEADER_LENGTH];
+		for (int i=0; i<b.length - HEADER_LENGTH; i++) {
+			content[i] = b[i + HEADER_LENGTH];
 		}	
 	}
 	
 	public byte[] getBytes () {
-		byte[] message = new byte[content.length + 22];
+		byte[] message = new byte[content.length + HEADER_LENGTH];
 		message[0] = (byte)type.ordinal();
 		message[1] = (byte)dir.ordinal();
-		for (int i=0; i<source.length() && i<10; i++) {
-			message[i+2] = (byte)source.charAt(i);
-		}
-		for (int i=0; i<dest.length() && i<10; i++) {
-			message[i+12] = (byte)dest.charAt(i);
-		}
-		
+		message[2] = (byte)source.ordinal();
+		message[3] = (byte)dest.ordinal();
+			
 		
 		for (int i=0; i<content.length; i++) {
-			message[i + 22] = content[i];
+			message[i + HEADER_LENGTH] = content[i];
 		}
 		return message;
 	}
 	
-	public String getSource() {
+	public Module getSource() {
 		return source;
+	}
+	
+	public Module getDest() {
+		return dest;
 	}
 	
 	public Msg setType(Type t) {
@@ -72,19 +73,27 @@ class Msg implements Serializable {
 	
 	
 	
-	public Msg setSource(String s) {
+	public Msg setSource(Module s) {
 		source = s;
 		return this;
 	}
 	
-	public Msg setDest(String destination) {
+	public Msg setSource(String s) {
+		source = Module.valueOf(s);
+		return this;
+	}
+	
+	public Msg setDest(Module destination) {
 		dest = destination;
 		return this;
 	}
-
-	public String getDest() {
-		return dest;
+	
+	public Msg setDest(String s) {
+		dest = Module.valueOf(s);
+		return this;
 	}
+
+	
 	
 	public String toString () {
 		return dir + " " + type +  ": " + source + " -> " + dest + " (" + content[0] + ")";

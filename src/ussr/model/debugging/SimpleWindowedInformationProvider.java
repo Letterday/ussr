@@ -1,7 +1,11 @@
 package ussr.model.debugging;
 
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import ussr.model.Module;
@@ -44,13 +48,16 @@ public class SimpleWindowedInformationProvider extends ConsoleInformationProvide
      * Create window
      */
     private void createWindow() {
-        frame = new JFrame("USSR debug");
+        frame = new JFrame(module.getProperty("name"));
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         text = new JTextArea("(no information)");
-        text.setColumns(80);
+        JScrollPane spane = new JScrollPane(text);
+        text.setColumns(40);
+        text.setRows(40);
         // Content must be a panel
         JPanel gui = new JPanel();
-        gui.add(text);
+        gui.add(spane);
+        
         //Create and set up the content pane.
         frame.setContentPane(gui);
         gui.setOpaque(true);
@@ -59,6 +66,8 @@ public class SimpleWindowedInformationProvider extends ConsoleInformationProvide
         frame.setVisible(true);
     }
 
+    
+    
     /**
      * @see ConsoleInformationProvider#getFactory(boolean)
      */

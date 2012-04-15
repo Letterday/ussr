@@ -220,9 +220,9 @@ public class JMEATRONFactory implements ModuleFactory {
         }
 	}
 
-	public void setConnectorMaxAlignmentForce(float force) { maxAlignmentForce = force; }
-	public void setConnectorMaxAlignmentDistance(float distance) { maxAlignmentDistance = distance; }
-	public void setConnectorEpsilonAlignmentDistance(float distance) { epsilonAlignmentDistance = distance; }
+	public static void setConnectorMaxAlignmentForce(float force) { maxAlignmentForce = force; }
+	public static void setConnectorMaxAlignmentDistance(float distance) { maxAlignmentDistance = distance; }
+	public static void setConnectorEpsilonAlignmentDistance(float distance) { epsilonAlignmentDistance = distance; }
 
 	private void updateConnectors(Module module) {
         

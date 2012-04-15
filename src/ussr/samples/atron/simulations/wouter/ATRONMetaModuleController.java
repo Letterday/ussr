@@ -4,19 +4,27 @@ import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 
+import ussr.model.debugging.DebugInformationProvider;
 import ussr.samples.atron.ATRONController;
 
 public class ATRONMetaModuleController extends ATRONController {
 
-	ATRONBus bus;
-
+	public ATRONBus bus;
+	DebugInformationProvider info;
+	
+	
+	
 	public static void main(String[] args) {
-		new ATRONMetaModuleSimulation().main();
+		ATRONMetaModuleSimulation.main(args);
 	}
 
+	
 	public void activate() {
+		
 		setup();
-		bus = new ATRONBus(this,ATRONBusPrinter.ALL - ATRONBusPrinter.STATE_MESSAGE);// Printer.ACTION + Printer.STATE_UPDATE);
+		bus = new ATRONBus(this);// Printer.ACTION + Printer.STATE_UPDATE);
+		info = this.getModule().getDebugInformationProvider();
+		
 
 		bus.state = 0;
 
@@ -24,19 +32,19 @@ public class ATRONMetaModuleController extends ATRONController {
 
 		assignRoles(true);
 		
+
 		while (true) {
 
-			bus.maintainConnection();
-			bus.getPrint().state();
+			bus.maintainPosition();
+
+			bus.execAt(Module.F0,1).con.disconnect(Module.MR).next();
+			bus.execAt(Module.F0,2).con.disconnect(Module.F2).next();
+			bus.execAt(Module.F0,3).rotateDegrees(90).next();
+			bus.execAt(Module.ML,4).rotateDegrees(90).next();
+			bus.execAt(Module.MR,5).con.connect(Module.F3).next();
+			bus.execAt(Module.ML,6).con.disconnect(Module.F0).next();
 			
-			
-			bus.execAt("m3",1).con.disconnect("f0").next();
-			bus.execAt("f2",2).con.disconnect("f0").next();
-			
-			bus.execAt("f0",3).rotateDegrees(90).next();
-			
-			bus.execAt("m2",4).rotateDegrees(90).next();
-			bus.execAt("m3",5).con.connect("f2").next();
+//			bus.execAt("m3",5).con.connect("f2").next();
 			
 			
 			//bus.execAt("f2",1).con.disconnect("f0").next();
@@ -96,15 +104,15 @@ public class ATRONMetaModuleController extends ATRONController {
 
 	public void colorize() {
 		
-		if (bus.moduleMatcher("m1")) {
+		if (bus.getId() == Module.MC) {
 			getModule().getComponent(0).setModuleComponentColor(Color.decode("#00FFFF"));
 			getModule().getComponent(1).setModuleComponentColor(Color.decode("#FFFF00"));
 		}
-		else if (bus.moduleMatcher("m2")) {
+		else if (bus.getId() == Module.ML) {
 			getModule().getComponent(0).setModuleComponentColor(Color.decode("#008888"));
 			getModule().getComponent(1).setModuleComponentColor(Color.decode("#888800"));
 		}
-		else if (bus.moduleMatcher("m3")) {
+		else if (bus.getId() == Module.MR) {
 			getModule().getComponent(0).setModuleComponentColor(Color.decode("#003333"));
 			getModule().getComponent(1).setModuleComponentColor(Color.decode("#333300"));
 		}
@@ -129,37 +137,34 @@ public class ATRONMetaModuleController extends ATRONController {
 
 	private void assignRoles(boolean firstTime) {
 		
-		Map <String,String> trans = new HashMap<String,String>();
-		trans.put("f0", "m1");
-		trans.put("f1", "m3");
-		trans.put("f2", "m2");
-		trans.put("f3", "f0");
-		trans.put("f4", "f1");
-		trans.put("f5", "f2");
-		trans.put("f6", "f3");
+		Map <Module,Module> trans = new HashMap<Module,Module>();
+		trans.put(Module.F0, Module.MC);
+		trans.put(Module.F1, Module.MR);
+		trans.put(Module.F2, Module.ML);
+		trans.put(Module.F3, Module.F0);
+		trans.put(Module.F4, Module.F1);
+		trans.put(Module.F5, Module.F2);
+		trans.put(Module.F6, Module.F3);
 	
 		
 		if (firstTime) {
-			trans.put("f7", "f4");
-			trans.put("f8", "f5");
-			trans.put("f9", "f6");
+			trans.put(Module.F7, Module.F4);
+			trans.put(Module.F8, Module.F5);
+			trans.put(Module.F9, Module.F6);
 		}
 		else {
-			trans.put("m1", "f6");
-			trans.put("m2", "f5");
-			trans.put("m3", "f4");
+			trans.put(Module.F1, Module.F6);
+			trans.put(Module.F2, Module.F5);
+			trans.put(Module.F3, Module.F4);
 			
 		}
 		
-		for (Map.Entry<String, String> entry : trans.entrySet()) {
-		   if (bus.moduleMatcher(entry.getKey())) {
-			   System.out.println(entry.getKey() + " renamed to " + entry.getValue());
-			   bus.setName(entry.getValue());
-			   
-				 
+		for (Map.Entry<Module, Module> entry : trans.entrySet()) {
+		   if (bus.getId() == entry.getKey()) {
+			   bus.setId(entry.getValue());
+	 
 			   bus.state++;
-				  
-			   
+			
 			   return;
 		   }
 		   
@@ -172,9 +177,27 @@ public class ATRONMetaModuleController extends ATRONController {
 		
 	} 
 
+	
+
 	public void handleMessage(byte[] message, int messageLength, int connector) {
-		bus.handleMessage(message, (byte)messageLength, (byte)connector);
+		
+		bus().receive(new Msg(message),(byte)connector);
 		colorize ();
+	}
+
+
+	public ATRONBus bus() {
+		if (bus == null) {
+			bus = new ATRONBus(this);
+		}
+		return bus;
+	}
+	
+	public DebugInformationProvider info() {
+		if (info == null) {
+			info = this.getModule().getDebugInformationProvider();
+		}
+		return info;
 	}
 
 }

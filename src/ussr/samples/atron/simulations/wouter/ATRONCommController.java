@@ -13,8 +13,8 @@ import ussr.samples.atron.simulations.wouter.Msg.Dir;
 
 public class ATRONCommController extends ATRONController {
 
-	HashMap <String,Byte> neighbors = new HashMap <String, Byte>();
-	HashMap <String,Msg> buffer = new HashMap <String,Msg>(); 
+	HashMap <Module,Byte> neighbors = new HashMap <Module, Byte>();
+	HashMap <Module,Msg> buffer = new HashMap <Module,Msg>(); 
 	HashSet <Integer> busy = new HashSet <Integer>();
 	
 	int state = 0;
@@ -46,7 +46,7 @@ public class ATRONCommController extends ATRONController {
 				if (getName().equals("f0")) {
 					busy.add(1);
 					System.out.println("START f2.");
-					disconnectTarget("f2");
+					disconnectTarget(Module.F2);
 					System.out.println("DONE f2.");
 				
 					while (!isFinished ()) {
@@ -60,7 +60,7 @@ public class ATRONCommController extends ATRONController {
 				}
 				if (getName().equals("f0")) {
 					System.out.println("START m3.");
-					disconnectTarget("m3");
+					//disconnectTarget(Module.M3);
 					System.out.println("DONE m3.");
 					finished(1);
 					while (state == 1) {
@@ -214,7 +214,7 @@ public class ATRONCommController extends ATRONController {
 	
 	
 	
-	public void disconnectTarget (String target) {
+	public void disconnectTarget (Module target) {
 		System.out.println(getName() + ".disconnect " + target);
 		int c = targetToConnector(target);
 		if (c%2 == 0) {
@@ -229,7 +229,7 @@ public class ATRONCommController extends ATRONController {
 		}
 	}
 		
-	private int targetToConnector (String target) {
+	private int targetToConnector (Module target) {
 		System.out.println(getName() + ".targetToConnector("+target+")");
 		if (!neighbors.containsKey(target)) {
 			System.out.println(getName() + ".neighbors.NOTcontainsKey " + target);
@@ -240,7 +240,7 @@ public class ATRONCommController extends ATRONController {
 		return c;
 	}
 	
-	private void connectTarget(String target) {
+	private void connectTarget(Module target) {
 		System.out.println(getName() + ".connect " + target);
 		int c = targetToConnector(target);
 		if (c%2 == 0) {
@@ -268,7 +268,7 @@ public class ATRONCommController extends ATRONController {
 		return name;
 	}
 	
-	public void connectTo (String target) {
+	public void connectTo (Module target) {
 		send(new Msg(0).setType(Msg.Type.CONNECT),target);
 		
 	}
@@ -291,7 +291,7 @@ public class ATRONCommController extends ATRONController {
 
 	
 	
-	public Msg send (Msg m, String dest) {
+	public Msg send (Msg m, Module dest) {
 		m.setDest(dest);
 		m.setSource(getName());
 
@@ -418,7 +418,7 @@ public class ATRONCommController extends ATRONController {
 		
 	}
 
-	private void addNeighbor(String source, byte c) {
+	private void addNeighbor(Module source, byte c) {
 		neighbors.put(source,c);
 		
 	}

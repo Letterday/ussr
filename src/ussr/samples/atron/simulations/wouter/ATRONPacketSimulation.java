@@ -17,15 +17,17 @@ import ussr.samples.atron.ATRON;
 import ussr.samples.atron.ATRONBuilder;
 import ussr.samples.atron.GenericATRONSimulation;
 
-public class ATRONMetaModuleSimulation extends GenericATRONSimulation {
+public class ATRONPacketSimulation extends GenericATRONSimulation {
 
 	
 	public static void main( String[] args ) {
 		PhysicsParameters.get().setRealisticCollision(true);
 		
-		PhysicsFactory.setDebugProviderFactory(SimpleWindowedInformationProvider.getFactory(false));
 		
-        new ATRONMetaModuleSimulation().main();
+		
+		PhysicsFactory.setDebugProviderFactory(SimpleWindowedInformationProvider.getFactory(true));
+		
+        new ATRONPacketSimulation().main();
     }
 	
 	@Override
@@ -38,7 +40,7 @@ public class ATRONMetaModuleSimulation extends GenericATRONSimulation {
 	protected Robot getRobot() {
         ATRON a = new ATRON() {
             public Controller createController() {
-            		return new ATRONMetaModuleController();
+            		return new ATRONPacketController();
             }
         };
       
