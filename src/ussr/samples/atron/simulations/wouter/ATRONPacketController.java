@@ -98,26 +98,57 @@ public class ATRONPacketController extends ATRONController {
 				case 0:
 					disconnect (Module.F0,Module.MR);
 				break;
+				
 				case 1:
 					disconnect (Module.F0,Module.F2);
 				break;
+				
 				case 2:
 					rotate (Module.F0,90);
 				break;
+				
 				case 3:
 					rotate (Module.ML,90);
 				break;
+				
 				case 4:
-					
 					// The call below does not work because MR does not receive messages from F3 (F3 does receive from MR (STRANGE?))
-					 connect (Module.MR,Module.F3);
-					
-					
+					// connect (Module.MR,Module.F3);
 					// But connecting by specifying the connection number does work
 					// However, we want the protocol to figure out this number itself.
 					if (getId() == Module.MR) {
-					//	connectionOnConn ((byte)6,true);
+						connectionOnConn ((byte)6,true);
 					}
+				break;
+				
+				case 5:
+					disconnect (Module.ML,Module.F0);
+				break;
+					
+				case 6:
+					rotate (Module.MR,180);
+				break;
+					
+				case 7:
+					rotate(Module.ML,-90);
+				break;
+				
+				case 8:
+					// connect (Module.ML,Module.F6);
+					if (getId() == Module.ML) {
+						connectionOnConn ((byte)2,true);
+						connectionOnConn ((byte)4,true);
+						connectionOnConn ((byte)6,true);
+						connectionOnConn ((byte)0,true);
+					}
+				break;
+				
+				case 9:
+					disconnect (Module.MR,Module.F3);
+				break;
+				
+				case 10:
+					rotate (Module.MR,90);
 				break;
 			}
 //
@@ -305,13 +336,13 @@ public class ATRONPacketController extends ATRONController {
 	}
 	
 	private void colorizeConnectors() {
-		module.getConnectors().get(0).setColor(Color.RED);
+		module.getConnectors().get(0).setColor(Color.BLUE);
 		module.getConnectors().get(1).setColor(Color.BLACK);
-		module.getConnectors().get(2).setColor(Color.BLUE);
+		module.getConnectors().get(2).setColor(Color.RED);
 		module.getConnectors().get(3).setColor(Color.WHITE);
-		module.getConnectors().get(4).setColor(Color.RED);
+		module.getConnectors().get(4).setColor(Color.BLUE);
 		module.getConnectors().get(5).setColor(Color.BLACK);
-		module.getConnectors().get(6).setColor(Color.BLUE);
+		module.getConnectors().get(6).setColor(Color.RED);
 		module.getConnectors().get(7).setColor(Color.WHITE);
 		
 	}

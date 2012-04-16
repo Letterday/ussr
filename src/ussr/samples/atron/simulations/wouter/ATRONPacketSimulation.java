@@ -22,7 +22,9 @@ public class ATRONPacketSimulation extends GenericATRONSimulation {
 	
 	public static void main( String[] args ) {
 		PhysicsParameters.get().setRealisticCollision(true);
-		
+		ussr.physics.jme.robots.JMEATRONFactory.setConnectorMaxAlignmentForce(100000000000000f);
+		ussr.physics.jme.robots.JMEATRONFactory.setConnectorMaxAlignmentDistance(0.000000000002f);
+		ussr.physics.jme.robots.JMEATRONFactory.setConnectorEpsilonAlignmentDistance(0.000000000001f);
 		
 		
 		PhysicsFactory.setDebugProviderFactory(SimpleWindowedInformationProvider.getFactory(true));
