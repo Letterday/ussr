@@ -1,7 +1,9 @@
 package distributedLanguage;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -120,4 +122,16 @@ public class ContextManager implements Message.Subscriber {
 		return null;
 	}
 
+	public List<Integer> getSharedVariableValues(String ensembleName, String fieldName) {
+		SharedMemberID id = new SharedMemberID(ensembleName,fieldName);
+		Collection<ContextInformation> all = context.values();
+		ArrayList<Integer> result = new ArrayList<Integer>();
+		for(ContextInformation info: all) {
+			List<Integer> value = info.get(id);
+			if(value==null) continue;
+			if(value.size()>1) throw new Error("Data size not supported");
+			result.add(value.get(0));
+		}
+		return result;
+	}
 }

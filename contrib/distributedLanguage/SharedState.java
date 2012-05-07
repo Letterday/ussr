@@ -18,6 +18,28 @@ public class SharedState {
     private Map<String,List<Integer>> local = new HashMap<String,List<Integer>>();
     private Map<String,SharedMemberID> fieldName2id = new HashMap<String,SharedMemberID>(); // note: memory leak
     
+    public void assign(Map<String,Integer> localVariables, String name, Integer value) {
+    	if(shared.containsKey(name) && local.containsKey(name)) throw new Error("Unresolved name precedence");
+    	if(shared.containsKey(name)) {
+    		if(!(shared.get(name).data.size()==1)) throw new Error("Bad data size");
+    		shared.get(name).data.set(0,value);
+    		shared.get(name).isLocallyAssigned = true;
+    	} else if(local.containsKey(name)) {
+    		local.get(name).set(0, value);
+    	} else
+    		localVariables.put(name, value);
+    }
+
+    public Integer get(Map<String,Integer> localVariables, String name) {
+    	if(localVariables.containsKey(name)) return localVariables.get(name);
+    	List<Integer> result;
+    	if(local.containsKey(name)) result = local.get(name);
+    	else if(shared.containsKey(name)) result = shared.get(name).data;
+    	else throw new Error("Variable not found: "+name);
+    	if(result.size()!=1) throw new Error("Illegal data size");
+    	return result.get(0);
+    }
+    
     /**
      * Remove any state not described by the given set of entities
      * @param all
