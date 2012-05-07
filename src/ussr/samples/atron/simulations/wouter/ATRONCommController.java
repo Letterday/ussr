@@ -46,7 +46,7 @@ public class ATRONCommController extends ATRONController {
 				if (getName().equals("f0")) {
 					busy.add(1);
 					System.out.println("START f2.");
-					disconnectTarget(Module.F2);
+					//disconnectTarget(Module.F2);
 					System.out.println("DONE f2.");
 				
 					while (!isFinished ()) {

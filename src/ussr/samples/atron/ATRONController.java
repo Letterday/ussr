@@ -342,6 +342,7 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	 * @see ussr.samples.atron.IATRONAPI#connect(int)
 	 */
     public void connect(int i) {
+    	System.out.println("connectT " + i);
         isOtherConnectorNearby(i);
     	module.getConnectors().get(i).connect();
     }

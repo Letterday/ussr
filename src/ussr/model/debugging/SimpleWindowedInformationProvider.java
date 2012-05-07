@@ -1,5 +1,6 @@
 package ussr.model.debugging;
 
+import java.awt.Rectangle;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 
@@ -54,6 +55,8 @@ public class SimpleWindowedInformationProvider extends ConsoleInformationProvide
         JScrollPane spane = new JScrollPane(text);
         text.setColumns(40);
         text.setRows(40);
+
+ 
         // Content must be a panel
         JPanel gui = new JPanel();
         gui.add(spane);

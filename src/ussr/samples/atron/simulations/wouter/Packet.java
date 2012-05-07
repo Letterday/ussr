@@ -1,13 +1,10 @@
 package ussr.samples.atron.simulations.wouter;
 
 import java.io.Serializable;
+import java.awt.Color;
 
-enum Module {ALL, MC,ML,MR,F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10;
-	public byte ord() {
-		return (byte)ordinal();
-	}
-}
-enum Type {ROTATE,CONNECT,DISCONNECT,STATE,DISCOVER;
+
+enum Type {ROTATE,CONNECT,DISCONNECT,STATE,DISCOVER,BROADCAST;
 	public byte ord() {
 		return (byte)ordinal();
 	}
@@ -28,7 +25,8 @@ class Packet implements Serializable {
 	private Module source;
 	private Module dest;
 	private byte sourceConnector = -1;
-	public byte data;  
+	public byte data;
+
 
 	public Packet (Module s, Module d) {
 		source = s;
@@ -54,7 +52,6 @@ class Packet implements Serializable {
 	}
 	
 	public Packet setSourceConnector (byte c) {
-		System.out.println(".setSourceConnector " + c);
 		if (c != -1){
 			sourceConnector = c;
 		}

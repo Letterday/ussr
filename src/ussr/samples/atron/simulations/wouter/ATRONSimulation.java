@@ -17,21 +17,21 @@ import ussr.samples.atron.ATRON;
 import ussr.samples.atron.ATRONBuilder;
 import ussr.samples.atron.GenericATRONSimulation;
 
-public class ATRONPacketSimulation extends GenericATRONSimulation {
+public abstract class ATRONSimulation extends GenericATRONSimulation {
 
-	
-	public static void main( String[] args ) {
+
+	public static void initSimulator () {
 		PhysicsParameters.get().setRealisticCollision(true);
-		ussr.physics.jme.robots.JMEATRONFactory.setConnectorMaxAlignmentForce(100000000000000f);
-		ussr.physics.jme.robots.JMEATRONFactory.setConnectorMaxAlignmentDistance(0.000000000002f);
-		ussr.physics.jme.robots.JMEATRONFactory.setConnectorEpsilonAlignmentDistance(0.000000000001f);
-		
+		ussr.physics.jme.robots.JMEATRONFactory.setConnectorMaxAlignmentForce(110f);
+		ussr.physics.jme.robots.JMEATRONFactory.setConnectorMaxAlignmentDistance(0.002f);
+		ussr.physics.jme.robots.JMEATRONFactory.setConnectorEpsilonAlignmentDistance(0.01f);
+
 		
 		PhysicsFactory.setDebugProviderFactory(SimpleWindowedInformationProvider.getFactory(true));
-		
-        new ATRONPacketSimulation().main();
-    }
+	}
+
 	
+		
 	@Override
 	protected void simulationHook(PhysicsSimulation simulation) {
         DebugInformationPicker.install(simulation);
@@ -39,15 +39,7 @@ public class ATRONPacketSimulation extends GenericATRONSimulation {
 	
 	
 	
-	protected Robot getRobot() {
-        ATRON a = new ATRON() {
-            public Controller createController() {
-            		return new ATRONPacketController();
-            }
-        };
-      
-        return a;
-    }
+	protected abstract Robot getRobot();
 
 	@Override
 	protected ArrayList<ModulePosition> buildRobot() {
@@ -63,8 +55,4 @@ public class ATRONPacketSimulation extends GenericATRONSimulation {
         //generator.obstacalize(ObstacleGenerator.ObstacleType.CIRCLE, world);
         world.setPlaneTexture(WorldDescription.GRASS_TEXTURE);
     }
-	
-	
-	    
-	
 }

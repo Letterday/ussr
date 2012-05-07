@@ -117,7 +117,15 @@ public class ConsoleInformationProvider extends Observable implements DebugInfor
         out.append("\n");
         
         out.append(" state: ");
-       out.append(((ATRONPacketController)module.getController()).getState());
+        out.append(((ATRONPacketController)module.getController()).getState());
+        
+        out.append("\n");
+        
+        out.append(" colors: ");
+        out.append(((ATRONPacketController)module.getController()).getColors()[0].toString());
+        out.append("  ");
+        out.append(((ATRONPacketController)module.getController()).getColors()[1].toString());
+        
         
         out.append("\n");
         

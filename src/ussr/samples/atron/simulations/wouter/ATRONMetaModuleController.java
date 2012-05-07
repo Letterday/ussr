@@ -30,19 +30,19 @@ public class ATRONMetaModuleController extends ATRONController {
 
 		bus.initBaseTime();
 
-		assignRoles(true);
+		//assignRoles(true);
 		
 
 		while (true) {
 
-			bus.maintainPosition();
-
-			bus.execAt(Module.F0,1).con.disconnect(Module.MR).next();
-			bus.execAt(Module.F0,2).con.disconnect(Module.F2).next();
-			bus.execAt(Module.F0,3).rotateDegrees(90).next();
-			bus.execAt(Module.ML,4).rotateDegrees(90).next();
-			bus.execAt(Module.MR,5).con.connect(Module.F3).next();
-			bus.execAt(Module.ML,6).con.disconnect(Module.F0).next();
+//			bus.maintainPosition();
+//
+//			bus.execAt(Module.F0,1).con.disconnect(Module.MetaR).next();
+//			bus.execAt(Module.F0,2).con.disconnect(Module.F2).next();
+//			bus.execAt(Module.F0,3).rotateDegrees(90).next();
+//			bus.execAt(Module.MetaL,4).rotateDegrees(90).next();
+//			bus.execAt(Module.MetaR,5).con.connect(Module.F3).next();
+//			bus.execAt(Module.MetaL,6).con.disconnect(Module.F0).next();
 			
 //			bus.execAt("m3",5).con.connect("f2").next();
 			
@@ -102,26 +102,26 @@ public class ATRONMetaModuleController extends ATRONController {
 		}
 	}
 
-	public void colorize() {
-		
-		if (bus.getId() == Module.MC) {
-			getModule().getComponent(0).setModuleComponentColor(Color.decode("#00FFFF"));
-			getModule().getComponent(1).setModuleComponentColor(Color.decode("#FFFF00"));
-		}
-		else if (bus.getId() == Module.ML) {
-			getModule().getComponent(0).setModuleComponentColor(Color.decode("#008888"));
-			getModule().getComponent(1).setModuleComponentColor(Color.decode("#888800"));
-		}
-		else if (bus.getId() == Module.MR) {
-			getModule().getComponent(0).setModuleComponentColor(Color.decode("#003333"));
-			getModule().getComponent(1).setModuleComponentColor(Color.decode("#333300"));
-		}
-		else {
-			getModule().getComponent(0).setModuleComponentColor(Color.decode("#0000FF"));
-			getModule().getComponent(1).setModuleComponentColor(Color.decode("#FF0000"));
-		}
-		colorizeConnectors();
-	}
+//	public void colorize() {
+//		
+//		if (bus.getId() == Module.MetaC) {
+//			getModule().getComponent(0).setModuleComponentColor(Color.decode("#00FFFF"));
+//			getModule().getComponent(1).setModuleComponentColor(Color.decode("#FFFF00"));
+//		}
+//		else if (bus.getId() == Module.MetaL) {
+//			getModule().getComponent(0).setModuleComponentColor(Color.decode("#008888"));
+//			getModule().getComponent(1).setModuleComponentColor(Color.decode("#888800"));
+//		}
+//		else if (bus.getId() == Module.MetaR) {
+//			getModule().getComponent(0).setModuleComponentColor(Color.decode("#003333"));
+//			getModule().getComponent(1).setModuleComponentColor(Color.decode("#333300"));
+//		}
+//		else {
+//			getModule().getComponent(0).setModuleComponentColor(Color.decode("#0000FF"));
+//			getModule().getComponent(1).setModuleComponentColor(Color.decode("#FF0000"));
+//		}
+//		colorizeConnectors();
+//	}
 
 	private void colorizeConnectors() {
 		module.getConnectors().get(0).setColor(Color.RED);
@@ -135,54 +135,54 @@ public class ATRONMetaModuleController extends ATRONController {
 		
 	}
 
-	private void assignRoles(boolean firstTime) {
-		
-		Map <Module,Module> trans = new HashMap<Module,Module>();
-		trans.put(Module.F0, Module.MC);
-		trans.put(Module.F1, Module.MR);
-		trans.put(Module.F2, Module.ML);
-		trans.put(Module.F3, Module.F0);
-		trans.put(Module.F4, Module.F1);
-		trans.put(Module.F5, Module.F2);
-		trans.put(Module.F6, Module.F3);
-	
-		
-		if (firstTime) {
-			trans.put(Module.F7, Module.F4);
-			trans.put(Module.F8, Module.F5);
-			trans.put(Module.F9, Module.F6);
-		}
-		else {
-			trans.put(Module.F1, Module.F6);
-			trans.put(Module.F2, Module.F5);
-			trans.put(Module.F3, Module.F4);
-			
-		}
-		
-		for (Map.Entry<Module, Module> entry : trans.entrySet()) {
-		   if (bus.getId() == entry.getKey()) {
-			   bus.setId(entry.getValue());
-	 
-			   bus.state++;
-			
-			   return;
-		   }
-		   
-		}
-
-		colorize();
-		
-		
-		
-		
-	} 
+//	private void assignRoles(boolean firstTime) {
+//		
+//		Map <Module,Module> trans = new HashMap<Module,Module>();
+//		trans.put(Module.F0, Module.MetaC);
+//		trans.put(Module.F1, Module.MetaR);
+//		trans.put(Module.F2, Module.MetaL);
+//		trans.put(Module.F3, Module.F0);
+//		trans.put(Module.F4, Module.F1);
+//		trans.put(Module.F5, Module.F2);
+//		trans.put(Module.F6, Module.F3);
+//	
+//		
+//		if (firstTime) {
+//			trans.put(Module.F7, Module.F4);
+//			trans.put(Module.F8, Module.F5);
+//			trans.put(Module.F9, Module.F6);
+//		}
+//		else {
+//			trans.put(Module.F1, Module.F6);
+//			trans.put(Module.F2, Module.F5);
+//			trans.put(Module.F3, Module.F4);
+//			
+//		}
+//		
+//		for (Map.Entry<Module, Module> entry : trans.entrySet()) {
+//		   if (bus.getId() == entry.getKey()) {
+//			   bus.setId(entry.getValue());
+//	 
+//			   bus.state++;
+//			
+//			   return;
+//		   }
+//		   
+//		}
+//
+//		colorize();
+//		
+//		
+//		
+//		
+//	} 
 
 	
 
 	public void handleMessage(byte[] message, int messageLength, int connector) {
 		
 		bus().receive(new Msg(message),(byte)connector);
-		colorize ();
+	//	colorize ();
 	}
 
 
