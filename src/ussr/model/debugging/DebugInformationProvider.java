@@ -15,7 +15,6 @@ public interface DebugInformationProvider {
     /**
      * Add state information
      * @param key identifies the name of the state
-     * @param value the value of the state
      */
     public void putStateInformation(String key, Object value);
     

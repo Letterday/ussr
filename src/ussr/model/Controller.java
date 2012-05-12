@@ -38,4 +38,5 @@ public interface Controller {
      * @return the representation of the module hardware
      */
 	public Module getModule();
+	
 }

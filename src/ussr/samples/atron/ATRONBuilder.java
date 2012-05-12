@@ -177,7 +177,7 @@ public class ATRONBuilder {
 	}
     
     
-    public ArrayList<ModulePosition> buildRectangle (int width, int height,VectorDescription pos) {
+    public ArrayList<ModulePosition> buildRectangle (int width, int height,VectorDescription pos, String prefix) {
     	ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
     	
     	// Build floor
@@ -185,10 +185,10 @@ public class ATRONBuilder {
     	for (int w = 0; w < width; w++) {
     		for (int h = 0; h < height; h++) {
 				if (w%2==0 && h%2==1) {
-					mPos.add(new ModulePosition("Floor_" + i++, aPos ((float)w,0,(float)h, pos ), ATRON.ROTATION_NS ));
+					mPos.add(new ModulePosition(prefix + i++, aPos ((float)w,0,(float)h, pos ), ATRON.ROTATION_NS ));
 				}
 				else if (w%2==1 && h%2==0) {
-					mPos.add(new ModulePosition("Floor_" + i++, aPos ((float)w,0,(float)h, pos), ATRON.ROTATION_EW ));
+					mPos.add(new ModulePosition(prefix + i++, aPos ((float)w,0,(float)h, pos), ATRON.ROTATION_EW ));
 				}
     		}
     	}

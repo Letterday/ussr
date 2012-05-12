@@ -39,7 +39,8 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	private int leds=0;
 	private boolean simulateCommFailure = false;
 	private float[] commFailureRisk = new float[8];
-	private Random commFailureRandomizer = new Random(); 
+	private Random commFailureRandomizer = new Random();
+	protected int angle = 0; 
 	
 	/**
 	 * Instantiate ATRON controller
@@ -288,6 +289,14 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	 */
     public int getAngularPositionDegrees() {
     	return (int)(readEncoderPosition()*360);
+    }
+    /**
+     * 
+     * @return Current angle of the two hemispheres
+     */
+    
+    public int getAngle() {
+    	return angle;
     }
     
     /**
