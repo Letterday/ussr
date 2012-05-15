@@ -58,6 +58,7 @@ public class PhysicsFactory {
 		private boolean saveWindowSettingOnExit = false;
 		private int xPosition=-1;//default value to indicate that simulation window position was not yet set.
 		private int yPosition=-1;//default value to indicate that simulation window position was not yet set.    
+        private boolean lowLevelCommunicationDebugOutput = false;
 
 		public void set(Options other) {
 			this.exitOnQuit = other.exitOnQuit;
@@ -197,6 +198,14 @@ public class PhysicsFactory {
 			}
 			return true;
 		}
+
+        public boolean getLowLevelCommunicationDebugOutput() {
+            return lowLevelCommunicationDebugOutput ;
+        }
+        
+        public void setLowLevelCommunicationDebugOutput(boolean enabled) {
+            lowLevelCommunicationDebugOutput = enabled;
+        }
 
 	}
 	
