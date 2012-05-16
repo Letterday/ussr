@@ -7,6 +7,7 @@ import ussr.physics.PhysicsFactory;
 import ussr.physics.PhysicsSimulation;
 import ussr.physics.jme.DebugInformationPicker;
 import ussr.samples.atron.ATRON;
+import ussr.samples.atron.network.ATRONReflectionEventController;
 import ussr.samples.atron.simulations.metaforma.lib.*;
 
 
@@ -32,6 +33,11 @@ class WalkerSimulator extends ATRONMetaformaSimulation {
         return a;
     }
 
+	
+}
+
+class ASEWalkerController extends ATRONReflectionEventController {
+	
 	
 }
 

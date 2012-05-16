@@ -27,7 +27,7 @@ public abstract class ATRONMetaformaSimulation extends GenericATRONSimulation {
 		ussr.physics.jme.robots.JMEATRONFactory.setConnectorMaxAlignmentDistance(0.002f);
 		ussr.physics.jme.robots.JMEATRONFactory.setConnectorEpsilonAlignmentDistance(0.01f);
 
-		
+		PhysicsFactory.getOptions().setLowLevelCommunicationDebugOutput(true);
 		PhysicsFactory.setDebugProviderFactory(SimpleWindowedInformationProvider.getFactory(true));
 	}
 
@@ -44,7 +44,7 @@ public abstract class ATRONMetaformaSimulation extends GenericATRONSimulation {
 
 	@Override
 	protected ArrayList<ModulePosition> buildRobot() {
-		return new ATRONBuilder().buildRectangle(7,3,new VectorDescription(0,-5*ATRON.UNIT,0),"Floor_");
+		return new ATRONBuilder().buildRectangle(7,3,new VectorDescription(0,-5*ATRON.UNIT,0),"Floor_",false);
 	}
 	
 	protected void changeWorldHook(WorldDescription world) {
