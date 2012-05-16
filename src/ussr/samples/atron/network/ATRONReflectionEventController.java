@@ -1,6 +1,5 @@
 package ussr.samples.atron.network;
 
-import java.awt.Color;
 
 import ussr.network.EventConnection;
 import ussr.network.ReflectionConnection;
@@ -10,7 +9,7 @@ import ussr.samples.atron.ATRONController;
 
 public class ATRONReflectionEventController extends ATRONController implements ReflectionEventController {
     private ReflectionConnection rcConnection;
-    private EventConnection eventConnection;
+    protected EventConnection eventConnection;
     private boolean isActive = false;
 
     private void printTopology(){
@@ -24,7 +23,10 @@ public class ATRONReflectionEventController extends ATRONController implements R
     public void activate() {
     	super.setup();
     	printTopology();
+//    	System.out.println("testevent NOT YET sent");
+     	
         ReflectionEventHelper.initializeAndActivate(this);
+//        System.out.println("testevent sent");
     }
     
     public void handleMessage(byte[] message, int messageSize, int channel) {
