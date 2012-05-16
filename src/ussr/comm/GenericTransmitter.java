@@ -262,25 +262,57 @@ public abstract class GenericTransmitter implements Transmitter {
 		}
 		//End Horn
 
-		private boolean send(Packet packet) {
-			boolean sendt = false;
-			for(Module m : module.getSimulation().getModules()) { //FIXME expensive implementation
-				if(!m.equals(module)) {
-					for(Receiver r : m.getReceivers()) {
-						if(transmitter.canSendTo(r)&&r.canReceiveFrom(transmitter)) {
-							r.receive(packet);
-							sendt = true;
-							//Begin Horn
-							//System.out.println(showPacketContent(packet));
-							//communicationContainer.addPacket(packet);
-							//communicationContainer.addPacketToQueue(packet);
-							//System.out.println("Size of packet queue for module " + m.getID() + ": " + communicationContainer.getPacketQueue().size());
-							//End Horn
-						}
-					}
-				}
-			}
-			return sendt;
-	    }
-	}
+        private boolean send(Packet packet) {
+            boolean sendt = false;
+            boolean debug = PhysicsFactory.getOptions().getLowLevelCommunicationDebugOutput();
+            for(Module m : module.getSimulation().getModules()) { //FIXME expensive implementation
+                if(!m.equals(module)) {
+                    for(Receiver r : m.getReceivers()) {
+                        boolean canSend = transmitter.canSendTo(r);
+                        boolean canReceive = r.canReceiveFrom(transmitter); 
+                        if(canSend&&canReceive) {
+                            if(debug) {
+                                StringBuffer message = new StringBuffer("###MATCH("+packet.hashCode()+"): ");
+                                String thisName = module.getProperty("name");
+                                if(thisName!=null) message.append("sender="+thisName);
+                                else message.append("sender=?");
+                                // Receiver
+                                String receiverName = m.getProperty("name");
+                                if(receiverName!=null) message.append(" receiver="+receiverName);
+                                else message.append(" receiver=?");
+                                System.out.println(message);
+                            }
+                            r.receive(packet);
+                            sendt = true;
+                        } else if(debug) {
+                            StringBuffer message = new StringBuffer("***MISMATCH("+packet.hashCode()+"): ");
+                            // Sender
+                            String thisName = module.getProperty("name");
+                            if(thisName!=null) message.append("sender="+thisName);
+                            else message.append("sender=?");
+                            message.append(",canSend="+canSend+" ");
+                            // Receiver
+                            String receiverName = m.getProperty("name");
+                            if(receiverName!=null) message.append("receiver="+receiverName);
+                            else message.append("receiver=?");
+                            message.append(",canReceive="+canReceive);
+                            // Diagnostics
+                            if(transmitter instanceof IRTransmitter) {
+                                IRTransmitter t = (IRTransmitter)transmitter;
+                                boolean ok_type = t.isCompatible(r.getType());
+                                boolean ok_inrange = t.withinRange(r);
+                                boolean ok_inangle = t.withinAngle(r);
+                                message.append(" IR(compatible?="+ok_type+",inrange="+ok_inrange+",inangle="+ok_inangle);
+                                message.append(" ;"+t.getDiagnostics(r)+")");
+                            } else {
+                                message.append(" <UNKNOWN TYPE>");
+                            }
+                            System.out.println(message);
+                        }
+                    }
+                }
+            }
+            return sendt;
+        }
+    }
 }
