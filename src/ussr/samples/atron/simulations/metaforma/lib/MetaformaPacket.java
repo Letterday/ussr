@@ -37,7 +37,7 @@ public class MetaformaPacket implements Serializable {
 	}
 
 	public String toString () {
-		return "(" + getDir().toString() + ") from: " + getSource().toString() + "(on: " + sourceConnector + ") to: " + getDest().toString() + " - " + getType().toString() + " (" + data + ")";
+		return hashCode() + "(" + getDir().toString() + ") from: " + getSource().toString() + "(over: " + sourceConnector + ") to: " + getDest().toString() + " - " + getType().toString() + " (" + data + ")";
 	}
 	
 	public MetaformaPacket setSourceConnector (byte c) {
