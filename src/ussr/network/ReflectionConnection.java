@@ -110,6 +110,8 @@ public class ReflectionConnection extends AbstractNetworkConnection {
                     else {
                     	throw new Error("Illegal arguments type @"+i+": "+parameters[i]);
                     }
+                }if (method.getName() != "yield") {
+                	System.out.println("." + method.getName() + "(" + arguments.toString() + ")");
                 }
                 Object result = method.invoke(target, arguments);
                 return result;

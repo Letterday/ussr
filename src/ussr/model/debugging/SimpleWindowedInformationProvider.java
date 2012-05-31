@@ -53,7 +53,7 @@ public class SimpleWindowedInformationProvider extends ConsoleInformationProvide
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         text = new JTextArea("(no information)");
         JScrollPane spane = new JScrollPane(text);
-        text.setColumns(40);
+        text.setColumns(45);
         text.setRows(40);
 
  

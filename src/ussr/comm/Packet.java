@@ -15,6 +15,8 @@ public class Packet {
     
     byte[] payload;
     private int connector;
+	private String source;
+	private String dest;
 
     public Packet(int data) {
         payload = new byte[] { (byte)data };
@@ -56,5 +58,23 @@ public class Packet {
 	}
 	public int getConnector() {
 		return connector;
+	}
+	
+	public Packet setSourceModule (String s) {
+		source = s;
+		return this;
+	}
+	
+	public Packet setDestModule (String d) {
+		dest = d;
+		return this;
+	}
+	
+	public String getSourceModule() {
+		return source;
+	}
+	
+	public String getDestModule() {
+		return dest;
 	}
 }

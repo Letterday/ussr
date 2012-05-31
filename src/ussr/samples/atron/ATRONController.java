@@ -23,6 +23,7 @@ import ussr.physics.PhysicsLogger;
 import ussr.physics.PhysicsObserver;
 import ussr.physics.PhysicsParameters;
 import ussr.physics.PhysicsSimulation;
+import ussr.samples.atron.simulations.metaforma.lib.MetaformaController;
 
 /**
  * Controller class that provides the ATRON API
@@ -437,10 +438,12 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
     /**
 	 * @see ussr.samples.atron.IATRONAPI#sendMessage(byte[], byte, byte)
 	 */
-    public byte sendMessage(byte[] message, byte messageSize, byte connector) 
+    public byte sendMessage(byte[] message, byte messageSize, byte connector, String sourceModule, String destModule) 
 	{
-    	if(connector<8 && isOtherConnectorNearby(connector)) {
-			module.getTransmitters().get(connector).send(new Packet(message));
+    	
+    	if(connector<8 && (isOtherConnectorNearby(connector) || ((MetaformaController)this).isOtherConnectorNearbyCallDisabled() )) {
+    		System.out.println("-- send from " + sourceModule + " to " + destModule + " over " + connector );
+			module.getTransmitters().get(connector).send(new Packet(message).setSourceModule(sourceModule).setDestModule(destModule));
 			if(packetCountingActive) incPacketsSentCount();
 			return 1;
 		}
@@ -457,6 +460,12 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 		return 0;
 	}
       
+    public byte sendMessage(byte[] message, byte messageSize, byte connector) {
+    	System.exit(0);
+    	return sendMessage(message,messageSize,connector,"???","???");
+    	
+    }
+    
     /**
      * Called when a packet is received by the module
      * @param device the device that received an incoming packet 

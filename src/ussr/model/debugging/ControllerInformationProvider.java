@@ -1,5 +1,7 @@
 package ussr.model.debugging;
 
+import ussr.samples.atron.simulations.metaforma.gen.Grouping;
+
 /**
  * Controllers that implement this interface can provide additional on-demand information to debug
  * information providers. 
@@ -12,6 +14,7 @@ public interface ControllerInformationProvider {
      * @return
      */
     public String getModuleInformation();
+
 
 
 }

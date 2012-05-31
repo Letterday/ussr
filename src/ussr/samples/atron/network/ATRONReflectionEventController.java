@@ -12,21 +12,10 @@ public class ATRONReflectionEventController extends ATRONController implements R
     protected EventConnection eventConnection;
     private boolean isActive = false;
 
-    private void printTopology(){
-    	for(int i=0;i<8;i++) {
-    		if(isConnected(i)) {
-    			System.out.println("Module "+getName()+" is connected on connector "+i);
-    		}
-    	}
-    }
-    
     public void activate() {
     	super.setup();
-    	printTopology();
-//    	System.out.println("testevent NOT YET sent");
-     	
+
         ReflectionEventHelper.initializeAndActivate(this);
-//        System.out.println("testevent sent");
     }
     
     public void handleMessage(byte[] message, int messageSize, int channel) {

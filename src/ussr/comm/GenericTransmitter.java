@@ -280,34 +280,50 @@ public abstract class GenericTransmitter implements Transmitter {
                                 String receiverName = m.getProperty("name");
                                 if(receiverName!=null) message.append(" receiver="+receiverName);
                                 else message.append(" receiver=?");
+                                
+                             // Diagnostics
+                                if(transmitter instanceof IRTransmitter) {
+                                    IRTransmitter t = (IRTransmitter)transmitter;
+                                    boolean ok_type = t.isCompatible(r.getType());
+                                    boolean ok_inrange = t.withinRange(r);
+                                    boolean ok_inangle = t.withinAngle(r);
+                                    message.append(" IR(compatible?="+ok_type+",inrange="+ok_inrange+",inangle="+ok_inangle);
+                                    message.append(" ;"+t.getDiagnostics(r)+")");
+                                } else {
+                                    message.append(" <UNKNOWN TYPE>");
+                                }
+                                
                                 System.out.println(message);
                             }
                             r.receive(packet);
                             sendt = true;
                         } else if(debug) {
-                            StringBuffer message = new StringBuffer("***MISMATCH("+packet.hashCode()+"): ");
+                            StringBuffer message = new StringBuffer("***MISM("+packet.hashCode()+"): ");
                             // Sender
                             String thisName = module.getProperty("name");
-                            if(thisName!=null) message.append("sender="+thisName);
-                            else message.append("sender=?");
-                            message.append(",canSend="+canSend+" ");
+                            if(thisName!=null) message.append("sndr="+thisName);
+                            else message.append("sndr=?");
+                            message.append(",canSnd="+canSend+" ");
                             // Receiver
                             String receiverName = m.getProperty("name");
-                            if(receiverName!=null) message.append("receiver="+receiverName);
-                            else message.append("receiver=?");
-                            message.append(",canReceive="+canReceive);
+                            if(receiverName!=null) message.append("rcvr="+receiverName);
+                            else message.append("rcvr=?");
+                            message.append(",canRcv="+canReceive);
                             // Diagnostics
                             if(transmitter instanceof IRTransmitter) {
                                 IRTransmitter t = (IRTransmitter)transmitter;
                                 boolean ok_type = t.isCompatible(r.getType());
                                 boolean ok_inrange = t.withinRange(r);
                                 boolean ok_inangle = t.withinAngle(r);
-                                message.append(" IR(compatible?="+ok_type+",inrange="+ok_inrange+",inangle="+ok_inangle);
+                                message.append(" IR(compt?="+ok_type+",inrng="+ok_inrange+",inangle="+ok_inangle);
                                 message.append(" ;"+t.getDiagnostics(r)+")");
                             } else {
                                 message.append(" <UNKNOWN TYPE>");
                             }
-                            System.out.println(message);
+                            if (thisName.equals(packet.getSourceModule()) && receiverName.equals(packet.getDestModule())) {
+                            	System.out.println(message);
+                            }
+                          
                         }
                     }
                 }

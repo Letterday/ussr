@@ -310,10 +310,10 @@ public class JMESimulation extends JMEBasicGraphicalSimulation implements Physic
             //a 
             if (!finished) {
                 if(!options.getHeadlessNoWindow()) {
-                    System.out.println("Available Display Modes: ");
+                   // System.out.println("Available Display Modes: ");
                     try {
                         org.lwjgl.opengl.DisplayMode[] modes = Display.getAvailableDisplayModes();
-                        for(int i=0;i<modes.length;i++) System.out.println(" Mode "+i+" = "+modes[i]);
+                       // for(int i=0;i<modes.length;i++) System.out.println(" Mode "+i+" = "+modes[i]);
                     } catch(UnsatisfiedLinkError err) {
                         throw new Error("Unable to initialize LWJGL, cannot load native library; path = "+System.getProperty("java.library.path"));
                     }

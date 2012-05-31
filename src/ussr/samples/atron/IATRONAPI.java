@@ -193,6 +193,7 @@ public interface IATRONAPI {
 	 * @return the value 1 if the message was transmitted to another module, 0 otherwise
 	 */
 	public byte sendMessage(byte[] message, byte messageSize, byte connector);
+	//public byte sendMessage(byte[] message, byte messageSize, byte connector,String s, String d);
 
 	/**
 	 * Controllers must overwrite this method to receive messages 

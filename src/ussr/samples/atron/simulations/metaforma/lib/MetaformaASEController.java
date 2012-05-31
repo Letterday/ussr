@@ -49,4 +49,11 @@ public class MetaformaASEController extends MetaformaReflectionEventController {
 	}
 
 
+	@Override
+	public String getOpStateName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
 }

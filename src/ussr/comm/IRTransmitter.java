@@ -67,6 +67,6 @@ public class IRTransmitter extends GenericTransmitter {
     public String getDiagnostics(Receiver receiver) {
         float angle = computeAngle(receiver);
         float distance = computeDistance(receiver); 
-        return "[angle="+angle+",distance="+distance+"]";
+        return "[angle="+angle+",dist="+distance+"]";
     }
 }

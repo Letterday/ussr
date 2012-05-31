@@ -141,8 +141,7 @@ public class JBulletPhysicsSpace extends PhysicsSpace {
         // log some stuff:
         Logger logger = Logger.getLogger( PhysicsSpace.LOGGER_NAME );
         if ( logger.isLoggable( Level.INFO ) ) {
-            logger.log( Level.INFO,
-                    "PhysicsNode (" + node.getName() + ") has been added" );
+//            logger.log( Level.INFO,  "PhysicsNode (" + node.getName() + ") has been added" );
         }
 
         // add it to the arraylist
@@ -159,10 +158,10 @@ public class JBulletPhysicsSpace extends PhysicsSpace {
         // print out a statement
         Logger logger = Logger.getLogger( PhysicsSpace.LOGGER_NAME );
         if ( logger.isLoggable( Level.INFO ) ) {
-            logger.log( Level.INFO,
-                    "PhysicsObject ("
-                            + obj.getName()
-                            + ") has been removed from PhysicsWorld and will no longer take place in the simulation" );
+//            logger.log( Level.INFO,
+//                    "PhysicsObject ("
+//                            + obj.getName()
+//                            + ") has been removed from PhysicsWorld and will no longer take place in the simulation" );
         }
     }
 
@@ -173,8 +172,8 @@ public class JBulletPhysicsSpace extends PhysicsSpace {
         // log some stuff:
         Logger logger = Logger.getLogger( PhysicsSpace.LOGGER_NAME );
         if ( logger.isLoggable( Level.INFO ) ) {
-            logger.log( Level.INFO,
-                    "Joint (" + joint.getName() + ") has been added" );
+//            logger.log( Level.INFO,
+//                    "Joint (" + joint.getName() + ") has been added" );
         }
 
         // add it to the arraylist
@@ -191,10 +190,10 @@ public class JBulletPhysicsSpace extends PhysicsSpace {
         // print out a statement
         Logger logger = Logger.getLogger( PhysicsSpace.LOGGER_NAME );
         if ( logger.isLoggable( Level.INFO ) ) {
-            logger.log( Level.INFO,
-                    "Joint ("
-                            + joint.getName()
-                            + ") has been removed from PhysicsWorld and will no longer take place in the simulation" );
+//            logger.log( Level.INFO,
+//                    "Joint ("
+//                            + joint.getName()
+//                            + ") has been removed from PhysicsWorld and will no longer take place in the simulation" );
         }
     }
 

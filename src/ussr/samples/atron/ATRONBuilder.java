@@ -102,6 +102,10 @@ public class ATRONBuilder {
         return Math.abs(dist-0.11313708f)<connection_acceptance_range;
     }
 
+    public ModulePosition add (int x, int y, int z, RotationDescription rot, String name) {
+    	return new ModulePosition(name,aPos((float)x,(float)y,(float)z,new VectorDescription()), rot);
+    }
+    
     public ArrayList<ModulePosition> buildCar(int numberOfWheels, VectorDescription position) {
         float Xoffset = position.getX();
         float Yoffset = position.getY();
@@ -160,7 +164,16 @@ public class ATRONBuilder {
         return mPos;
     }
     
-    
+    public ArrayList<ModulePosition> buildEight2(VectorDescription position) {
+        mPos.add(new ModulePosition("Floor_6", aPos(0,0,0,position), ATRON.ROTATION_EW));
+        mPos.add(new ModulePosition("Floor_5", aPos(1,0,-1,position), ATRON.ROTATION_NS));
+        mPos.add(new ModulePosition("Floor_4", aPos(-1,0,-1,position), ATRON.ROTATION_NS));
+        mPos.add(new ModulePosition("Floor_3", aPos(0,0,-2,position), ATRON.ROTATION_EW));
+        mPos.add(new ModulePosition("Floor_2", aPos(1,0,-3,position), ATRON.ROTATION_NS));
+        mPos.add(new ModulePosition("Floor_1", aPos(-1,0,-3,position), ATRON.ROTATION_NS));
+        mPos.add(new ModulePosition("Floor_0", aPos(0,0,-4,position), ATRON.ROTATION_EW));
+        return mPos;
+    }
     
     public ArrayList<ModulePosition> buildCrawler() {
     	float Yoffset = 0.25f;
@@ -204,6 +217,35 @@ public class ATRONBuilder {
 				}
     		}
     	}
+    	return mPos;
+    }
+    	
+    	public ArrayList<ModulePosition> buildGrid(int width, int height, String prefix, boolean useASE) {
+    		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
+    		VectorDescription pos = new VectorDescription(0,-5*ATRON.UNIT,0);
+    		
+    		for (int w = 0; w < width; w++) {
+        		for (int h = 0; h < height; h++) {
+        			
+        			
+        			RotationDescription rot = null; 
+    				if ((w+h)%2==0) {
+    					rot = ATRON.ROTATION_NS;
+    				}
+    				else  {
+    					rot = ATRON.ROTATION_EW;
+    				}
+    	
+    				if (useASE) {
+    					mPos.add(new ModulePosition(prefix + (w+w*h), ";portRC=" + (9900+(w+w*h)*2) + ";portEvent=" + (9901+(w+w*h)+1), aPos ((float)w,0,(float)h, pos), rot));
+    				}
+    				else {
+    					mPos.add(new ModulePosition(prefix + (w+w*h), aPos ((float)w,0,(float)h, pos), rot));
+    				}
+    				
+        		}
+    		}
+    	
     	
     	// Add module to it
 //    	mPos.add(new ModulePosition("m1", aPos (0,1,0, pos ), ATRON.ROTATION_UD ));
@@ -389,6 +431,7 @@ public class ATRONBuilder {
         return mPos;
     }
 
+	
     /*world.setModulePositions(new WorldDescription.ModulePosition[] {
     new WorldDescription.ModulePosition("leftleg",new VectorDescription(0,0,0), rotation_EW),
     new WorldDescription.ModulePosition("middle",new VectorDescription(unit,unit,0), rotation_UD),

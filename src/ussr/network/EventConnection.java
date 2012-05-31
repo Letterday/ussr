@@ -42,6 +42,8 @@ public class EventConnection extends AbstractNetworkConnection {
         reconnect = false;
         return true;
 	}
+	
+	
 	public String sendEvent(String eventType, Object[] eventParams) {
 		String packet = packEvent(eventType, eventParams);
 		if(debug) System.out.println("Packet: "+packet);
