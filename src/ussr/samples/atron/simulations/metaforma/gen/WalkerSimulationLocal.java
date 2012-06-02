@@ -49,6 +49,7 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 	private static final int GETUP = 2;
 	private static final int GETDOWN = 3;
 	private static final int GLOBAL_META_EXISTS = 25;
+	private static final int REPAIR = 6;
 	
 	
 	
@@ -69,6 +70,9 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 				
 			case WALK2:
 				return "WALK2";
+				
+			case REPAIR:
+				return "REPAIR";
 			
 		}
 		return null;
@@ -79,8 +83,6 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 	
 	public void handleStates () {
 		if (stateOperation == ELECT) {
-			
-			
 			
 			if (stateInstr == 0) {
 				if (isC(6,2,true)) {
@@ -118,7 +120,7 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 					stateCurrentFinished = true;
 					broadcastNewOperationState(GETUP);
 				}
-				
+				waitAndDiscover();
 			}
 			
 //			
@@ -177,67 +179,13 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
     				waitForPendingState(1);
     				nextInstrState();
     			}
-    			
-    			
-    			
 	    	}
 	        	
-	      
-//    		if (stateInstr == 1) {
-//    			if (getId() == Module.Walker_Left) {
-//	    			if (errInPreviousState == 1) {
-//	    				while (hasNeighbor(Grouping.Floor, true) && timeSpentInState() < 10) {
-//	        				for (Module m2 : getNeighbors(Grouping.Floor).keySet()) {
-//	            				connection(m2, false);
-//	            			}
-//	        				waitAndDiscover();
-//	    				}
-//	    			}
-//	    			nextInstrState();
-//	    		}
-//    			else if (getGrouping() == Grouping.Floor)  {
-//    				if (errInPreviousState == 1) {
-//	    				while (hasNeighbor(Module.Walker_Left,true)){// && timeSpentInState() < 10) {
-//	    					info.addNotification("time spent so  far: " + timeSpentInState());
-//		        			connection(Module.Walker_Left, false);
-//		    				waitAndDiscover();
-//		    			}
-//    				}
-//    			}
-//	    	}
-//        	
-//	    	if (stateInstr == 2) 
-//	    	{
-//        		if (getId() == Module.Floor_Uplifter) {
-//        			
-//        			while (!(hasNeighbor(Module.Walker_Left,false) && hasNeighbor(Module.Walker_Right,false))) {
-//	    				waitAndDiscover();
-//	    			}
-//        			
-//        			
-//        			if (hasNeighbor(Module.Walker_Left,true)) {
-//        				disconnect(Module.Floor_UplifterLeft);
-//        				while (hasNeighbor(Module.Floor_UplifterLeft, true)){
-//        					yield();
-//        				}
-//        				info.addNotification("##Left connected");
-//        			}
-//        			else if (hasNeighbor(Module.Walker_Right,true)) {
-//        				disconnect(Module.Floor_UplifterRight);
-//        				while (hasNeighbor(Module.Floor_UplifterRight, true)){
-//        					yield();
-//        				}
-//        				info.addNotification("##Right connected");
-//        			}
-//        			
-//        			nextInstrState();
-//        		}
-//	    	}
+	     
     		if (stateInstr == 1) 
 	    	{
     			if (!isPendingState(1) && getId() == Module.Floor_Uplifter) {
     				rotate(90);
-    				renameTo(Module.Floor_4);
     				nextPendingState(1);
     			}
     			if (!isPendingState(2) && getId() == Module.Walker_Left) {
@@ -250,6 +198,8 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
     				renameTo(Module.Floor_6);
     				nextPendingState(4);
     			}
+    			delay(1000);
+    			
 	    	}
 		}    		    
 		
@@ -258,13 +208,13 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 			    case 0:
 		    		if (getId() == Module.Walker_Right) {
 		    			waitAndDiscover();
-		    			if (exists(getNeighbors(Grouping.Floor))) { 
-		    				if (!exists(maleAligned(disconnected(getNeighbors(Grouping.Floor))))){
+		    			if (exists(onGroup(nbs(),Grouping.Floor))) { 
+		    				if (!exists(maleAligned(disconnected(onGroup(nbs(),Grouping.Floor))))){
 		    					rotate(90);
 		    					waitAndDiscover();
 		    				}
-			    			while (exists(maleAligned(disconnected(getNeighbors(Grouping.Floor))))) {
-			    				for (Module nb: maleAligned(disconnected(getNeighbors(Grouping.Floor))).keySet()) {
+			    			while (exists(maleAligned(disconnected(onGroup(nbs(),Grouping.Floor))))) {
+			    				for (Module nb: maleAligned(disconnected(onGroup(nbs(),Grouping.Floor))).keySet()) {
 			    					connect(nb);
 			    				}
 			    				waitAndDiscover();
@@ -281,8 +231,8 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 		    	case 1:
 		    		if (getId() == Module.Walker_Left) {
 		    			waitAndDiscover();
-		    			while (exists(connected(getNeighbors(Grouping.Floor)))) {
-		    				for (Module nb: maleAligned(connected(getNeighbors(Grouping.Floor))).keySet()) {
+		    			while (exists(connected(onGroup(nbs(),Grouping.Floor)))) {
+		    				for (Module nb: maleAligned(connected(onGroup(nbs(),Grouping.Floor))).keySet()) {
 		    					disconnect(nb);
 		    				}
 		    				waitAndDiscover();
@@ -328,12 +278,12 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 				waitAndDiscover();
 				
 				if (getGrouping() == Grouping.Floor && hasNeighbor(Module.Walker_Left, true)) {
-					renameTo(Module.Floor_Uplifter);
+					renameTo(Module.Floor_Downlifter);
 					stateCurrentFinished = true;
 				}
 				
-				if (getConnectorToNb(Module.Floor_Uplifter,false) == 7) {
-					renameTo(Module.Floor_UplifterLeft);
+				if (getConnectorToNb(Module.Floor_Downlifter,false) == 7) {
+					renameTo(Module.Floor_DownlifterLeft);
 					stateCurrentFinished = true;
 					nextInstrState();
 				}
@@ -342,10 +292,10 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 			
 			if (stateInstr == 1) {
 				waitAndDiscover();
-				if (getId() == Module.Floor_Uplifter) {
-					while (hasNeighbor(Module.Floor_UplifterLeft, true)) {
+				if (getId() == Module.Floor_Downlifter) {
+					while (hasNeighbor(Module.Floor_DownlifterLeft, true)) {
     					waitAndDiscover();
-    					disconnect(Module.Floor_UplifterLeft);
+    					disconnect(Module.Floor_DownlifterLeft);
     				}
 					nextInstrState();
 					
@@ -359,20 +309,26 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 				}
 			}
 			if (stateInstr == 3) {
-				if (getId() == Module.Floor_Uplifter) {
+				if (!isPendingState(1) && getId() == Module.Floor_Downlifter) {
 					rotate(90);
+					nextPendingState(1);
+				}
+				if (!isPendingState(2) && getId() == Module.Walker_Right) {
+					rotateTo(0);
+					nextPendingState(2);
+					waitForPendingState(3);
 					nextInstrState();
 				}
 			}
 			if (stateInstr == 4) {
 				if (!isPendingState(1)) {
+					waitAndDiscover();
 					if (getId() == Module.Walker_Right) {
-						while (exists(disconnected(getNeighbors(Grouping.Floor)))) {
-	    					waitAndDiscover();
-	    					for (Module nb: maleAligned(connected(getNeighbors(Grouping.Floor))).keySet()) {
+						while (exists(disconnected(onGroup(nbs(),Grouping.Floor)))) {
+	    					for (Module nb: maleAligned(disconnected(onGroup(nbs(),Grouping.Floor))).keySet()) {
 		    					connect(nb);
 		    				}
-	    					
+	    					waitAndDiscover();
 	    				}
 						nextInstrState();
 					}
@@ -385,27 +341,48 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 		    			}
 					}
 				}
-				if (!isPendingState(2)) {
-					if (getId() == Module.Floor_UplifterLeft) {
-						if (contains(nbs(),Module.Floor_Uplifter)) { 
-		    				if (!contains(maleAligned(nbs()),Module.Floor_Uplifter)){
-		    					rotate(90);
-		    					waitAndDiscover();
-		    				}
-						}
-						while (contains(disconnected(nbs()),Module.Floor_Uplifter)) {
-		    				connect(Module.Floor_Uplifter);
-		    				waitAndDiscover();
-		    			}
-						nextPendingState(2);
-						waitForPendingState(3);
-						nextInstrState();
-					}
+				
+				
+			}
+			if (stateInstr == 5) {
+				if (getId() == Module.Walker_Left) {
+					discoverNeighbors();
+					while (exists(connected(onGroup(nbs(),Grouping.Floor)))) {
+						for (Module nb: maleAligned(connected(onGroup(nbs(),Grouping.Floor))).keySet()) {
+	    					disconnect(nb);
+	    				}
+    					waitAndDiscover();
+	    			}
+					nextInstrState();
 				}
 			}
-			if (stateInstr == 5 && !stateCurrentFinished) {
-				gradients.put(HORIZONTAL, Byte.MAX_VALUE);
-				gradients.put(VERTICAL, Byte.MAX_VALUE);
+			if (stateInstr == 6) {
+				if (!isPendingState(1) && getId() == Module.Walker_Left) {
+					rotate(90);
+					nextPendingState(1);
+				}
+				if (!isPendingState(2) && getId() == Module.Floor_Downlifter) {
+					rotate(90);
+					nextPendingState(2);
+					waitForPendingState(3);
+					nextInstrState();
+				}
+			}
+			if (stateInstr == 7) {
+				if (getId() == Module.Floor_Downlifter) {
+					waitAndDiscover();
+	    			while (disconnected(nbs()).containsKey(Module.Walker_Left) || disconnected(nbs()).containsKey(Module.Floor_DownlifterLeft)) {
+	    				connect(Module.Walker_Left);
+	    				connect(Module.Floor_DownlifterLeft);
+	    				waitAndDiscover();
+	    			}
+	    			nextInstrState();
+					
+				}
+			}
+			
+			if (stateInstr == 8 && !stateCurrentFinished) {
+				
 				
 				if (getId() == Module.Walker_Left) {
 					renameTo(Module.Floor_0);
@@ -415,13 +392,49 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 				}
 				if (getId() == Module.Walker_Head) {
 					renameTo(Module.Floor_2);
-					//broadcastNewOperationState(ELECT);
+					broadcastNewOperationState(REPAIR);
 				}
 				stateCurrentFinished = true;
 			}
+		}
+		
+		if (stateOperation == REPAIR) {
+			if (stateInstr == 0) {
+				gradients.put(HORIZONTAL, Byte.MAX_VALUE);
+				gradients.put(VERTICAL, Byte.MAX_VALUE);
+				if (!isPendingState(1) && getId() == Module.Floor_Uplifter) {
+					discoverNeighbors();
+					rotateTo(0);
+					
+					nextPendingState(1);
+				}
+				
+				if (!isPendingState(2) && getId() == Module.Floor_Downlifter) {
+					nextPendingState(2);
+					renameTo(Module.Floor_22);
+				}
+				if (!isPendingState(4) && getId() == Module.Floor_DownlifterLeft) {
+					nextPendingState(4);
+					renameTo(Module.Floor_23);
+					waitForPendingState(7);
+					nextInstrState();
+				}
+			}
 			
-			
-			
+			if (stateInstr == 1) {
+				if (getId() == Module.Floor_Uplifter) {
+					discoverNeighbors();
+					while (exists(maleAligned(disconnected(onGroup(nbs(), Grouping.Floor))))) {
+						for (Module nb: maleAligned(disconnected(onGroup(nbs(), Grouping.Floor))).keySet()) {
+	    					connect(nb);
+	    				}
+	    				waitAndDiscover();
+	    			}
+					
+					renameTo(Module.Floor_4);
+					broadcastNewOperationState(ELECT);
+				}
+			}
 		}
 
 	    
@@ -509,8 +522,11 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 		setModuleColors (Module.Walker_Right,new Color[]{Color.decode("#003333"),Color.decode("#333300")}); 
 		
 		setModuleColors (Module.Floor_Uplifter,new Color[]{Color.decode("#FF9900"),Color.decode("#9900FF")});
-		setModuleColors (Module.Floor_UplifterLeft,new Color[]{Color.decode("#FF0099"),Color.decode("#9900FF")});
-		setModuleColors (Module.Floor_UplifterRight,new Color[]{Color.decode("#AA0033"),Color.decode("#3300AA")});
+		setModuleColors (Module.Floor_UplifterLeft,new Color[]{Color.decode("#FF0099"),Color.decode("#0099FF")});
+		
+		setModuleColors (Module.Floor_Downlifter,new Color[]{Color.decode("#FF33CC"),Color.decode("#33CCFF")});
+		setModuleColors (Module.Floor_DownlifterLeft,new Color[]{Color.decode("#FF0099"),Color.decode("#9900FF")});
+		
 		
 		addStructureColors (new Color[]{Color.decode("#0000FF"),Color.decode("#FF0000")});
 		
