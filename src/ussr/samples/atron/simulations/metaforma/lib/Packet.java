@@ -14,11 +14,16 @@ public class Packet implements Serializable {
 	private byte sourceConnector = -1;
 	private Module dest;
 	Dir dir = Dir.REQ;
-	public byte[] data = new byte[2];
+	public byte[] data = new byte[3];
 
 	public Packet (Module s, Module d) {
 		source = s;
 		dest = d;
+	}
+	
+	public Packet (Module s) {
+		source = s;
+		dest = Module.ALL;
 	}
 	
 	public Packet (Packet p) {
@@ -72,7 +77,7 @@ public class Packet implements Serializable {
 	}
 	
 	public byte[] getBytes () {
-		return new byte[]{type.ord(),source.ord(),sourceConnector,dest.ord(),dir.ord(),data[0],data[1]};
+		return new byte[]{type.ord(),source.ord(),sourceConnector,dest.ord(),dir.ord(),data[0],data[1],data[2]};
 	}
 	
 	public Packet (byte[] msg) {
@@ -81,7 +86,7 @@ public class Packet implements Serializable {
 		sourceConnector = msg[2];
 		dest = Module.values()[msg[3]];
 		dir = Dir.values()[msg[4]];
-		data = new byte[] {msg[5],msg[6]};
+		data = new byte[] {msg[5],msg[6],msg[7]};
 	}
 
 	public Packet getAck() {
@@ -109,6 +114,13 @@ public class Packet implements Serializable {
 	public Packet setData(int d1, int d2) {
 		data[0] = (byte)d1;
 		data[1] = (byte)d2;
+		return this;
+	}
+	
+	public Packet setData(int d1, int d2, int d3) {
+		data[0] = (byte)d1;
+		data[1] = (byte)d2;
+		data[2] = (byte)d3;
 		return this;
 	}
 

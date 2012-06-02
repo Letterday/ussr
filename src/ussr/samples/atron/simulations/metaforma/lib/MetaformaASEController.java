@@ -15,14 +15,14 @@ public class MetaformaASEController extends MetaformaReflectionEventController {
 	
 	public void disconnect (int g1, int m1, int g2, int m2) {
 		//System.out.println(".disconnect()");
-		disconnect(Module.getOnNumber(g1, m1), Module.getOnNumber(g2, m2));
+//		disconnect(Module.getOnNumber(g1, m1), Module.getOnNumber(g2, m2));
 	}
 	
-	public void rotate (int g, int m, int degrees) {
-		rotate(Module.getOnNumber(g, m), degrees);
-		
-	}
-	
+//	public void rotate (int g, int m, int degrees) {
+//		rotate(Module.getOnNumber(g, m), degrees);
+//		
+//	}
+//	
 	public int getModuleId () {
 		return getId().getNumber();
 	}
