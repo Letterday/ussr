@@ -442,7 +442,7 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	{
     	
     	if(connector<8 && (isOtherConnectorNearby(connector) || ((MetaformaController)this).isOtherConnectorNearbyCallDisabled() )) {
-    		System.out.println("-- send from " + sourceModule + " to " + destModule + " over " + connector );
+    		//System.out.println("-- send from " + sourceModule + " to " + destModule + " over " + connector );
 			module.getTransmitters().get(connector).send(new Packet(message).setSourceModule(sourceModule).setDestModule(destModule));
 			if(packetCountingActive) incPacketsSentCount();
 			return 1;
