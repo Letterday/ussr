@@ -21,9 +21,9 @@ public abstract class MetaformaController extends ATRONController implements Con
 	private HashMap<Module, Color[]> moduleColors = new HashMap<Module, Color[]>();
 	private Color[] structureColors;
 	
-	protected int stateOperation = 0;
-	protected int stateInstr = 0;
-	protected int statePending = 0;
+	private int stateOperation = 0;
+	private int stateInstruction = 0;
+	private int statePending = 0;
 	private float stateStartTime;
 	
 	protected int errInPreviousState;
@@ -47,6 +47,16 @@ public abstract class MetaformaController extends ATRONController implements Con
 	protected byte SOUTH_MALE_R = 6;
 	protected byte SOUTH_FEMALE_R = 7;
 	private Module previousName;
+	
+	
+	
+	public boolean stateOperation(int state) {
+		return stateOperation == state;
+	}
+	
+	public boolean stateInstruction(int state) {
+		return stateInstruction == state;
+	}
 	
 	public void switchNorthSouth () {
 		 NORTH_MALE_L = 6;
@@ -353,7 +363,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 			info.addNotification("## Pending state to " + newState);
 		
 			//delay(1000);
-			broadcast(new Packet(getId()).setType(Type.STATE_PENDING_INCR).setData(statePending,stateInstr));
+			broadcast(new Packet(getId()).setType(Type.STATE_PENDING_INCR).setData(statePending,stateInstruction));
 		}
 	}
 	
@@ -380,11 +390,11 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 	
 	protected void increaseInstrState(int newState) {
-		if (newState > stateInstr + 1) {
-			info.addNotification("!!! I might have missed a state, from " + stateInstr + " to " + newState);
+		if (newState > stateInstruction + 1) {
+			info.addNotification("!!! I might have missed a state, from " + stateInstruction + " to " + newState);
 		}
-		stateInstr = newState;
-		info.addNotification("\nLeave instruction state " + (stateInstr-1) + ", time spent: " + timeSpentInState() + "\n----------------------------\nNew instruction state: " + stateInstr);
+		stateInstruction = newState;
+		info.addNotification("\nLeave instruction state " + (stateInstruction-1) + ", time spent: " + timeSpentInState() + "\n----------------------------\nNew instruction state: " + stateInstruction);
 		initInstrState();
 	}
 	
@@ -392,8 +402,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	protected void increaseInstrState() {
 		initInstrState();
-		stateInstr++;
-		info.addNotification("\n\ntime spent: " + timeSpentInState() + "\n=====================================\nnew instruction state: " + stateInstr);
+		stateInstruction++;
+		info.addNotification("\n\ntime spent: " + timeSpentInState() + "\n=====================================\nnew instruction state: " + stateInstruction);
 	}
 	
 	protected void stateOperationBroadcast (int newState) {
@@ -404,7 +414,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	private void setNewOperationState (int newState) {
 		stateOperation = newState;
 		initInstrState();
-		stateInstr = 0;
+		stateInstruction = 0;
 		info.addNotification("\n#############################\nnew operation state: " + getOpStateName() + "\n#############################\n");
 	}
 	
@@ -413,25 +423,25 @@ public abstract class MetaformaController extends ATRONController implements Con
 		stateConnectorNearbyCallDisabled = true;
 	}
 	
-	protected void stateInstrBroadcastNext(int newState) {
-		stateInstr = newState;
+	protected void stateInstructionBroadcastNext(int newState) {
+		stateInstruction = newState;
 		nextInstrState();
 	}
 	
 	protected void stateInstrBroadcastNext() {
-		stateInstr++;
+		stateInstruction++;
 		nextInstrState();
 		
 	}
 	
 	private void nextInstrState() {
-		info.addNotification("\ntime spent: " + timeSpentInState() + "\n----------------------------\nNEW INSTRUCTION STATE: " + stateInstr);
+		info.addNotification("\ntime spent: " + timeSpentInState() + "\n----------------------------\nNEW INSTRUCTION STATE: " + stateInstruction);
 		if (errInCurrentState == 1) {
 			info.addNotification("\n(the following error occured in this state: " + errInCurrentState + ") ");
 		}
 		initInstrState();	
 		//delay(1000);
-		broadcast(new Packet(getId(), Module.ALL).setType(Type.STATE_INSTR_INCR).setData(stateInstr,stateOperation,errInCurrentState));
+		broadcast(new Packet(getId(), Module.ALL).setType(Type.STATE_INSTR_INCR).setData(stateInstruction,stateOperation,errInCurrentState));
 	}
 
 	public float time() {
@@ -689,7 +699,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 					gradients.put(p.getData()[0], Byte.MAX_VALUE);
 				}
 				
-				if (p.getType() == Type.STATE_INSTR_INCR && stateInstr < p.getData()[0] && stateOperation == p.getData()[1]) {
+				if (p.getType() == Type.STATE_INSTR_INCR && stateInstruction < p.getData()[0] && stateOperation == p.getData()[1]) {
 					increaseInstrState(p.getData()[0]);
 					broadcast(new Packet(p),connector);
 				}
@@ -704,7 +714,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 					broadcast(new Packet(p),connector);
 				}
 
-				if (p.getType() == Type.STATE_PENDING_INCR && (p.getData()[0]|statePending)!= statePending  && stateInstr == p.getData()[1]) {
+				if (p.getType() == Type.STATE_PENDING_INCR && (p.getData()[0]|statePending)!= statePending  && stateInstruction == p.getData()[1]) {
 					statePending = statePending|p.getData()[0];
 					broadcast(new Packet(p).setData(statePending),connector);
 				}
@@ -769,7 +779,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 
 	public int getStateInstruction() {
-		return stateInstr;
+		return stateInstruction;
 	}
 	
 	public int getStateOperation() {
@@ -899,7 +909,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		out.append("\n");
 		
 		out.append("current state: ");
-		out.append("[" + getOpStateName() + " # " + stateInstr + " @ " + statePending + "]");
+		out.append("[" + getOpStateName() + " # " + stateInstruction + " @ " + statePending + "]");
 
 		
 		out.append("\n");

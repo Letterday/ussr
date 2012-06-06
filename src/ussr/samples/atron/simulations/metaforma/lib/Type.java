@@ -3,7 +3,6 @@ package ussr.samples.atron.simulations.metaforma.lib;
 
 public enum Type {
 		STATE_INSTR_INCR,
-		STATE_INSTR_RESET,
 		STATE_OPERATION_NEW, 
 		STATE_PENDING_INCR,
 		DISCOVER,
