@@ -14,7 +14,7 @@ import ussr.samples.atron.simulations.metaforma.lib.Packet;
 
 public abstract class MetaformaController extends ATRONController implements ControllerInformationProvider{
 
-	private static final boolean SHOWTRAFFIC = false;
+	
 	protected DebugInformationProvider info;
 	public HashMap<Grouping, HashMap<Module, Byte[]>> neighbors = new HashMap<Grouping, HashMap<Module, Byte[]>>();
 	
@@ -33,22 +33,50 @@ public abstract class MetaformaController extends ATRONController implements Con
 	private boolean stateConnectorNearbyCallDisabled = false; // For connecting to neighbors
 	
 	private float timeLastBc = 0;
-	protected boolean stateCurrentFinished = false;
+	private boolean stateCurrentFinished = false;
 	
 	protected HashMap<Byte,Byte> globals = new HashMap<Byte,Byte>();
 	protected HashMap<Byte,Byte> gradients = new HashMap<Byte,Byte>(); 
 	
-	protected byte NORTH_MALE_L = 0;
-	protected byte NORTH_FEMALE_L = 1;
-	protected byte NORTH_MALE_R = 2;
-	protected byte NORTH_FEMALE_R = 3;
-	protected byte SOUTH_MALE_L = 4;
-	protected byte SOUTH_FEMALE_L = 5;
-	protected byte SOUTH_MALE_R = 6;
-	protected byte SOUTH_FEMALE_R = 7;
+	protected final int NORTH_MALE_WEST = 0;
+	protected final int NORTH_MALE_EAST = 2;
+	protected final int SOUTH_MALE_WEST = 4;
+	protected final int SOUTH_MALE_EAST = 6;
+	protected final int NORTH_FEMALE_WEST = 1;
+	protected final int NORTH_FEMALE_EAST = 3;
+	protected final int SOUTH_FEMALE_WEST = 5;
+	protected final int SOUTH_FEMALE_EAST = 7;
+	
+	protected byte C (int nr) {
+		byte ret = (byte) nr;
+		if (switchNorthSouth) {
+			ret = (byte) ((ret + 4)%8);
+		}
+		if (switchEastWest) {
+			if (ret >= 4) {
+				ret = (byte) (((ret + 2)%4 )+ 4);
+			}
+			else {
+				ret = (byte) ((ret + 2)%4);
+			}
+		}
+		return ret;
+	}
+	
 	private Module previousName;
+	private float stateLastBroadcast;
+	private boolean switchEastWest;
+	private boolean switchNorthSouth;
+	private byte SHOWTRAFFIC = (byte) (Type.FIX_DIRECTION.bit() | Type.GRADIENT.bit());
 	
-	
+	public static final int PENDING1 = 1;
+	public static final int PENDING2 = 2;
+	public static final int PENDING3 = 4;
+	public static final int PENDING4 = 8;
+	public static final int PENDING5 = 16;
+	public static final int PENDING6 = 32;
+	public static final int PENDING7 = 64;
+	public static final int PENDING8 = 128;
 	
 	public boolean stateOperation(int state) {
 		return stateOperation == state;
@@ -58,16 +86,42 @@ public abstract class MetaformaController extends ATRONController implements Con
 		return stateInstruction == state;
 	}
 	
+	public void switchEastWest () {
+		switchEastWest =! switchEastWest;
+		notification("$$$ Switch East West");
+		
+		updateNeighborsSymmetryEW();
+		
+		colorize();
+
+	}
+	
+	
+	
 	public void switchNorthSouth () {
-		 NORTH_MALE_L = 6;
-		 NORTH_FEMALE_L = 7;
-		 NORTH_MALE_R = 4;
-		 NORTH_FEMALE_R = 5;
-		 SOUTH_MALE_L = 2;
-		 SOUTH_FEMALE_L = 3;
-		 SOUTH_MALE_R = 0;
-		 SOUTH_FEMALE_R = 1;
-		 info.addNotification("$$$ Switch North South");
+		 switchNorthSouth =! switchNorthSouth;
+		 notification("$$$ Switch North South");
+		 
+		 updateNeighborsSymmetryNS();
+		 
+		 colorize();
+	}
+	
+	private void updateNeighborsSymmetryNS () {
+		for (Map.Entry<Module, Byte[]> entry : nbs().entrySet()) {
+			addNeighbor(entry.getKey(), (entry.getValue()[0] + 4) % 8, entry.getValue()[1]);
+		}
+	}
+	
+	private void updateNeighborsSymmetryEW () {
+		for (Map.Entry<Module, Byte[]> entry : nbs().entrySet()) {
+			if (entry.getValue()[0] < 4) {
+				addNeighbor(entry.getKey(), (entry.getValue()[0] + 2) % 4, entry.getValue()[1]);
+			}
+			else {
+				addNeighbor(entry.getKey(), ((entry.getValue()[0] + 2) % 4) + 4, entry.getValue()[1]);
+			}
+		}
 	}
 	
 	public void gradientCreate(int id, int value) {
@@ -83,7 +137,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	public int getGradient(int id) {
 		if (!gradients.containsKey((byte)id)) {
-			gradients.put((byte)id, (byte)100);
+			gradients.put((byte)id, Byte.MAX_VALUE);
 		}
 		return gradients.get((byte)id);
 	}
@@ -105,13 +159,13 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	
 	public void rotate(int degrees) {
-		info.addNotification("## rotate " + degrees + ", current = " + angle + "; new = " + (degrees + angle) + "");
+		notification("## rotate " + degrees + ", current = " + angle + "; new = " + (degrees + angle) + "");
 		angle = degrees + angle;
 		doRotate(angle);
 	}
 	
 	public void rotateTo(int degrees) {
-		info.addNotification("## rotateTo " + degrees + ", current = " + angle);
+		notification("## rotateTo " + degrees + ", current = " + angle);
 		angle = degrees;
 		doRotate(angle);
 	}
@@ -125,8 +179,16 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	public boolean isConnected (int c) {
 		if (c == -1) return false;
-		return super.isConnected(c);
+		return super.isConnected(C(c));
 	}
+	
+	 public void disconnect(int c) {
+		super.disconnect(C(c));
+	 }
+	 
+	 public void connect(int c) {
+			super.connect(C(c));
+		 }
 
 
 	public byte getConnectorToNb(Module nb, boolean otherModule) {
@@ -134,13 +196,17 @@ public abstract class MetaformaController extends ATRONController implements Con
 			return getNeighbors(nb.getGrouping()).get(nb)[otherModule? 1 : 0];
 		}
 		else {
-			//info.addNotification("Neighbor " + nb + " does not exist in table so can't find its connector number");
+			//notification("Neighbor " + nb + " does not exist in table so can't find its connector number");
 			return -1;
 		}
 	}
 
+	private float round (float f, int decimals) {
+		return (float) (Math.round(f * Math.pow(10,decimals)) / Math.pow(10,decimals));
+	}
+	
 	protected float timeSpentInState() {
-		return Math.round((time() - stateStartTime) * 100000) / 100000;
+		return round((time() - stateStartTime),3);
 	}
 
 	protected byte oppositeConnector (int c) {
@@ -149,14 +215,6 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 	
 	public void connection(Module dest, boolean makeConnection) {
-//		if (makeConnection) {
-//			info.addNotification("#connection to " + dest);
-//		}
-//		else {
-//			info.addNotification("#disconnection to " + dest);
-//		}
-		//keepSending(dest);
-		//info.addNotification("done keepsending");
 		byte conToNb = getConnectorToNb(dest,false);
 		byte conFromNb = getConnectorToNb(dest,true);
 		if (conToNb % 2 == 0 && conFromNb % 2 == 1) {
@@ -165,59 +223,11 @@ public abstract class MetaformaController extends ATRONController implements Con
 				connect(conToNb);
 			else
 				disconnect(conToNb);
-//			info.addNotification("make (dis)connection to " + conToNb);
-//			while (makeConnection && !isConnected(conToNb)
-//					|| !makeConnection && isConnected(conToNb)) {
-//				waiting();
-//			}
-//			info.addNotification("done (dis)connection to " + conToNb);
-//			if (autoNextState) {
-//				nextInstrState();
-//			}
 		}
-//		if (conToNb % 2 == 1 && conFromNb % 2 == 0) {
-//			// Female can not connect to male, so lets wait for other module
-//			while (makeConnection && !isConnected(conToNb)
-//					|| !makeConnection && isConnected(conToNb)) {
-//				yield();
-//			}
-//		}
-//		if (conToNb % 2 == conFromNb % 2) {
-//			// Same gender for both connectors. Outch, one of the hemispheres needs to
-//			// rotate!
-//			info.addNotification("###I cant connect, connector numbers are: " + conToNb + "," + conFromNb);
-//			if (getId().ord() < dest.ord()) {
-//				angle = 90 + angle;
-//				rotateToDegreeInDegrees(angle);
-//				while (isRotating()) {
-//					yield();
-//				}
-//				
-//				neighbors.clear();
-//				keepSending(dest);
-//			}
-//			else {
-//				neighbors.clear();
-//				delay(1000);
-//				keepSending(dest);
-//				
-//			}
-//			if (makeConnection)
-//				connect(conToNb);
-//			else
-//				disconnect(conToNb);
-//			while (makeConnection && !isConnected(conToNb)
-//					|| !makeConnection && isConnected(conToNb)) {
-//				waiting();
-//			}
-//			if (autoNextState) {
-//				nextInstrState();
-//			}
-//		}
 	}
 	
 	public void connect (Module m) {
-		info.addNotification("## connect to " + m);
+		notification("## connect to " + m);
 		connection(m, true);
 	}
 	
@@ -235,105 +245,23 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 	
 	
-	protected boolean isC (int c, boolean only) {
-		HashSet<Integer> s = new HashSet<Integer>();
-		s.add(c);
-		return isC(s, only);
-	}
-	
-	protected boolean isC (int c1, int c2, boolean only) {
-		HashSet<Integer> s = new HashSet<Integer>();
-		s.add(c1);
-		s.add(c2);
-		return isC(s, only);
-	}
-	
-	protected boolean isC (HashSet<Integer> conns, boolean only) {
-		for (int i=0; i<8; i++) {
-			if (isConnected(i) && only && !conns.contains(i)) {
-				return false;
-			}
-			if (!isConnected(i) && conns.contains(i)) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
 	public void waitAndDiscover () {
 		if (time() - timeLastBc  > 0.5) {
 			discoverNeighbors();
 		}
 		delay(500);
-		//info.addNotification(timeLastBc + " - " + time());
+		//notification(timeLastBc + " - " + time());
 		yield();
 	}
 	
 	
 	
 	public void disconnect(Module m) {
-		info.addNotification("## disconnect to " + m);
+		notification("## disconnect to " + m);
 		connection(m, false);
 	}
 	
 	
-	
-//	public void connection (Module m1, Grouping g, boolean connection) {
-//		if (connection) {
-//			info.addNotification(".connect(" + m1 + "," + g + ")");
-//			disableConnectorNearby();
-//		}
-//		else {
-//			info.addNotification(".disconnect(" + m1 + "," + g + ")");
-//		}
-//
-//		int initialstate = stateInstr;
-//		if (m1 == getId()) {
-//				broadcast(new Packet(getId(), Module.ALL)
-//						.setType(Type.DISCOVER));
-//				
-//			delay(2000);
-//			info.addNotification(getNeighbors(g).toString());
-//			for (Module m2 : getNeighbors(g).keySet()) {
-//				connection(getId(), m2, connection);
-//			}
-//			nextInstrState();
-//		} else {
-//			broadcast(new Packet(getId(), Module.ALL)
-//					.setType(Type.DISCOVER));
-//			delay(1000);
-//			// Note: We have to wait here for some time, since we do not know
-//			// how much modules in the structure are connected. 
-//
-//			if (getId().getGrouping() == g) {
-//				if (hasNeighbor(m1,false)) {
-//					connection(getId(), m1, connection);
-//					connection(m1, getId(), connection);
-//					//TODO: A module in a grouping does not know if the other modules are still connected, so we wait 1 second here.
-//					// Ideally, m1 should do the nextState() call when all neighbors are (dis)connected.
-//					// EDIT: this should be done by nextState(); in the above section
-//				}
-//			} else {
-//				info.addNotification(getId().getGrouping() + " != " + g);
-//			}
-//		}
-//
-//		while (stateInstr == initialstate) {
-//			yield();
-//		}
-//	}
-
-//	public void connect(Module m, Grouping s) {
-//		connection(m,s,true);
-//	}
-//	
-//	public void disconnect(Module m, Grouping s) {
-//		connection(m,s,false);
-//	}
-	
-//	public void disconnect(Grouping dest) {
-//		disconnect(getId(),dest);
-//	}
 
 	private void refresh() {
 		rotateToDegreeInDegrees(angle);
@@ -354,28 +282,32 @@ public abstract class MetaformaController extends ATRONController implements Con
 
 			handleStates();
 			yield();
+			if (time() - 10 > stateLastBroadcast) {
+				broadcast(new Packet(getId()).setType(Type.STATE_INSTR_UPDATE));
+				stateLastBroadcast = time();
+			}
 		}
 	}
 	
 	protected void statePendingBroadcast(int newState) {
 		if (statePending != (statePending|newState)) {
 			statePending = statePending|newState;
-			info.addNotification("## Pending state to " + newState);
-		
+			notification("## Pending state to " + newState);
+			stateLastBroadcast = time();
+			stateFinish();
 			//delay(1000);
-			broadcast(new Packet(getId()).setType(Type.STATE_PENDING_INCR).setData(statePending,stateInstruction));
 		}
+		broadcast(new Packet(getId()).setType(Type.STATE_INSTR_UPDATE));
+		stateLastBroadcast = time();
 	}
 	
 	protected boolean statePending (int state) {
-		return (state&statePending) != 0;
+		return (state&statePending) == state;
 	}
 	
-	protected void waitForPendingState (int state) {
-		info.addNotification("# wait for pending state " + state);
-		while (!statePending(state)) {yield();}
-		//TODO: Since we are waiting for a next pending state update, it might have happened that it was not received, so send out a request for a new pending state update here
-		info.addNotification("# wait for pending state done.");
+	
+	protected void notification (String msg) {
+		info.addNotification("[" + round(time(),1) + "] - " + msg);
 	}
 
 	protected void initInstrState() {
@@ -389,12 +321,14 @@ public abstract class MetaformaController extends ATRONController implements Con
 		colorize();
 	}
 	
-	protected void increaseInstrState(int newState) {
-		if (newState > stateInstruction + 1) {
-			info.addNotification("!!! I might have missed a state, from " + stateInstruction + " to " + newState);
+	private void increaseInstrState(int newStateInstruction, int newStatePending) {
+		if (newStateInstruction > stateInstruction + 1) {
+			notification("!!! I might have missed a state, from " + stateInstruction + " to " + newStateInstruction);
 		}
-		stateInstruction = newState;
-		info.addNotification("\nLeave instruction state " + (stateInstruction-1) + ", time spent: " + timeSpentInState() + "\n----------------------------\nNew instruction state: " + stateInstruction);
+		stateInstruction = newStateInstruction;
+		statePending = newStatePending;
+		
+		printInstrState();
 		initInstrState();
 	}
 	
@@ -403,11 +337,16 @@ public abstract class MetaformaController extends ATRONController implements Con
 	protected void increaseInstrState() {
 		initInstrState();
 		stateInstruction++;
-		info.addNotification("\n\ntime spent: " + timeSpentInState() + "\n=====================================\nnew instruction state: " + stateInstruction);
+		printInstrState();
+	}
+	
+	private void printInstrState() {
+		notification("\n\n=================================\nLeft instruction state " + (stateInstruction-1) + ", time spent: " + timeSpentInState() + "\nNew instruction state: " + stateInstruction + "\n=================================");
 	}
 	
 	protected void stateOperationBroadcast (int newState) {
 		setNewOperationState(newState);
+		stateLastBroadcast = time();
 		broadcast(new Packet(getId(), Module.ALL).setType(Type.STATE_OPERATION_NEW).setData(stateOperation));
 	}
 	
@@ -415,7 +354,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		stateOperation = newState;
 		initInstrState();
 		stateInstruction = 0;
-		info.addNotification("\n#############################\nnew operation state: " + getOpStateName() + "\n#############################\n");
+		notification("\n\n#############################\nnew operation state: " + getOpStateName() + "\n#############################\n");
 	}
 	
 	
@@ -429,57 +368,34 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 	
 	protected void stateInstrBroadcastNext() {
+		statePending = 0;
 		stateInstruction++;
 		nextInstrState();
 		
 	}
 	
 	private void nextInstrState() {
-		info.addNotification("\ntime spent: " + timeSpentInState() + "\n----------------------------\nNEW INSTRUCTION STATE: " + stateInstruction);
+		printInstrState();
 		if (errInCurrentState == 1) {
-			info.addNotification("\n(the following error occured in this state: " + errInCurrentState + ") ");
+			notification("\n(the following error occured in this state: " + errInCurrentState + ") ");
 		}
 		initInstrState();	
 		//delay(1000);
-		broadcast(new Packet(getId(), Module.ALL).setType(Type.STATE_INSTR_INCR).setData(stateInstruction,stateOperation,errInCurrentState));
+		stateLastBroadcast = time();
+		broadcast(new Packet(getId(), Module.ALL).setType(Type.STATE_INSTR_UPDATE));
 	}
 
 	public float time() {
 		return getModule().getSimulation().getTime();
 	}
 
-//	private void keepSending(Module dest) {
-//		info.addNotification(".keepsending to " + dest);
-//		if (dest == Module.ALL) {
-//			System.err.println("keepsending all not allowed");
-//			System.exit(0);
-//		}
-//
-//		float t = time();
-//		if (!hasNeighbor(dest)) {
-//			System.err.println("***BROADCAST");
-//			//this.getModule().getSimulation().setPause(true);
-//
-//			
-//			while (!hasNeighbor(dest)) {
-//				waiting();
-//				delay(1000);
-//				broadcast(new Packet(getId(), dest));
-////				if (time() - 4 > t) {
-////					broadcast(new Packet(getId(), dest).setData(99)); // 99 Discover packet
-////				}
-//			}
-//		}
-//		// info.addNotification("GOT nr " + dest + ": " + neighbors.get(dest)[0]
-//		// + "," + neighbors.get(dest)[1]);
-//	}
 
 	public boolean hasNeighbor(Module m, boolean mustBeConnected) {
 		if (getNeighbors(m.getGrouping()).containsKey(m)) {
-			//info.addNotification(".hasNeighbor " + m);
+			//notification(".hasNeighbor " + m);
 			return (!mustBeConnected || isConnected(getConnectorToNb(m, false)));
 		} else {
-			//info.addNotification(".hasNeighbor " + m + " NOT");
+			//notification(".hasNeighbor " + m + " NOT");
 			return false;
 		}
 	}
@@ -497,7 +413,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 			}
 			return false;
 		}
-	}
+	} 
 	
 	
 	public void discoverNeighbors () {
@@ -567,6 +483,55 @@ public abstract class MetaformaController extends ATRONController implements Con
 		return ret;
 	}
 	
+	public HashMap<Module, Byte[]> male (HashMap<Module, Byte[]> neighbors) {
+		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
+		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
+			if (MALE(entry.getValue()[0])) {
+				ret.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return ret;
+	}
+	
+	public HashMap<Module, Byte[]> female (HashMap<Module, Byte[]> neighbors) {
+		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
+		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
+			if (FEMALE(entry.getValue()[0])) {
+				ret.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return ret;
+	}
+	
+	public HashMap<Module, Byte[]> west (HashMap<Module, Byte[]> neighbors) {
+		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
+		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
+			if (WEST(entry.getValue()[0])) {
+				ret.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return ret;
+	}
+	
+	public HashMap<Module, Byte[]> north (HashMap<Module, Byte[]> neighbors) {
+		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
+		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
+			if (NORTH(entry.getValue()[0])) {
+				ret.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return ret;
+	}
+	
+	public HashMap<Module, Byte[]> east (HashMap<Module, Byte[]> neighbors) {
+		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
+		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
+			if (EAST(entry.getValue()[0])) {
+				ret.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return ret;
+	}
 
 	public Module onConnector (HashMap<Module, Byte[]> neighbors,int c) {
 		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
@@ -591,12 +556,11 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 
 	public void addNeighbor(Module nb, int conToNb, int conFromNb) {
-		
 		if (getConnectorToNb(nb, false) != conToNb || getConnectorToNb(nb, true) != conFromNb) {
 			if (exists(onConnector(nbs(),conToNb))) {
 				neighborRemove(onConnector(nbs(),conToNb));
 			}
-			info.addNotification(".addNeighbor " + nb + " [" + conToNb + "," + conFromNb + "]");
+			notification(".addNeighbor " + nb + " [" + conToNb + "," + conFromNb + "]");
 			getNeighbors(nb.getGrouping()).put(nb,
 					new Byte[] { (byte) conToNb, (byte) conFromNb });
 		}
@@ -647,21 +611,73 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 
 	public void colorize() {
-		getModule().getComponent(0).setModuleComponentColor(getColors()[0]);
-		getModule().getComponent(1).setModuleComponentColor(getColors()[1]);
+		notification(".colorize();");
+		
+		getModule().getComponent(0).setModuleComponentColor(getColors()[switchNorthSouth ? 1 : 0]);
+		getModule().getComponent(1).setModuleComponentColor(getColors()[switchNorthSouth ? 0 : 1]);
 
-		colorizeConnectors();
+		notification("NORTH_MALE_WEST " + NORTH_MALE_WEST + " - " + C(NORTH_MALE_WEST) + " - " + module.getConnectors().get(C(NORTH_MALE_WEST)).hashCode());
+		notification("NORTH_MALE_EAST " + NORTH_MALE_EAST + " - " + C(NORTH_MALE_EAST) + " - " + module.getConnectors().get(C(NORTH_MALE_EAST)).hashCode());
+		module.getConnectors().get(C(NORTH_MALE_WEST)).setColor(Color.BLUE);
+		module.getConnectors().get(C(NORTH_FEMALE_WEST)).setColor(Color.BLACK);
+		module.getConnectors().get(C(NORTH_MALE_EAST)).setColor(Color.RED);
+		module.getConnectors().get(C(NORTH_FEMALE_EAST)).setColor(Color.WHITE);
+		
+		module.getConnectors().get(C(SOUTH_MALE_WEST)).setColor(Color.GREEN);
+		module.getConnectors().get(C(SOUTH_FEMALE_WEST)).setColor(Color.BLACK);
+		module.getConnectors().get(C(SOUTH_MALE_EAST)).setColor(Color.RED);
+		module.getConnectors().get(C(SOUTH_FEMALE_EAST)).setColor(Color.WHITE);
+		if (switchEastWest) {
+			notification("switchEastWest");
+			module.getConnectors().get(0).setColor(Color.RED);
+			module.getConnectors().get(4).setColor(Color.RED);
+		}
+		notification("NORTH_MALE_WEST " + NORTH_MALE_WEST + " - " + C(NORTH_MALE_WEST) + " - " + module.getConnectors().get(C(NORTH_MALE_WEST)).hashCode());
+		notification("NORTH_MALE_EAST " + NORTH_MALE_EAST + " - " + C(NORTH_MALE_EAST) + " - " + module.getConnectors().get(C(NORTH_MALE_EAST)).hashCode());
+	}
+	
+	public boolean NORTH(int c) {
+		return c >= 0 && c <= 3;
+	}
+	
+	public boolean SOUTH(int c) {
+		return c >= 4 && c <= 7;
+	}
+	
+	public boolean WEST(int c) {
+		return c == 0 || c == 1 || c == 4 || c == 5;
+	}
+	
+	public boolean EAST(int c) {
+		return c == 2 || c == 3 || c == 6 || c == 7;
+	}
+	
+	public boolean MALE(int c) {
+		return c%2 == 0;
+	}
+	
+	public boolean FEMALE(int c) {
+		return c%2 == 1;
 	}
 
-	public void handleMessage(byte[] message, int messageLength, int connector) {
+
+	public void handleMessage(byte[] message, int messageLength, int connectorNr) {
+		byte connector = C(connectorNr);
 		Packet p = new Packet(message);
 		
-				
+//		if (p.getType() != Type.p.getStateInstruction() < stateInstruction) {
+//			notification("");
+//		}
+		
 		if (p.getType() == Type.CONNECTOR_NR && p.getDir() == Dir.REQ && p.getDest() == getId()) {
+			if (p.getDest() == getId() || p.getDest() == Module.ALL) {
+				if ((SHOWTRAFFIC & p.getType().bit()) != 0) notification(".handleMessage = " + p.toString()	+ " over " + connector);
+			}
+			
 			// Indicates that sender is waiting for an answer, but it does not
 			// come. So try a broadcast.
 			broadcast(new Packet(getId(), p.getSource()).setType(Type.CONNECTOR_NR).setData(p.getSourceConnector()).setDir(Dir.ACK));
-			info.addNotification("Answer to " + p.getSource()
+			notification("Answer to " + p.getSource()
 					+ " does not arrive, so try broadcast.");
 		}
 		
@@ -669,7 +685,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		if (p.getType() == Type.CONNECTOR_NR && p.getDir() == Dir.ACK && stateHasReceivedBroadcast == false) {
 			stateHasReceivedBroadcast = true;
 			if (p.getDest() != getId()) {
-				info.addNotification("spread broadcast!");
+				notification("spread broadcast!");
 				broadcast(p,connector);
 			}
 			else {
@@ -691,6 +707,38 @@ public abstract class MetaformaController extends ATRONController implements Con
 			}
 			
 			if (p.getDest() == getId() || p.getDest() == Module.ALL) {
+			
+				// TODO
+				if (!stateIsFinished()) {
+					if (p.getType() == Type.FIX_DIRECTION) {
+						
+						if (FEMALE(connector)) {
+							if (!SOUTH(connector)) {
+								switchNorthSouth();
+							}
+							if (NORTH(p.getSourceConnector()) && !WEST(connector) || SOUTH(p.getSourceConnector()) && !EAST(connector)) {
+								switchEastWest();
+							}
+							
+							send(p.getBytes(),(NORTH_FEMALE_WEST));
+							send(p.getBytes(),(NORTH_FEMALE_EAST));
+						}
+						else if (MALE(connector)) {
+							if (!EAST(connector)) {
+								switchEastWest();
+							}
+							if (EAST(p.getSourceConnector()) && !SOUTH(connector) || WEST(p.getSourceConnector()) && !NORTH(connector)) {
+								switchNorthSouth();
+							}
+							
+							send(p.getBytes(),(NORTH_MALE_WEST));
+							send(p.getBytes(),(SOUTH_MALE_WEST));
+						}
+						
+						stateFinish();
+					}
+				}
+					
 				if (p.getType() == Type.GRADIENT && getGradient(p.getData()[0]) > p.getData()[1]) {
 					gradientCreate(p.getData()[0],p.getData()[1]);
 				}
@@ -699,9 +747,21 @@ public abstract class MetaformaController extends ATRONController implements Con
 					gradients.put(p.getData()[0], Byte.MAX_VALUE);
 				}
 				
-				if (p.getType() == Type.STATE_INSTR_INCR && stateInstruction < p.getData()[0] && stateOperation == p.getData()[1]) {
-					increaseInstrState(p.getData()[0]);
-					broadcast(new Packet(p),connector);
+				if (p.getType() == Type.STATE_INSTR_UPDATE && p.getStateOperation() == stateOperation) {
+					if (stateInstruction < p.getStateInstruction()) {
+						increaseInstrState(p.getStateInstruction(),p.getStatePending());
+						broadcast(new Packet(p),connector);
+					}
+					else if (stateInstruction == p.getStateInstruction()) {
+						if ((statePending | p.getStatePending()) != statePending) {
+							statePending |=  p.getStatePending();
+							notification("## @ " + stateInstruction +" new pending state received: " + statePending);
+							broadcast(new Packet(p),connector);
+						}
+						
+					}
+					
+					
 				}
 				
 				if (p.getType() == Type.STATE_OPERATION_NEW && stateOperation != p.getData()[0]) {
@@ -714,12 +774,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 					broadcast(new Packet(p),connector);
 				}
 
-				if (p.getType() == Type.STATE_PENDING_INCR && (p.getData()[0]|statePending)!= statePending  && stateInstruction == p.getData()[1]) {
-					statePending = statePending|p.getData()[0];
-					broadcast(new Packet(p).setData(statePending),connector);
-				}
+				
 
-				if (SHOWTRAFFIC)info.addNotification(".handleMessage = " + p.toString()	+ " over " + connector);
 
 				if (p.getType() == Type.DISCOVER && p.getDir() == Dir.REQ) {
 					send(p.getAck().getBytes(), connector);
@@ -728,21 +784,13 @@ public abstract class MetaformaController extends ATRONController implements Con
 		}
 	}
 
-//	private byte getC(int connector) {
-//		if (northSouthSwitched) {
-//			return (byte) ((connector + 4) % 8);
-//		}
-//		else {
-//			return (byte)connector;
-//		}
-//	}
 
 	public void broadcast (Packet p) {	
 		broadcast (p,-1);
 	}
 		
 	public void broadcast(Packet p,int exceptConnector) {
-		if (SHOWTRAFFIC)info.addNotification(".broadcast packet (" + p.toString() + ") ");
+		if ((SHOWTRAFFIC & p.getType().bit()) != 0)  notification(".broadcast packet (" + p.toString() + ") ");
 		for (byte c = 0; c < 8; c++) {
 			if (c != exceptConnector) {
 				send(p.getBytes(), c);
@@ -751,7 +799,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 
 	public void send(Packet p) {
-		if (SHOWTRAFFIC)info.addNotification(".send packet (" + p.toString() + ") ");
+		if ((SHOWTRAFFIC & p.getType().bit()) != 0) notification(".send packet (" + p.toString() + ") ");
 		byte c = getConnectorToNb(p.getDest(),false);
 		send(p.setSourceConnector(c).getBytes(), c);
 	}
@@ -761,14 +809,15 @@ public abstract class MetaformaController extends ATRONController implements Con
 		if (p.getType() != Type.CONNECTOR_NR) {
 			p.setSourceConnector((byte) connector);
 			p.setSource(getId());
+			p.addState(this);
 		}
 
-		if (SHOWTRAFFIC)info.addNotification(".send = " + p.toString() + " over " + connector);
+		if ((SHOWTRAFFIC & p.getType().bit()) != 0) notification(".send = " + p.toString() + " over " + connector);
 		if (connector < 0 || connector > 7) {
 			System.err.println("Connector has invalid nr " + connector);
 		}
 		
-		sendMessage(p.getBytes(), (byte) p.getBytes().length, (byte) connector,p.getSource().toString(),p.getDest().toString());
+		sendMessage(p.getBytes(), (byte) p.getBytes().length, C(connector),p.getSource().toString(),p.getDest().toString());
 	}
 
 	public DebugInformationProvider info() {
@@ -790,30 +839,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 		return statePending;
 	}
 	
-	public void nextStatePending (int i) {
-		statePending|=i;
-		broadcast(new Packet(getId(), Module.ALL).setData(statePending).setType(Type.STATE_PENDING_INCR));
-	}
+
 	
-	
-
-	private void colorizeConnectors() {
-		module.getConnectors().get(0).setColor(Color.BLUE);
-		module.getConnectors().get(1).setColor(Color.BLACK);
-		module.getConnectors().get(2).setColor(Color.RED);
-		module.getConnectors().get(3).setColor(Color.WHITE);
-		module.getConnectors().get(4).setColor(Color.BLUE);
-		module.getConnectors().get(5).setColor(Color.BLACK);
-		module.getConnectors().get(6).setColor(Color.RED);
-		module.getConnectors().get(7).setColor(Color.WHITE);
-	}
-
-	// for (int i=3; i<=9; i++) {
-	// renameFromTo
-	// (Module.getOnNumber(Structure.Structure,i),Module.getOnNumber(Structure.Structure,i-3));
-	// }
-	// colorize();
-
 	public void addStructureColors(Color[] colors) {
 		structureColors = colors;
 	}
@@ -831,15 +858,33 @@ public abstract class MetaformaController extends ATRONController implements Con
 
 	}
 	
-	public void renameSwitch (Module m1, Module m2) {
-		if (getId() == m1 && !stateCurrentFinished) {
-			setId(m2);
+	public boolean stateIsFinished () {
+		return stateCurrentFinished;
+	}
+	
+	public void stateFinish () {
+		if (!stateCurrentFinished) {
 			stateCurrentFinished = true;
+			notification("%% State finished!");
 		}
-		if (getId() == m2 && !stateCurrentFinished) {
+	}
+	
+	public void renameSwitch (Module m1, Module m2) {
+		if (getId() == m1 && !statePending(PENDING1) && !stateIsFinished()) {
+			setId(m2);
+			statePendingBroadcast(PENDING1);
+		}
+		if (getId() == m2 && !statePending(PENDING2) && !stateIsFinished()) {
 			setId(m1);
-			stateCurrentFinished = true;
-			stateInstrBroadcastNext();
+			statePendingBroadcast(PENDING2);
+		}
+		
+		
+		
+		if (getId() == m2) {
+			if (statePending(PENDING1 + PENDING2)) {
+				stateInstrBroadcastNext();
+			}
 		}
 	}
 	
@@ -848,28 +893,21 @@ public abstract class MetaformaController extends ATRONController implements Con
 		previousName = getId();
 		setId(to);
 		discoverNeighbors();
-		
-		//System.out.println("###DOOO rename from " + getId() + " to " + to);
 	}
 	
-	public void setId(Module id) {
-		info.addNotification("$$$ rename " + getId() + " to " + id);
+	private void setId(Module id) {
+		notification("$$$ rename " + getId() + " to " + id);
 		getModule().setProperty("name", id.name());
 		colorize();
 	}
 	
 	
 	public void renameRestore () {
-		info.addNotification("$$$ restore name " + getId() + " to " + previousName);
+		notification("$$$ restore name " + getId() + " to " + previousName);
 		getModule().setProperty("name", previousName.name());
 		discoverNeighbors();
 	}
 
-	public void renameFromTo(Module from, Module to) {
-		if (getId() == from) {
-			renameTo(to);
-		}
-	}
 
 	public String getModuleInformation() {
 		StringBuffer out = new StringBuffer();
@@ -881,7 +919,9 @@ public abstract class MetaformaController extends ATRONController implements Con
 
 		out.append("\n");
 		
-		out.append("orientationSwitched: " + (NORTH_MALE_L != 0));
+		out.append("orientationSwitched NS: " + switchNorthSouth);
+		out.append("\n");
+		out.append("orientationSwitched EW: " + switchEastWest);
 		
 		out.append("\n");
 		

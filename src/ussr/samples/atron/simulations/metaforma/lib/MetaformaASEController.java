@@ -9,7 +9,7 @@ public class MetaformaASEController extends MetaformaReflectionEventController {
 	
 	public void renameFromTo (int g1, int m1, int g2, int m2) {
 		System.out.println(".renameFromTo " + g1 + "," + m1 + "," + g2 + "," + m2);
-		renameFromTo(Module.getOnNumber(g1, m1),Module.getOnNumber(g2, m2));
+		//renameFromTo(Module.getOnNumber(g1, m1),Module.getOnNumber(g2, m2));
 	}
 	
 	

@@ -2,15 +2,19 @@ package ussr.samples.atron.simulations.metaforma.lib;
 
 
 public enum Type {
-		STATE_INSTR_INCR,
+		STATE_INSTR_UPDATE,
 		STATE_OPERATION_NEW, 
-		STATE_PENDING_INCR,
 		DISCOVER,
 		CONNECTOR_NR,
 		GRADIENT,
 		GLOBAL_VAR, 
-		GRADIENT_RESET;
+		GRADIENT_RESET,
+		FIX_DIRECTION;
 		
+	public byte bit() {
+		return (byte)Math.pow(2,(byte)ordinal());
+	}
+	
 	public byte ord() {
 		return (byte)ordinal();
 	}

@@ -8,12 +8,14 @@ import java.io.Serializable;
 public class Packet implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
-	
 	Type type = Type.DISCOVER;
 	private Module source;
-	private byte sourceConnector = -1;
 	private Module dest;
+	private byte sourceConnector = -1;
 	Dir dir = Dir.REQ;
+	private byte stateOperation = -1;
+	private byte stateInstruction = -1;
+	private byte statePending = -1;
 	public byte[] data = new byte[3];
 
 	public Packet (Module s, Module d) {
@@ -33,7 +35,38 @@ public class Packet implements Serializable {
 		dest = p.getDest();
 		data = p.getData();
 		dir = p.getDir();
+		stateOperation = p.getStateOperation();
+		stateInstruction = p.getStateInstruction();
+		statePending = p.getStatePending();
 	}
+	
+	public byte getStateOperation() {
+		return stateOperation;
+	}
+	
+	public byte getStateInstruction() {
+		return stateInstruction;
+	}
+	
+	public byte getStatePending() {
+		return statePending;
+	}
+	
+	public Packet addState(MetaformaController c) {
+		if (stateOperation == -1) {
+			stateOperation = (byte)c.getStateOperation();
+		}
+		if (stateInstruction == -1) {
+			stateInstruction = (byte)c.getStateInstruction();
+		}
+		if (statePending == -1) {
+			statePending = (byte)c.getStatePending();
+		}
+
+		return this;
+	}
+	
+	
 	
 	
 	public byte[] getData() {
@@ -41,7 +74,7 @@ public class Packet implements Serializable {
 	}
 
 	public String toString () {
-		return hashCode() + "(" + getDir().toString() + ") from: " + getSource().toString() + "(over: " + sourceConnector + ") to: " + getDest().toString() + " - " + getType().toString() + " (" + data[0] + "," + data[1] + ")";
+		return "(" + getDir().toString() + ") from: " + getSource().toString() + "(over: " + sourceConnector + ") to: " + getDest().toString() + " - " + getType().toString() + " [" + getStateOperation() + "," + getStateInstruction() + "," + getStatePending() + "]" + (data[0] != 0 ? "(" + data[0] + "," + data[1] + "," + data[2] + ")" : "");
 	}
 	
 	public Packet setSourceConnector (byte c) {
@@ -51,6 +84,13 @@ public class Packet implements Serializable {
 		else {
 			System.err.println("sourceConnector " + c);
 		}
+		return this;
+	}
+	
+	public Packet setState (byte operation, byte instruction, byte pending) {
+		stateOperation = operation;
+		stateInstruction = instruction;
+		statePending = pending;
 		return this;
 	}
 	
@@ -77,7 +117,7 @@ public class Packet implements Serializable {
 	}
 	
 	public byte[] getBytes () {
-		return new byte[]{type.ord(),source.ord(),sourceConnector,dest.ord(),dir.ord(),data[0],data[1],data[2]};
+		return new byte[]{type.ord(),source.ord(),sourceConnector,dest.ord(),dir.ord(),stateOperation,stateInstruction,statePending,data[0],data[1],data[2]};
 	}
 	
 	public Packet (byte[] msg) {
@@ -86,7 +126,10 @@ public class Packet implements Serializable {
 		sourceConnector = msg[2];
 		dest = Module.values()[msg[3]];
 		dir = Dir.values()[msg[4]];
-		data = new byte[] {msg[5],msg[6],msg[7]};
+		stateOperation = msg[5];
+		stateInstruction = msg[6];
+		statePending = msg[7];
+		data = new byte[] {msg[8],msg[9],msg[10]};
 	}
 
 	public Packet getAck() {

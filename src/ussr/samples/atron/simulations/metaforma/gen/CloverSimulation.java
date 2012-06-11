@@ -37,7 +37,7 @@ class CloverSimulation extends MetaformaSimulation {
     }
 	
 	protected ArrayList<ModulePosition> buildRobot() {
-		return new ATRONBuilder().buildGrid(4, 4, "Floor", false);
+		return new ATRONBuilder().buildGrid(4, 4, "Floor",false);
 	}
 	
 }
@@ -79,6 +79,7 @@ class CloverController extends MetaformaController implements ControllerInformat
 	
 	public void handleStates () {
    
+		
    }
   
   public void setColors () {
