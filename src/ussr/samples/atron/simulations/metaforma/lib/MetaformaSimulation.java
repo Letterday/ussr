@@ -43,7 +43,7 @@ public abstract class MetaformaSimulation extends GenericATRONSimulation {
 
 	@Override
 	protected ArrayList<ModulePosition> buildRobot() {
-		return new ATRONBuilder().buildRectangle(7,5,new VectorDescription(0,-5*ATRON.UNIT,0),"Floor_",false);
+		return new ATRONBuilder().buildRectangle(5,5,new VectorDescription(0,-5*ATRON.UNIT,0),"Floor_",false);
 	}
 	
 	protected void changeWorldHook(WorldDescription world) {

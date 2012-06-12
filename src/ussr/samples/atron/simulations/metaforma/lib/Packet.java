@@ -55,13 +55,14 @@ public class Packet implements Serializable {
 	public Packet addState(MetaformaController c) {
 		if (stateOperation == -1) {
 			stateOperation = (byte)c.getStateOperation();
+			if (stateInstruction == -1) {
+				stateInstruction = (byte)c.getStateInstruction();
+			}
+			if (statePending == -1) {
+				statePending = (byte)c.getStatePending();
+			}
 		}
-		if (stateInstruction == -1) {
-			stateInstruction = (byte)c.getStateInstruction();
-		}
-		if (statePending == -1) {
-			statePending = (byte)c.getStatePending();
-		}
+		
 
 		return this;
 	}

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import ussr.builder.genericTools.RemoveModule;
 import ussr.model.debugging.ControllerInformationProvider;
 import ussr.model.debugging.DebugInformationProvider;
 import ussr.samples.atron.ATRONController;
@@ -126,6 +127,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	public void gradientCreate(int id, int value) {
 		gradients.put((byte)id, (byte)value);
+		notification("@gradient start.");
 		broadcast(new Packet(getId()).setType(Type.GRADIENT).setData(id,value + 1));
 	}
 	
@@ -160,7 +162,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	public void rotate(int degrees) {
 		notification("## rotate " + degrees + ", current = " + angle + "; new = " + (degrees + angle) + "");
-		angle = degrees + angle;
+		angle = degrees + angle % 360;
 		doRotate(angle);
 	}
 	
@@ -311,7 +313,15 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 
 	protected void initInstrState() {
-		neighbors.clear();
+		//neighbors.clear();
+		// Instead of throwing all NB's away, only remove the unconnected ones
+		for (Map.Entry<Module, Byte[]> f : nbs().entrySet()) {
+			if (!isConnected(f.getValue()[0])) {				
+				neighborRemove(f.getKey());
+				notification("remove NB " + f.getKey());
+			}
+		}
+		
 		stateHasReceivedBroadcast = false;
 		stateConnectorNearbyCallDisabled = true;
 		stateCurrentFinished = false;
@@ -532,6 +542,16 @@ public abstract class MetaformaController extends ATRONController implements Con
 		}
 		return ret;
 	}
+	
+	public HashMap<Module, Byte[]> south (HashMap<Module, Byte[]> neighbors) {
+		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
+		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
+			if (SOUTH(entry.getValue()[0])) {
+				ret.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return ret;
+	}
 
 	public Module onConnector (HashMap<Module, Byte[]> neighbors,int c) {
 		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
@@ -616,24 +636,24 @@ public abstract class MetaformaController extends ATRONController implements Con
 		getModule().getComponent(0).setModuleComponentColor(getColors()[switchNorthSouth ? 1 : 0]);
 		getModule().getComponent(1).setModuleComponentColor(getColors()[switchNorthSouth ? 0 : 1]);
 
-		notification("NORTH_MALE_WEST " + NORTH_MALE_WEST + " - " + C(NORTH_MALE_WEST) + " - " + module.getConnectors().get(C(NORTH_MALE_WEST)).hashCode());
-		notification("NORTH_MALE_EAST " + NORTH_MALE_EAST + " - " + C(NORTH_MALE_EAST) + " - " + module.getConnectors().get(C(NORTH_MALE_EAST)).hashCode());
+//		notification("NORTH_MALE_WEST " + NORTH_MALE_WEST + " - " + C(NORTH_MALE_WEST) + " - " + module.getConnectors().get(C(NORTH_MALE_WEST)).hashCode());
+//		notification("NORTH_MALE_EAST " + NORTH_MALE_EAST + " - " + C(NORTH_MALE_EAST) + " - " + module.getConnectors().get(C(NORTH_MALE_EAST)).hashCode());
 		module.getConnectors().get(C(NORTH_MALE_WEST)).setColor(Color.BLUE);
 		module.getConnectors().get(C(NORTH_FEMALE_WEST)).setColor(Color.BLACK);
 		module.getConnectors().get(C(NORTH_MALE_EAST)).setColor(Color.RED);
 		module.getConnectors().get(C(NORTH_FEMALE_EAST)).setColor(Color.WHITE);
 		
-		module.getConnectors().get(C(SOUTH_MALE_WEST)).setColor(Color.GREEN);
+		module.getConnectors().get(C(SOUTH_MALE_WEST)).setColor(Color.BLUE);
 		module.getConnectors().get(C(SOUTH_FEMALE_WEST)).setColor(Color.BLACK);
 		module.getConnectors().get(C(SOUTH_MALE_EAST)).setColor(Color.RED);
 		module.getConnectors().get(C(SOUTH_FEMALE_EAST)).setColor(Color.WHITE);
-		if (switchEastWest) {
-			notification("switchEastWest");
-			module.getConnectors().get(0).setColor(Color.RED);
-			module.getConnectors().get(4).setColor(Color.RED);
-		}
-		notification("NORTH_MALE_WEST " + NORTH_MALE_WEST + " - " + C(NORTH_MALE_WEST) + " - " + module.getConnectors().get(C(NORTH_MALE_WEST)).hashCode());
-		notification("NORTH_MALE_EAST " + NORTH_MALE_EAST + " - " + C(NORTH_MALE_EAST) + " - " + module.getConnectors().get(C(NORTH_MALE_EAST)).hashCode());
+//		if (switchEastWest) {
+//			notification("switchEastWest");
+//			module.getConnectors().get(0).setColor(Color.RED);
+//			module.getConnectors().get(4).setColor(Color.RED);
+//		}
+//		notification("NORTH_MALE_WEST " + NORTH_MALE_WEST + " - " + C(NORTH_MALE_WEST) + " - " + module.getConnectors().get(C(NORTH_MALE_WEST)).hashCode());
+//		notification("NORTH_MALE_EAST " + NORTH_MALE_EAST + " - " + C(NORTH_MALE_EAST) + " - " + module.getConnectors().get(C(NORTH_MALE_EAST)).hashCode());
 	}
 	
 	public boolean NORTH(int c) {
@@ -665,14 +685,17 @@ public abstract class MetaformaController extends ATRONController implements Con
 		byte connector = C(connectorNr);
 		Packet p = new Packet(message);
 		
-//		if (p.getType() != Type.p.getStateInstruction() < stateInstruction) {
-//			notification("");
-//		}
+		if (p.getType() != Type.STATE_INSTR_UPDATE && p.getType() != Type.DISCOVER && p.getType() != Type.STATE_OPERATION_NEW && (p.getStateInstruction() < stateInstruction || p.getStateOperation() != stateOperation)) {
+			notification("!!! Packet dropped due to state mismatch:");
+			notification(p.toString());
+			return;
+		}
+		
+		if (p.getDest() == getId() || p.getDest() == Module.ALL) {
+			if ((SHOWTRAFFIC & p.getType().bit()) != 0) notification(".handleMessage = " + p.toString()	+ " over " + connector);
+		}
 		
 		if (p.getType() == Type.CONNECTOR_NR && p.getDir() == Dir.REQ && p.getDest() == getId()) {
-			if (p.getDest() == getId() || p.getDest() == Module.ALL) {
-				if ((SHOWTRAFFIC & p.getType().bit()) != 0) notification(".handleMessage = " + p.toString()	+ " over " + connector);
-			}
 			
 			// Indicates that sender is waiting for an answer, but it does not
 			// come. So try a broadcast.
@@ -813,6 +836,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		}
 
 		if ((SHOWTRAFFIC & p.getType().bit()) != 0) notification(".send = " + p.toString() + " over " + connector);
+		
 		if (connector < 0 || connector > 7) {
 			System.err.println("Connector has invalid nr " + connector);
 		}
@@ -905,6 +929,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	public void renameRestore () {
 		notification("$$$ restore name " + getId() + " to " + previousName);
 		getModule().setProperty("name", previousName.name());
+		colorize();
 		discoverNeighbors();
 	}
 
@@ -923,9 +948,6 @@ public abstract class MetaformaController extends ATRONController implements Con
 		out.append("\n");
 		out.append("orientationSwitched EW: " + switchEastWest);
 		
-		out.append("\n");
-		
-		out.append("currentFinished: " + stateCurrentFinished);
 		
 		out.append("\n");
 		
@@ -949,7 +971,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		out.append("\n");
 		
 		out.append("current state: ");
-		out.append("[" + getOpStateName() + " # " + stateInstruction + " @ " + statePending + "]");
+		out.append("[" + getOpStateName() + " # " + stateInstruction + " @ " + statePending + "]" + (stateIsFinished()? " // finished" : ""));
 
 		
 		out.append("\n");

@@ -50,7 +50,9 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 	private static final int GETDOWN = 4;
 	private static final int REPAIR = 5;
 
-	 
+	
+	
+	
 	public String getOpStateName () {
 		switch (getStateOperation()) {
 			case ELECT:
@@ -108,7 +110,7 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 					stateFinish();
 				}
 				
-				delay(1000);
+				delay(2000);
 			
 				stateInstructionBroadcastNext(1);
 			}
@@ -206,6 +208,29 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 		
 		if (stateOperation(WALK) || stateOperation(WALK2)) {
 			
+			// Event handlers
+			// REPAIR is allowed in any instruction state
+			if (getId() == Module.Floor_Uplifter) {
+				if (!exists(connected(onGroup(nbs(),Grouping.Walker)))) {
+					notification("Event handler fires!");
+					rotateTo(0);
+					discoverNeighbors();
+					for (Module m2 : disconnected(maleAligned(onGroup(nbs(),Grouping.Floor))).keySet()) {
+        				connect(m2);
+        			}
+					renameRestore();
+				}
+			}
+			
+			if (getId() == Module.Floor_UplifterLeft) {
+				if (exists(west(south(onGroup(nbs(),Grouping.Floor))))) {
+					notification("Event handler fires!");
+					renameRestore();
+				}
+			}
+				
+			
+			
 			if (stateInstruction(0)) {
 	    		if (getId() == Module.Walker_Right) {
 	    			waitAndDiscover();
@@ -272,6 +297,21 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 			}		
 		}
 	
+		
+		if (getId() == Module.Floor_Downlifter) {
+			if (!exists(onGroup(nbs(),Grouping.Walker))) {
+				renameRestore();
+			}
+		}
+		
+		
+		// Event handlers
+		if (getId() == Module.Floor_DownlifterLeft) {
+			if (!hasNeighbor(Module.Floor_Downlifter, false)) {
+				renameRestore();
+			}
+		}
+		
 		if (stateOperation(GETDOWN)) {
 			
 			if (stateInstruction(0) && !stateIsFinished()) {
@@ -381,9 +421,10 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 			if (stateInstruction(6)) {
 				if (getId() == Module.Floor_Downlifter) {
 					waitAndDiscover();
-	    			while (disconnected(nbs()).containsKey(Module.Walker_Left) || disconnected(nbs()).containsKey(Module.Floor_DownlifterLeft)) {
-	    				connect(Module.Walker_Left);
-	    				connect(Module.Floor_DownlifterLeft);
+	    			while (exists(disconnected(maleAligned(nbs())))) {
+	    				for (Module nb: maleAligned(disconnected(nbs())).keySet()) {
+	    					connect(nb);
+	    				}
 	    				waitAndDiscover();
 	    			}
 	    			stateInstrBroadcastNext();
@@ -394,13 +435,14 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 			if (stateInstruction(7)) {
 				if (getGrouping() == Grouping.Floor) {
 					discoverNeighbors();
-					delay(1000);
-					discoverNeighbors();
-					delay(1000);
-					if (exists(west(nbs())) && !exists(east(nbs())) && !stateIsFinished()) {
-						send(new Packet(getId()).setType(Type.FIX_DIRECTION).getBytes(),NORTH_MALE_WEST);
-						send(new Packet(getId()).setType(Type.FIX_DIRECTION).getBytes(),SOUTH_MALE_WEST);
-						stateFinish();
+					delay(2000);
+					if (stateInstruction(7)) { // TODO: Critical section!
+						if (exists(west(nbs())) && !exists(east(nbs())) && !stateIsFinished()) {
+							send(new Packet(getId()).setType(Type.FIX_DIRECTION).getBytes(),NORTH_MALE_WEST);
+							send(new Packet(getId()).setType(Type.FIX_DIRECTION).getBytes(),SOUTH_MALE_WEST);
+							notification("Im only allowed in state 7!!!!" + getStateOperation() + " - " + getStateInstruction());
+							stateFinish();
+						}
 					}
 				}
 				if (getId() == Module.Walker_Head) {
@@ -420,62 +462,26 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 				}
 				if (getId() == Module.Walker_Head) {
 					renameRestore();
-					stateOperationBroadcast(REPAIR);
+					stateInstrBroadcastNext();
 					
 				}
 				stateFinish();
 			}
-		}
-		
-		if (stateOperation(REPAIR)) {
 			
-			if (stateInstruction(0)) {
+			if (stateInstruction(9)) {
 				gradients.put(HORIZONTAL, Byte.MAX_VALUE);
 				gradients.put(VERTICAL, Byte.MAX_VALUE);
 				waitAndDiscover();
-				
-				if (!statePending(PENDING1) && getId() == Module.Floor_Uplifter) {
-					rotateTo(0);
-					statePendingBroadcast(PENDING1);
-				}
-				
-				if (!statePending(PENDING2) && getId() == Module.Floor_UplifterLeft) {
-    				renameRestore();
-    				statePendingBroadcast(PENDING2);
-    			}
-				
-				if (!statePending(PENDING3) && getId() == Module.Floor_Downlifter) {
-					statePendingBroadcast(PENDING3);
-					renameRestore();
-				}
+								
 			
-				if (!statePending(PENDING4) && getId() == Module.Floor_DownlifterLeft) {
-					statePendingBroadcast(PENDING4);
-					renameRestore();
-				}
-
-				// TODO: Does this work if all modules broadcast this?
-				if (statePending(PENDING1+PENDING2+PENDING3+PENDING4)) {
-					stateInstrBroadcastNext();
-				}
+				stateOperationBroadcast(ELECT);
 			}
 			
-			if (stateInstruction(1)) {
-				if (getId() == Module.Floor_Uplifter) {
-					discoverNeighbors();
-					while (exists(maleAligned(disconnected(onGroup(nbs(), Grouping.Floor))))) {
-						for (Module nb: maleAligned(disconnected(onGroup(nbs(), Grouping.Floor))).keySet()) {
-	    					connect(nb);
-	    				}
-	    				waitAndDiscover();
-	    			}
-					
-					renameRestore();
-					stateOperationBroadcast(ELECT);
-				}
-			}
+			
 		}
-
+		
+	
+			
 	    
 //	    if (masterState == repair) {
 //		    if (getGrouping() == Grouping.Floor)  {
