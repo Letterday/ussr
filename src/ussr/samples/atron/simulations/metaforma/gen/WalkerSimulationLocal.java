@@ -1,17 +1,9 @@
 package ussr.samples.atron.simulations.metaforma.gen;
 import java.awt.Color;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Random;
-
 import ussr.description.Robot;
 import ussr.model.Controller;
 import ussr.model.debugging.ControllerInformationProvider;
-import ussr.physics.PhysicsFactory;
-import ussr.physics.PhysicsSimulation;
-import ussr.physics.jme.DebugInformationPicker;
 import ussr.samples.atron.ATRON;
-import ussr.samples.atron.network.ATRONReflectionEventController;
 import ussr.samples.atron.simulations.metaforma.lib.*;
 
 
@@ -77,20 +69,6 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 		return null;
 	}
 	
-	public void doInPending22f (int pendingState) {
-		if (!statePending(pendingState) && getId() == Module.Walker_Right) {
-			while (exists(connected(onGroup(nbs(),Grouping.Floor))) && timeSpentInState() < 10) {
-				info.addNotification("time spent so  far: " + timeSpentInState());
-				for (Module m2 : maleAligned(onGroup(nbs(),Grouping.Floor)).keySet()) {
-    				disconnect(m2);
-    			}
-				waitAndDiscover();
-			}
-			
-			statePendingBroadcast(pendingState);
-
-		}
-	}
 	
 	
 	public void handleStates () {
@@ -98,14 +76,18 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 			
 			if (stateInstruction(0)  && !stateIsFinished()) {
 				discoverNeighbors();
-			
-				if (exists(male(west(nbs()))) && !exists(east(nbs()))) {
+				
+				notification(nbs().toString());
+				notification(nbs().size() + " size");
+				notification(nbs().east().size() + " size 2");
+				notification(nbs().east().toString());
+				
+				if (nbs().male().west().exists() && !nbs().east().exists()) {
 					gradientCreate(HORIZONTAL,0);
 					stateFinish();
 				}
 				
-			
-				if (exists(female(west(nbs()))) && !exists(east(nbs()))) {
+				if (nbs().female().west().exists() && !nbs().east().exists()) {
 					gradientCreate(VERTICAL,0);
 					stateFinish();
 				}
@@ -122,25 +104,26 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 					stateFinish();
 				}
 				
-				if (getConnectorToNb(Module.Walker_Head,false) == (SOUTH_FEMALE_WEST)) {
+				
+				if (nbs().getConnectorNrTo(Module.Walker_Head) == SOUTH_FEMALE_WEST) {
 					renameTo(Module.Walker_Left);
 					stateFinish();
 				}
-				if (getConnectorToNb(Module.Walker_Head,false) == (SOUTH_FEMALE_EAST)) {
+				if (nbs().getConnectorNrTo(Module.Walker_Head) == SOUTH_FEMALE_EAST) {
 					renameTo(Module.Walker_Right);
 					stateFinish();
 				}
-				if (hasNeighbor(Module.Walker_Left,true) && hasNeighbor(Module.Walker_Right,true) && getId() != Module.Walker_Head) {
+				if (nbs().connected().contains(Module.Walker_Left) && nbs().connected().contains(Module.Walker_Right) && getId() != Module.Walker_Head) {
 					renameTo(Module.Floor_Uplifter);
 					stateFinish();
 				}
-				if (getConnectorToNb(Module.Floor_Uplifter,false) == (SOUTH_FEMALE_WEST)) {
+				if (nbs().getConnectorNrTo(Module.Floor_Uplifter) == SOUTH_FEMALE_WEST) {
 					renameTo(Module.Floor_UplifterLeft);
 					stateFinish();
 					stateOperationBroadcast(GETUP);
 				}
 				waitAndDiscover();
-				
+				notification(neighbors.toString());
 			}
 			
 
@@ -154,18 +137,17 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
     			discoverNeighbors();
     	
     			if (!statePending(PENDING1) && getId() == Module.Walker_Right) {
-    				while (exists(connected(onGroup(nbs(),Grouping.Floor))) ) {//&& timeSpentInState() < 10
-    					info.addNotification("time spent so  far: " + timeSpentInState());
-	    				for (Module m2 : maleAligned(onGroup(nbs(),Grouping.Floor)).keySet()) {
+    				while (nbs().connected().onGroup(Grouping.Floor).exists()) {//&& timeSpentInState() < 10
+	    				for (Module m2 : nbs().onGroup(Grouping.Floor).maleAlignedWithFemale().modules()) {
 	        				disconnect(m2);
 	        			}
 	    				waitAndDiscover();
+	    				notification("time spent: " + timeSpentInState());
 	    			}
     				statePendingBroadcast(PENDING1);
 	    		}
     			if (!statePending(PENDING2) && getId() == Module.Floor_Uplifter) {
-    				
-    				while (hasNeighbor(Module.Floor_UplifterLeft, true)) {
+    				while (nbs().connected().contains(Module.Floor_UplifterLeft)) {
     					disconnect(Module.Floor_UplifterLeft);
     					waitAndDiscover();
     				}
@@ -173,9 +155,9 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
     			}
     			
     			if (getGrouping() == Grouping.Floor)  {
-    				while (contains(connected(nbs()),Module.Walker_Right)){// && timeSpentInState() < 10) {
+    				while (nbs().connected().contains(Module.Walker_Right)){// && timeSpentInState() < 10) {
     					info.addNotification("time spent so  far: " + timeSpentInState());
-	        			if (isMale(getConnectorToNb(Module.Walker_Right, false))) {
+	        			if (nbs().male().contains(Module.Walker_Right)) {
 	        				disconnect(Module.Walker_Right);
 	        			}
 	    				waitAndDiscover();
@@ -211,19 +193,23 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 			// Event handlers
 			// REPAIR is allowed in any instruction state
 			if (getId() == Module.Floor_Uplifter) {
-				if (!exists(connected(onGroup(nbs(),Grouping.Walker)))) {
+				if (nbs().connected().north().onGroup(Grouping.Walker).exists()) {
+					
+				}
+				if (nbs().connected().onGroup(Grouping.Walker).exists()) {
 					notification("Event handler fires!");
 					rotateTo(0);
 					discoverNeighbors();
-					for (Module m2 : disconnected(maleAligned(onGroup(nbs(),Grouping.Floor))).keySet()) {
+					
+					for (Module m2 : nbs().disconnected().maleAlignedWithFemale().onGroup(Grouping.Floor).modules()) {
         				connect(m2);
         			}
 					renameRestore();
 				}
 			}
-			
+
 			if (getId() == Module.Floor_UplifterLeft) {
-				if (exists(west(south(onGroup(nbs(),Grouping.Floor))))) {
+				if (nbs().south().west().onGroup(Grouping.Floor).exists()) {
 					notification("Event handler fires!");
 					renameRestore();
 				}
@@ -234,13 +220,13 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 			if (stateInstruction(0)) {
 	    		if (getId() == Module.Walker_Right) {
 	    			waitAndDiscover();
-	    			if (exists(onGroup(nbs(),Grouping.Floor))) { 
-	    				if (!exists(maleAligned(disconnected(onGroup(nbs(),Grouping.Floor))))){
+	    			if (nbs().onGroup(Grouping.Floor).exists()) { 
+	    				if (!nbs().onGroup(Grouping.Floor).maleAlignedWithFemale().disconnected().exists()) {
 	    					rotate(90);
 	    					waitAndDiscover();
 	    				}
-		    			while (exists(maleAligned(disconnected(onGroup(nbs(),Grouping.Floor))))) {
-		    				for (Module nb: maleAligned(disconnected(onGroup(nbs(),Grouping.Floor))).keySet()) {
+		    			while (nbs().disconnected().onGroup(Grouping.Floor).maleAlignedWithFemale().exists()) {
+		    				for (Module nb: nbs().disconnected().onGroup(Grouping.Floor).modules()) {
 		    					connect(nb);
 		    				}
 		    				waitAndDiscover();
@@ -256,19 +242,18 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 			if (stateInstruction(1)) {
 	    		if (getId() == Module.Walker_Left) {
 	    			waitAndDiscover();
-	    			while (exists(connected(onGroup(nbs(),Grouping.Floor)))) {
-	    				for (Module nb: maleAligned(connected(onGroup(nbs(),Grouping.Floor))).keySet()) {
+	    			while (nbs().connected().onGroup(Grouping.Floor).exists()) {
+	    				for (Module nb: nbs().connected().onGroup(Grouping.Floor).modules()) {
 	    					disconnect(nb);
 	    				}
 	    				waitAndDiscover();
 	    			}
-	    			info.addNotification(connected(onGroup(nbs(),Grouping.Floor)).toString());
 	    			stateInstrBroadcastNext();
 	    		}
 	    		
 	    		if (getGrouping() == Grouping.Floor) {
 	    			waitAndDiscover();
-	    			while (connected(nbs()).containsKey(Module.Walker_Left)) {
+	    			while (nbs().connected().contains(Module.Walker_Left)) {
 	    				disconnect(Module.Walker_Left);
 	    				waitAndDiscover();
 	    			}
@@ -299,7 +284,7 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 	
 		
 		if (getId() == Module.Floor_Downlifter) {
-			if (!exists(onGroup(nbs(),Grouping.Walker))) {
+			if (!nbs().onGroup(Grouping.Walker).exists()) {
 				renameRestore();
 			}
 		}
@@ -307,178 +292,178 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 		
 		// Event handlers
 		if (getId() == Module.Floor_DownlifterLeft) {
-			if (!hasNeighbor(Module.Floor_Downlifter, false)) {
+			if (!nbs().connected().contains(Module.Floor_Downlifter)) {
 				renameRestore();
 			}
 		}
 		
-		if (stateOperation(GETDOWN)) {
-			
-			if (stateInstruction(0) && !stateIsFinished()) {
-				waitAndDiscover();
-				
-				if (getGrouping() == Grouping.Floor && hasNeighbor(Module.Walker_Left, true)) {
-					renameTo(Module.Floor_Downlifter);
-					stateFinish();
-				}
-				
-				if (getConnectorToNb(Module.Floor_Downlifter,false) == (NORTH_FEMALE_WEST)) {
-					renameTo(Module.Floor_DownlifterLeft);
-					stateFinish();
-					stateInstrBroadcastNext();
-				}
-				
-			}
-			
-			if (stateInstruction(1)) {
-				if (!statePending(PENDING1)) {
-					waitAndDiscover();
-					if (getId() == Module.Floor_Downlifter) {
-						while (hasNeighbor(Module.Floor_DownlifterLeft, true)) {
-	    					waitAndDiscover();
-	    					disconnect(Module.Floor_DownlifterLeft);
-	    				}
-						statePendingBroadcast(PENDING1);
-					}
-				}
-				if (!statePending(PENDING2)) {
-					if (getId() == Module.Walker_Left) {
-						rotate(-90);
-						statePendingBroadcast(PENDING2);
-					}
-				}
-				if (getId() == Module.Walker_Left) {
-					if (statePending(PENDING1 + PENDING2)) {
-						stateInstrBroadcastNext();
-					}
-				}
-			}
-			if (stateInstruction(2)) {
-				if (!statePending(PENDING1) && getId() == Module.Floor_Downlifter) {
-					rotate(90);
-					statePendingBroadcast(PENDING1);
-				}
-				if (!statePending(PENDING2) && getId() == Module.Walker_Right) {
-					rotateTo(0);
-					statePendingBroadcast(PENDING2);
-				}
-				//if (getId() == Module.Walker_Right) {
-					if (statePending(PENDING1 + PENDING2)) {
-						stateInstrBroadcastNext();
-					}
-				//}
-			}
-			if (stateInstruction(3)) {
-				if (!statePending(PENDING1)) {
-					waitAndDiscover();
-					if (getId() == Module.Walker_Right) {
-						while (exists(disconnected(onGroup(nbs(),Grouping.Floor)))) {
-	    					for (Module nb: maleAligned(disconnected(onGroup(nbs(),Grouping.Floor))).keySet()) {
-		    					connect(nb);
-		    				}
-	    					waitAndDiscover();
-	    				}
-						stateInstrBroadcastNext();
-					}
-					
-					if (getGrouping() == Grouping.Floor) {
-						waitAndDiscover();
-		    			while (disconnected(nbs()).containsKey(Module.Walker_Right)) {
-		    				connect(Module.Walker_Right);
-		    				waitAndDiscover();
-		    			}
-					}
-				}
-				
-				
-			}
-			if (stateInstruction(4)) {
-				if (getId() == Module.Walker_Left) {
-					discoverNeighbors();
-					while (exists(connected(onGroup(nbs(),Grouping.Floor)))) {
-						for (Module nb: maleAligned(connected(onGroup(nbs(),Grouping.Floor))).keySet()) {
-	    					disconnect(nb);
-	    				}
-    					waitAndDiscover();
-	    			}
-					stateInstrBroadcastNext();
-				}
-			}
-			if (stateInstruction(5)) {
-				if (!statePending(PENDING1) && getId() == Module.Walker_Left) {
-					rotate(90);
-					statePendingBroadcast(1);
-				}
-				if (!statePending(PENDING2) && getId() == Module.Floor_Downlifter) {
-					rotateTo(0);
-					statePendingBroadcast(2);
-					
-				}
-				if (getId() == Module.Walker_Left && statePending(PENDING1 + PENDING2)) {
-					stateInstrBroadcastNext();
-				}
-			}
-			if (stateInstruction(6)) {
-				if (getId() == Module.Floor_Downlifter) {
-					waitAndDiscover();
-	    			while (exists(disconnected(maleAligned(nbs())))) {
-	    				for (Module nb: maleAligned(disconnected(nbs())).keySet()) {
-	    					connect(nb);
-	    				}
-	    				waitAndDiscover();
-	    			}
-	    			stateInstrBroadcastNext();
-					
-				}
-			} 
-			
-			if (stateInstruction(7)) {
-				if (getGrouping() == Grouping.Floor) {
-					discoverNeighbors();
-					delay(2000);
-					if (stateInstruction(7)) { // TODO: Critical section!
-						if (exists(west(nbs())) && !exists(east(nbs())) && !stateIsFinished()) {
-							send(new Packet(getId()).setType(Type.FIX_DIRECTION).getBytes(),NORTH_MALE_WEST);
-							send(new Packet(getId()).setType(Type.FIX_DIRECTION).getBytes(),SOUTH_MALE_WEST);
-							notification("Im only allowed in state 7!!!!" + getStateOperation() + " - " + getStateInstruction());
-							stateFinish();
-						}
-					}
-				}
-				if (getId() == Module.Walker_Head) {
-					delay(4000);
-					stateInstrBroadcastNext();
-				}
-			}
-			
-			if (stateInstruction(8) && !stateIsFinished()) {
-				
-				
-				if (getId() == Module.Walker_Left) {
-					renameRestore();
-				}
-				if (getId() == Module.Walker_Right) {
-					renameRestore();
-				}
-				if (getId() == Module.Walker_Head) {
-					renameRestore();
-					stateInstrBroadcastNext();
-					
-				}
-				stateFinish();
-			}
-			
-			if (stateInstruction(9)) {
-				gradients.put(HORIZONTAL, Byte.MAX_VALUE);
-				gradients.put(VERTICAL, Byte.MAX_VALUE);
-				waitAndDiscover();
-								
-			
-				stateOperationBroadcast(ELECT);
-			}
-			
-			
-		}
+//		if (stateOperation(GETDOWN)) {
+//			
+//			if (stateInstruction(0) && !stateIsFinished()) {
+//				waitAndDiscover();
+//				
+//				if (getGrouping() == Grouping.Floor && hasNeighbor(Module.Walker_Left, true)) {
+//					renameTo(Module.Floor_Downlifter);
+//					stateFinish();
+//				}
+//				
+//				if (getConnectorToNb(Module.Floor_Downlifter,false) == (NORTH_FEMALE_WEST)) {
+//					renameTo(Module.Floor_DownlifterLeft);
+//					stateFinish();
+//					stateInstrBroadcastNext();
+//				}
+//				
+//			}
+//			
+//			if (stateInstruction(1)) {
+//				if (!statePending(PENDING1)) {
+//					waitAndDiscover();
+//					if (getId() == Module.Floor_Downlifter) {
+//						while (hasNeighbor(Module.Floor_DownlifterLeft, true)) {
+//	    					waitAndDiscover();
+//	    					disconnect(Module.Floor_DownlifterLeft);
+//	    				}
+//						statePendingBroadcast(PENDING1);
+//					}
+//				}
+//				if (!statePending(PENDING2)) {
+//					if (getId() == Module.Walker_Left) {
+//						rotate(-90);
+//						statePendingBroadcast(PENDING2);
+//					}
+//				}
+//				if (getId() == Module.Walker_Left) {
+//					if (statePending(PENDING1 + PENDING2)) {
+//						stateInstrBroadcastNext();
+//					}
+//				}
+//			}
+//			if (stateInstruction(2)) {
+//				if (!statePending(PENDING1) && getId() == Module.Floor_Downlifter) {
+//					rotate(90);
+//					statePendingBroadcast(PENDING1);
+//				}
+//				if (!statePending(PENDING2) && getId() == Module.Walker_Right) {
+//					rotateTo(0);
+//					statePendingBroadcast(PENDING2);
+//				}
+//				//if (getId() == Module.Walker_Right) {
+//					if (statePending(PENDING1 + PENDING2)) {
+//						stateInstrBroadcastNext();
+//					}
+//				//}
+//			}
+//			if (stateInstruction(3)) {
+//				if (!statePending(PENDING1)) {
+//					waitAndDiscover();
+//					if (getId() == Module.Walker_Right) {
+//						while (exists(disconnected(onGroup(nbs(),Grouping.Floor)))) {
+//	    					for (Module nb: maleAligned(disconnected(onGroup(nbs(),Grouping.Floor))).keySet()) {
+//		    					connect(nb);
+//		    				}
+//	    					waitAndDiscover();
+//	    				}
+//						stateInstrBroadcastNext();
+//					}
+//					
+//					if (getGrouping() == Grouping.Floor) {
+//						waitAndDiscover();
+//		    			while (disconnected(nbs()).containsKey(Module.Walker_Right)) {
+//		    				connect(Module.Walker_Right);
+//		    				waitAndDiscover();
+//		    			}
+//					}
+//				}
+//				
+//				
+//			}
+//			if (stateInstruction(4)) {
+//				if (getId() == Module.Walker_Left) {
+//					discoverNeighbors();
+//					while (exists(connected(onGroup(nbs(),Grouping.Floor)))) {
+//						for (Module nb: maleAligned(connected(onGroup(nbs(),Grouping.Floor))).keySet()) {
+//	    					disconnect(nb);
+//	    				}
+//    					waitAndDiscover();
+//	    			}
+//					stateInstrBroadcastNext();
+//				}
+//			}
+//			if (stateInstruction(5)) {
+//				if (!statePending(PENDING1) && getId() == Module.Walker_Left) {
+//					rotate(90);
+//					statePendingBroadcast(1);
+//				}
+//				if (!statePending(PENDING2) && getId() == Module.Floor_Downlifter) {
+//					rotateTo(0);
+//					statePendingBroadcast(2);
+//					
+//				}
+//				if (getId() == Module.Walker_Left && statePending(PENDING1 + PENDING2)) {
+//					stateInstrBroadcastNext();
+//				}
+//			}
+//			if (stateInstruction(6)) {
+//				if (getId() == Module.Floor_Downlifter) {
+//					waitAndDiscover();
+//	    			while (exists(disconnected(maleAligned(nbs())))) {
+//	    				for (Module nb: maleAligned(disconnected(nbs())).keySet()) {
+//	    					connect(nb);
+//	    				}
+//	    				waitAndDiscover();
+//	    			}
+//	    			stateInstrBroadcastNext();
+//					
+//				}
+//			} 
+//			
+//			if (stateInstruction(7)) {
+//				if (getGrouping() == Grouping.Floor) {
+//					discoverNeighbors();
+//					delay(2000);
+//					if (stateInstruction(7)) { // TODO: Critical section!
+//						if (exists(west(nbs())) && !exists(east(nbs())) && !stateIsFinished()) {
+//							send(new Packet(getId()).setType(Type.FIX_DIRECTION).getBytes(),NORTH_MALE_WEST);
+//							send(new Packet(getId()).setType(Type.FIX_DIRECTION).getBytes(),SOUTH_MALE_WEST);
+//							notification("Im only allowed in state 7!!!!" + getStateOperation() + " - " + getStateInstruction());
+//							stateFinish();
+//						}
+//					}
+//				}
+//				if (getId() == Module.Walker_Head) {
+//					delay(4000);
+//					stateInstrBroadcastNext();
+//				}
+//			}
+//			
+//			if (stateInstruction(8) && !stateIsFinished()) {
+//				
+//				
+//				if (getId() == Module.Walker_Left) {
+//					renameRestore();
+//				}
+//				if (getId() == Module.Walker_Right) {
+//					renameRestore();
+//				}
+//				if (getId() == Module.Walker_Head) {
+//					renameRestore();
+//					stateInstrBroadcastNext();
+//					
+//				}
+//				stateFinish();
+//			}
+//			
+//			if (stateInstruction(9)) {
+//				gradients.put(HORIZONTAL, Byte.MAX_VALUE);
+//				gradients.put(VERTICAL, Byte.MAX_VALUE);
+//				waitAndDiscover();
+//								
+//			
+//				stateOperationBroadcast(ELECT);
+//			}
+//			
+//			
+//		}
 		
 	
 			

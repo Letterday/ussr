@@ -12,12 +12,13 @@ import ussr.model.debugging.DebugInformationProvider;
 import ussr.samples.atron.ATRONController;
 import ussr.samples.atron.simulations.metaforma.gen.*;
 import ussr.samples.atron.simulations.metaforma.lib.Packet;
+import ussr.samples.atron.simulations.metaforma.lib.NeighborBag;
 
 public abstract class MetaformaController extends ATRONController implements ControllerInformationProvider{
 
 	
 	protected DebugInformationProvider info;
-	public HashMap<Grouping, HashMap<Module, Byte[]>> neighbors = new HashMap<Grouping, HashMap<Module, Byte[]>>();
+	public NeighborBag neighbors = new NeighborBag(this);
 	
 	private HashMap<Module, Color[]> moduleColors = new HashMap<Module, Color[]>();
 	private Color[] structureColors;
@@ -110,17 +111,17 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	private void updateNeighborsSymmetryNS () {
 		for (Map.Entry<Module, Byte[]> entry : nbs().entrySet()) {
-			addNeighbor(entry.getKey(), (entry.getValue()[0] + 4) % 8, entry.getValue()[1]);
+			neighbors.add(entry.getKey(), (entry.getValue()[0] + 4) % 8, entry.getValue()[1]);
 		}
 	}
 	
 	private void updateNeighborsSymmetryEW () {
 		for (Map.Entry<Module, Byte[]> entry : nbs().entrySet()) {
 			if (entry.getValue()[0] < 4) {
-				addNeighbor(entry.getKey(), (entry.getValue()[0] + 2) % 4, entry.getValue()[1]);
+				neighbors.add(entry.getKey(), (entry.getValue()[0] + 2) % 4, entry.getValue()[1]);
 			}
-			else {
-				addNeighbor(entry.getKey(), ((entry.getValue()[0] + 2) % 4) + 4, entry.getValue()[1]);
+			else { 
+				neighbors.add(entry.getKey(), ((entry.getValue()[0] + 2) % 4) + 4, entry.getValue()[1]);
 			}
 		}
 	}
@@ -189,19 +190,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 	 }
 	 
 	 public void connect(int c) {
-			super.connect(C(c));
-		 }
-
-
-	public byte getConnectorToNb(Module nb, boolean otherModule) {
-		if (getNeighbors(nb.getGrouping()).containsKey(nb)) {
-			return getNeighbors(nb.getGrouping()).get(nb)[otherModule? 1 : 0];
-		}
-		else {
-			//notification("Neighbor " + nb + " does not exist in table so can't find its connector number");
-			return -1;
-		}
-	}
+		super.connect(C(c));
+	 }
 
 	private float round (float f, int decimals) {
 		return (float) (Math.round(f * Math.pow(10,decimals)) / Math.pow(10,decimals));
@@ -216,9 +206,9 @@ public abstract class MetaformaController extends ATRONController implements Con
 		return  (byte)((c+4)%8);
 	}
 	
-	public void connection(Module dest, boolean makeConnection) {
-		byte conToNb = getConnectorToNb(dest,false);
-		byte conFromNb = getConnectorToNb(dest,true);
+	private void connection(Module dest, boolean makeConnection) {
+		byte conToNb = nbs().getConnectorNrTo(dest);
+		byte conFromNb = nbs().getConnectorNrFrom(dest);
 		if (conToNb % 2 == 0 && conFromNb % 2 == 1) {
 			// Male wants to connect to female. No further action needed
 			if (makeConnection)
@@ -277,11 +267,12 @@ public abstract class MetaformaController extends ATRONController implements Con
 		setup();
 		info = this.getModule().getDebugInformationProvider();
 		setColors();
-
+		
 
 		while (true) {
 			refresh();
-
+			
+			
 			handleStates();
 			yield();
 			if (time() - 10 > stateLastBroadcast) {
@@ -317,7 +308,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		// Instead of throwing all NB's away, only remove the unconnected ones
 		for (Map.Entry<Module, Byte[]> f : nbs().entrySet()) {
 			if (!isConnected(f.getValue()[0])) {				
-				neighborRemove(f.getKey());
+				nbs().delete(f.getKey());
 				notification("remove NB " + f.getKey());
 			}
 		}
@@ -400,30 +391,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 
 
-	public boolean hasNeighbor(Module m, boolean mustBeConnected) {
-		if (getNeighbors(m.getGrouping()).containsKey(m)) {
-			//notification(".hasNeighbor " + m);
-			return (!mustBeConnected || isConnected(getConnectorToNb(m, false)));
-		} else {
-			//notification(".hasNeighbor " + m + " NOT");
-			return false;
-		}
-	}
-	
-	public boolean hasNeighbor (Grouping g, boolean mustBeConnected) {
-		if (!mustBeConnected) {
-			return (getNeighbors(g).size() > 0);
-		}
-		else {
-			for (Byte conn[]: getNeighbors(g).values()) {
-				if (isConnected(conn[0])) {
-					return true;
-				}
-					
-			}
-			return false;
-		}
-	} 
+
 	
 	
 	public void discoverNeighbors () {
@@ -432,184 +400,15 @@ public abstract class MetaformaController extends ATRONController implements Con
 		delay(500);
 	}
 
-	private void neighborRemove (Module nb) {
-		getNeighbors(nb.getGrouping()).remove(nb);
-	}
-	
-	private HashMap<Module, Byte[]> getNeighbors(Grouping g) {
-		if (!neighbors.containsKey(g)) {
-			neighbors.put(g, new HashMap<Module, Byte[]>());
-		}
-
-		return neighbors.get(g);
-	}
-	
-	public HashMap<Module, Byte[]> nbs() {
-		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
-		for (Entry<Grouping, HashMap<Module, Byte[]>> entryGroup : neighbors.entrySet()) {
-			for (Entry<Module, Byte[]> entry : entryGroup.getValue().entrySet()) {
-				ret.put(entry.getKey(), entry.getValue());
-			}
-		}
-		return ret;
-	}
 	
 	
-	public HashMap<Module, Byte[]> connected(HashMap<Module, Byte[]>neighbors) {
-		return connected(neighbors,true);
-	}
 	
-	public HashMap<Module, Byte[]> disconnected(HashMap<Module, Byte[]>neighbors) {
-		return connected(neighbors,false);
-	}
-	
-	private HashMap<Module, Byte[]> connected(HashMap<Module, Byte[]>neighbors, boolean connected) {
-		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
-		for (Map.Entry<Module, Byte []> e : neighbors.entrySet()) {
-			if (isConnected(e.getValue()[0]) == connected) {
-				ret.put(e.getKey(),e.getValue());
-			}
-		}
-		return ret;
-	}
-	
-	public HashMap<Module, Byte[]> maleAligned (HashMap<Module, Byte[]> neighbors) {
-		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
-		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
-			if (entry.getValue()[0]%2 == 0 && entry.getValue()[1]%2 == 1) {
-				ret.put(entry.getKey(), entry.getValue());
-			}
-		}
-		return ret;
-	}
-	
-	public HashMap<Module, Byte[]> onGroup (HashMap<Module, Byte[]> neighbors, Grouping g) {
-		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
-		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
-			if (entry.getKey().getGrouping().equals(g)) {
-				ret.put(entry.getKey(), entry.getValue());
-			}
-		}
-		return ret;
-	}
-	
-	public HashMap<Module, Byte[]> male (HashMap<Module, Byte[]> neighbors) {
-		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
-		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
-			if (MALE(entry.getValue()[0])) {
-				ret.put(entry.getKey(), entry.getValue());
-			}
-		}
-		return ret;
-	}
-	
-	public HashMap<Module, Byte[]> female (HashMap<Module, Byte[]> neighbors) {
-		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
-		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
-			if (FEMALE(entry.getValue()[0])) {
-				ret.put(entry.getKey(), entry.getValue());
-			}
-		}
-		return ret;
-	}
-	
-	public HashMap<Module, Byte[]> west (HashMap<Module, Byte[]> neighbors) {
-		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
-		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
-			if (WEST(entry.getValue()[0])) {
-				ret.put(entry.getKey(), entry.getValue());
-			}
-		}
-		return ret;
-	}
-	
-	public HashMap<Module, Byte[]> north (HashMap<Module, Byte[]> neighbors) {
-		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
-		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
-			if (NORTH(entry.getValue()[0])) {
-				ret.put(entry.getKey(), entry.getValue());
-			}
-		}
-		return ret;
-	}
-	
-	public HashMap<Module, Byte[]> east (HashMap<Module, Byte[]> neighbors) {
-		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
-		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
-			if (EAST(entry.getValue()[0])) {
-				ret.put(entry.getKey(), entry.getValue());
-			}
-		}
-		return ret;
-	}
-	
-	public HashMap<Module, Byte[]> south (HashMap<Module, Byte[]> neighbors) {
-		HashMap<Module, Byte[]> ret = new HashMap<Module, Byte[]>();
-		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
-			if (SOUTH(entry.getValue()[0])) {
-				ret.put(entry.getKey(), entry.getValue());
-			}
-		}
-		return ret;
-	}
-
-	public Module onConnector (HashMap<Module, Byte[]> neighbors,int c) {
-		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
-			if (entry.getValue()[0] == c) {
-				return entry.getKey();
-			}
-		}
-		return null;
-	}
-	
-	public boolean contains (HashMap<Module, Byte[]> neighbors,Module m) {
-		return neighbors.containsKey(m);
-	}
-	
-	public boolean exists (HashMap<Module, Byte[]> neighbors) {
-		return !neighbors.isEmpty();
-	}
-	
-	public boolean exists (Module m) {
-		return m != null;
+	public NeighborBag nbs() {
+		return neighbors;
 	}
 	
 
-	public void addNeighbor(Module nb, int conToNb, int conFromNb) {
-		if (getConnectorToNb(nb, false) != conToNb || getConnectorToNb(nb, true) != conFromNb) {
-			if (exists(onConnector(nbs(),conToNb))) {
-				neighborRemove(onConnector(nbs(),conToNb));
-			}
-			notification(".addNeighbor " + nb + " [" + conToNb + "," + conFromNb + "]");
-			getNeighbors(nb.getGrouping()).put(nb,
-					new Byte[] { (byte) conToNb, (byte) conFromNb });
-		}
-	}
 	
-	
-	
-
-	public String getNeighborsString() {
-		String r = "  \n";
-
-		for (Map.Entry<Grouping, HashMap<Module, Byte[]>> e : neighbors
-				.entrySet()) {
-			if (!getNeighbors(e.getKey()).isEmpty()) {
-				for (Map.Entry<Module, Byte[]> f : e.getValue().entrySet()) {
-					String m = f.getKey() + " [" + f.getValue()[0] + ", "
-							+ f.getValue()[1] + "], ";
-					if (isConnected(f.getValue()[0])) {
-						m = m.toUpperCase();
-					}
-					r += m;
-					
-				}
-				r = r.substring(0, r.length() - 2);
-			}
-			r += "\n ";
-		}
-		return r.substring(0, r.length() - 2);
-	}
 
 	public void delay(int ms) {
 		float stopTime = module.getSimulation().getTime() + ms / 1000f;
@@ -656,30 +455,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 //		notification("NORTH_MALE_EAST " + NORTH_MALE_EAST + " - " + C(NORTH_MALE_EAST) + " - " + module.getConnectors().get(C(NORTH_MALE_EAST)).hashCode());
 	}
 	
-	public boolean NORTH(int c) {
-		return c >= 0 && c <= 3;
-	}
 	
-	public boolean SOUTH(int c) {
-		return c >= 4 && c <= 7;
-	}
-	
-	public boolean WEST(int c) {
-		return c == 0 || c == 1 || c == 4 || c == 5;
-	}
-	
-	public boolean EAST(int c) {
-		return c == 2 || c == 3 || c == 6 || c == 7;
-	}
-	
-	public boolean MALE(int c) {
-		return c%2 == 0;
-	}
-	
-	public boolean FEMALE(int c) {
-		return c%2 == 1;
-	}
-
 
 	public void handleMessage(byte[] message, int messageLength, int connectorNr) {
 		byte connector = C(connectorNr);
@@ -712,12 +488,12 @@ public abstract class MetaformaController extends ATRONController implements Con
 				broadcast(p,connector);
 			}
 			else {
-				addNeighbor(p.getSource(), p.getData()[0], 1);	// We use an odd number 1 here for a female connector
+				neighbors.add(p.getSource(), p.getData()[0], 1);	// We use an odd number 1 here for a female connector
 			}
 		}
 		
 		if (p.getType() != Type.CONNECTOR_NR) {
-			addNeighbor(p.getSource(), connector, p.getSourceConnector());
+			neighbors.add(p.getSource(), connector, p.getSourceConnector());
 
 			if (p.getSource() == getId()) {
 				try {
@@ -735,22 +511,22 @@ public abstract class MetaformaController extends ATRONController implements Con
 				if (!stateIsFinished()) {
 					if (p.getType() == Type.FIX_DIRECTION) {
 						
-						if (FEMALE(connector)) {
-							if (!SOUTH(connector)) {
+						if (Connector.isFEMALE(connector)) {
+							if (!Connector.isSOUTH(connector)) {
 								switchNorthSouth();
 							}
-							if (NORTH(p.getSourceConnector()) && !WEST(connector) || SOUTH(p.getSourceConnector()) && !EAST(connector)) {
+							if (Connector.isNORTH(p.getSourceConnector()) && !Connector.isWEST(connector) || Connector.isSOUTH(p.getSourceConnector()) && !Connector.isEAST(connector)) {
 								switchEastWest();
 							}
 							
 							send(p.getBytes(),(NORTH_FEMALE_WEST));
 							send(p.getBytes(),(NORTH_FEMALE_EAST));
 						}
-						else if (MALE(connector)) {
-							if (!EAST(connector)) {
+						else if (Connector.isMALE(connector)) {
+							if (!Connector.isEAST(connector)) {
 								switchEastWest();
 							}
-							if (EAST(p.getSourceConnector()) && !SOUTH(connector) || WEST(p.getSourceConnector()) && !NORTH(connector)) {
+							if (Connector.isEAST(p.getSourceConnector()) && !Connector.isSOUTH(connector) || Connector.isWEST(p.getSourceConnector()) && !Connector.isNORTH(connector)) {
 								switchNorthSouth();
 							}
 							
@@ -823,7 +599,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 
 	public void send(Packet p) {
 		if ((SHOWTRAFFIC & p.getType().bit()) != 0) notification(".send packet (" + p.toString() + ") ");
-		byte c = getConnectorToNb(p.getDest(),false);
+		byte c = nbs().getConnectorNrTo(p.getDest());
 		send(p.setSourceConnector(c).getBytes(), c);
 	}
 
@@ -990,7 +766,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 
 		out.append("neighbors: ");
 
-		out.append(getNeighborsString());
+		out.append(nbs().toString());
 
 		out.append("\n");
 
