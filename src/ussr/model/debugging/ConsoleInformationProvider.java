@@ -73,17 +73,12 @@ public class ConsoleInformationProvider extends Observable implements DebugInfor
         String name = module.getProperty("name");
         if(name==null) name = "?";
 
-        out.append("state: ");
-        for(Map.Entry<String,Object> entry: stateInformation.entrySet())
-            out.append("["+entry.getKey()+"="+entry.getValue().toString()+"] ");
-        out.append("\n");
-      
-        
+               
         if(module.getController() instanceof ControllerInformationProvider)
             out.append(((ControllerInformationProvider)module.getController()).getModuleInformation());
         else
             getModuleInformation(out);
-        out.append("-------------------------------\nLog information:\n");
+        out.append("------------------------------------------------------\nLog information:\n\n");
         
         synchronized (allMessages) {  
         	for(String line: allMessages) out.append(line+"\n");

@@ -82,7 +82,7 @@ class CloverController extends MetaformaController implements ControllerInformat
 		
    }
   
-  public void setColors () {
+  public void init () {
 		setModuleColors (Module.Clover_North,new Color[]{Color.decode("#00FFFF"),Color.decode("#FFFF00")}); 
 		setModuleColors (Module.Clover_South,new Color[]{Color.decode("#00AAAA"),Color.decode("#AAAA00")}); 
 		setModuleColors (Module.Clover_West,new Color[]{Color.decode("#006666"),Color.decode("#666600")}); 

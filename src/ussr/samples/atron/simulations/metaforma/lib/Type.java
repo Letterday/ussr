@@ -9,7 +9,7 @@ public enum Type {
 		GRADIENT,
 		GLOBAL_VAR, 
 		GRADIENT_RESET,
-		FIX_DIRECTION;
+		FIX_SYMMETRY;
 		
 	public byte bit() {
 		return (byte)Math.pow(2,(byte)ordinal());

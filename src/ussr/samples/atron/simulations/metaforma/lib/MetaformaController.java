@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Random;
 import java.util.Map.Entry;
 
 import ussr.builder.genericTools.RemoveModule;
@@ -69,7 +70,14 @@ public abstract class MetaformaController extends ATRONController implements Con
 	private float stateLastBroadcast;
 	private boolean switchEastWest;
 	private boolean switchNorthSouth;
-	private byte SHOWTRAFFIC = (byte) (Type.FIX_DIRECTION.bit() | Type.GRADIENT.bit());
+	private byte msgFilter;
+	private boolean stateOperationCoordinate = false;
+	private Random random = new Random(19580427);
+	private byte stateOperationMessageIdentifier;
+	
+	public void setMessageFilter (int msg) {
+		msgFilter = (byte) msg;
+	}
 	
 	public static final int PENDING1 = 1;
 	public static final int PENDING2 = 2;
@@ -92,7 +100,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		switchEastWest =! switchEastWest;
 		notification("$$$ Switch East West");
 		
-		updateNeighborsSymmetryEW();
+		neighbors.updateSymmetryEW();
 		
 		colorize();
 
@@ -100,36 +108,32 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	
 	
+	
 	public void switchNorthSouth () {
 		 switchNorthSouth =! switchNorthSouth;
 		 notification("$$$ Switch North South");
 		 
-		 updateNeighborsSymmetryNS();
+		 neighbors.updateSymmetryNS();
 		 
 		 colorize();
 	}
 	
-	private void updateNeighborsSymmetryNS () {
-		for (Map.Entry<Module, Byte[]> entry : nbs().entrySet()) {
-			neighbors.add(entry.getKey(), (entry.getValue()[0] + 4) % 8, entry.getValue()[1]);
-		}
-	}
-	
-	private void updateNeighborsSymmetryEW () {
-		for (Map.Entry<Module, Byte[]> entry : nbs().entrySet()) {
-			if (entry.getValue()[0] < 4) {
-				neighbors.add(entry.getKey(), (entry.getValue()[0] + 2) % 4, entry.getValue()[1]);
-			}
-			else { 
-				neighbors.add(entry.getKey(), ((entry.getValue()[0] + 2) % 4) + 4, entry.getValue()[1]);
-			}
-		}
-	}
-	
-	public void gradientCreate(int id, int value) {
+	public void gradientTransit(int id, int value) {
 		gradients.put((byte)id, (byte)value);
-		notification("@gradient start.");
+		notification("@gradient transit.");
 		broadcast(new Packet(getId()).setType(Type.GRADIENT).setData(id,value + 1));
+		
+	}
+	
+	
+	public void gradientCreate(int id) {
+		gradients.put((byte)id, (byte)0);
+		notification("@gradient start.");
+		// To make sure eventually one gets through (packet loss)
+		for (int i=0; i<3; i++) {
+			broadcast(new Packet(getId()).setType(Type.GRADIENT).setData(id, 1));
+		}
+		
 	}
 	
 	public void gradientReset(int id) {
@@ -157,8 +161,6 @@ public abstract class MetaformaController extends ATRONController implements Con
 		}
 		return 0;
 	}
-	
-	
 	
 	
 	public void rotate(int degrees) {
@@ -261,24 +263,27 @@ public abstract class MetaformaController extends ATRONController implements Con
 
 	public abstract void handleStates();
 
-	public abstract void setColors();
+	public abstract void init();
 
 	public void activate() {
 		setup();
 		info = this.getModule().getDebugInformationProvider();
-		setColors();
-		
+		init();
 
 		while (true) {
 			refresh();
-			
 			
 			handleStates();
 			yield();
 			if (time() - 10 > stateLastBroadcast) {
 				broadcast(new Packet(getId()).setType(Type.STATE_INSTR_UPDATE));
+				if (stateOperationCoordinate) {
+					delay(100);
+					broadcast(new Packet(getId()).setType(Type.STATE_OPERATION_NEW).setData(stateOperation));
+				}
 				stateLastBroadcast = time();
 			}
+			
 		}
 	}
 	
@@ -306,12 +311,9 @@ public abstract class MetaformaController extends ATRONController implements Con
 	protected void initInstrState() {
 		//neighbors.clear();
 		// Instead of throwing all NB's away, only remove the unconnected ones
-		for (Map.Entry<Module, Byte[]> f : nbs().entrySet()) {
-			if (!isConnected(f.getValue()[0])) {				
-				nbs().delete(f.getKey());
-				notification("remove NB " + f.getKey());
-			}
-		}
+//		info.addNotification("Neighbors before:" + neighbors.toString());
+		neighbors.deleteUnconnectedOnes();
+//		info.addNotification("Neighbors after:" + neighbors.toString());
 		
 		stateHasReceivedBroadcast = false;
 		stateConnectorNearbyCallDisabled = true;
@@ -347,8 +349,10 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	protected void stateOperationBroadcast (int newState) {
 		setNewOperationState(newState);
+		stateOperationCoordinate  = true;
+		notification("I will be operation coordinator!");
 		stateLastBroadcast = time();
-		broadcast(new Packet(getId(), Module.ALL).setType(Type.STATE_OPERATION_NEW).setData(stateOperation));
+		broadcast(4, new Packet(getId(), Module.ALL).setType(Type.STATE_OPERATION_NEW).setData(stateOperation,random.nextInt()));
 	}
 	
 	private void setNewOperationState (int newState) {
@@ -365,6 +369,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	protected void stateInstructionBroadcastNext(int newState) {
 		stateInstruction = newState;
+		
 		nextInstrState();
 	}
 	
@@ -391,23 +396,22 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 
 
-
 	
 	
 	public void discoverNeighbors () {
 		timeLastBc = time();
-		broadcast(new Packet(getId()));
-		delay(500);
+		for (int i = 0; i< 5; i++) {
+			broadcast(new Packet(getId()));
+			delay(100);
+		}
+		
 	}
 
-	
 	
 	
 	public NeighborBag nbs() {
 		return neighbors;
 	}
-	
-
 	
 
 	public void delay(int ms) {
@@ -442,6 +446,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 		module.getConnectors().get(C(NORTH_MALE_EAST)).setColor(Color.RED);
 		module.getConnectors().get(C(NORTH_FEMALE_EAST)).setColor(Color.WHITE);
 		
+//		notification(C(NORTH_MALE_EAST) + "(" + module.getConnectors().get(C(NORTH_MALE_EAST)) +") will be red " + NORTH_MALE_EAST + "(" + module.getConnectors().get((NORTH_MALE_EAST)) +")");
+		
 		module.getConnectors().get(C(SOUTH_MALE_WEST)).setColor(Color.BLUE);
 		module.getConnectors().get(C(SOUTH_FEMALE_WEST)).setColor(Color.BLACK);
 		module.getConnectors().get(C(SOUTH_MALE_EAST)).setColor(Color.RED);
@@ -458,6 +464,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 
 	public void handleMessage(byte[] message, int messageLength, int connectorNr) {
+		// Translate absolute connector to relative connector (symmetry feature)
 		byte connector = C(connectorNr);
 		Packet p = new Packet(message);
 		
@@ -468,7 +475,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		}
 		
 		if (p.getDest() == getId() || p.getDest() == Module.ALL) {
-			if ((SHOWTRAFFIC & p.getType().bit()) != 0) notification(".handleMessage = " + p.toString()	+ " over " + connector);
+			if ((msgFilter & p.getType().bit()) != 0) notification(".handleMessage = " + p.toString()	+ " over " + connector);
 		}
 		
 		if (p.getType() == Type.CONNECTOR_NR && p.getDir() == Dir.REQ && p.getDest() == getId()) {
@@ -509,7 +516,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 			
 				// TODO
 				if (!stateIsFinished()) {
-					if (p.getType() == Type.FIX_DIRECTION) {
+					if (p.getType() == Type.FIX_SYMMETRY) {
 						
 						if (Connector.isFEMALE(connector)) {
 							if (!Connector.isSOUTH(connector)) {
@@ -519,8 +526,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 								switchEastWest();
 							}
 							
-							send(p.getBytes(),(NORTH_FEMALE_WEST));
-							send(p.getBytes(),(NORTH_FEMALE_EAST));
+							send(4, p.getBytes(),NORTH_FEMALE_WEST);
+							send(4, p.getBytes(),NORTH_FEMALE_EAST);
 						}
 						else if (Connector.isMALE(connector)) {
 							if (!Connector.isEAST(connector)) {
@@ -530,8 +537,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 								switchNorthSouth();
 							}
 							
-							send(p.getBytes(),(NORTH_MALE_WEST));
-							send(p.getBytes(),(SOUTH_MALE_WEST));
+							send(4, p.getBytes(),(NORTH_MALE_WEST));
+							send(4, p.getBytes(),(SOUTH_MALE_WEST));
 						}
 						
 						stateFinish();
@@ -539,7 +546,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 				}
 					
 				if (p.getType() == Type.GRADIENT && getGradient(p.getData()[0]) > p.getData()[1]) {
-					gradientCreate(p.getData()[0],p.getData()[1]);
+					gradientTransit(p.getData()[0],p.getData()[1]);
 				}
 				
 				if (p.getType() == Type.GRADIENT_RESET && p.getData()[0] != Byte.MAX_VALUE) {
@@ -563,9 +570,16 @@ public abstract class MetaformaController extends ATRONController implements Con
 					
 				}
 				
-				if (p.getType() == Type.STATE_OPERATION_NEW && stateOperation != p.getData()[0]) {
-					setNewOperationState(p.getData()[0]);
-					broadcast(new Packet(p),connector);
+				if (p.getType() == Type.STATE_OPERATION_NEW) {
+					if (stateOperation != p.getData()[0]) {
+						setNewOperationState(p.getData()[0]);
+						stateOperationCoordinate = false;
+					}
+					if (stateOperationMessageIdentifier != p.getData()[1]) {
+						broadcast(new Packet(p),connector);
+						stateOperationMessageIdentifier = p.getData()[1];
+					}
+					
 				}
 								
 				if (p.getType() == Type.GLOBAL_VAR && getGlobal(p.getData()[0]) != p.getData()[1]) {
@@ -583,26 +597,44 @@ public abstract class MetaformaController extends ATRONController implements Con
 		}
 	}
 
-
+	public void broadcast (int times, Packet p) {	
+		broadcast (times,p,-1);
+	}
+	
 	public void broadcast (Packet p) {	
 		broadcast (p,-1);
 	}
 		
 	public void broadcast(Packet p,int exceptConnector) {
-		if ((SHOWTRAFFIC & p.getType().bit()) != 0)  notification(".broadcast packet (" + p.toString() + ") ");
+		if ((msgFilter & p.getType().bit()) != 0)  notification(".broadcast packet (" + p.toString() + ") ");
 		for (byte c = 0; c < 8; c++) {
 			if (c != exceptConnector) {
 				send(p.getBytes(), c);
 			}
 		}
 	}
+	
+	public void broadcast (int times, Packet p, int exceptConnector) {	
+		for (int i = 0; i<times; i++) {
+			broadcast (p,exceptConnector);
+		//	delay(100);
+		}
+	}
 
-	public void send(Packet p) {
-		if ((SHOWTRAFFIC & p.getType().bit()) != 0) notification(".send packet (" + p.toString() + ") ");
+	public void send (Packet p) {
+		if ((msgFilter & p.getType().bit()) != 0) notification(".send packet (" + p.toString() + ") ");
 		byte c = nbs().getConnectorNrTo(p.getDest());
 		send(p.setSourceConnector(c).getBytes(), c);
 	}
 
+	public void send (int times, byte[] bs, int connector) {
+		for (int i=0; i<times; i++) {
+			send(bs,connector);
+//			delay(100);
+			// Todo: We have to wait here, but other tasks like message handling must wait
+		}
+	}
+	
 	public void send(byte[] bs, int connector) {
 		Packet p = new Packet(bs);
 		if (p.getType() != Type.CONNECTOR_NR) {
@@ -611,7 +643,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 			p.addState(this);
 		}
 
-		if ((SHOWTRAFFIC & p.getType().bit()) != 0) notification(".send = " + p.toString() + " over " + connector);
+		if ((msgFilter & p.getType().bit()) != 0) notification(".send = " + p.toString() + " over " + connector);
 		
 		if (connector < 0 || connector > 7) {
 			System.err.println("Connector has invalid nr " + connector);
@@ -626,20 +658,6 @@ public abstract class MetaformaController extends ATRONController implements Con
 		}
 		return info;
 	}
-
-	public int getStateInstruction() {
-		return stateInstruction;
-	}
-	
-	public int getStateOperation() {
-		return stateOperation;
-	}
-	
-	public int getStatePending() {
-		return statePending;
-	}
-	
-
 	
 	public void addStructureColors(Color[] colors) {
 		structureColors = colors;
@@ -657,6 +675,19 @@ public abstract class MetaformaController extends ATRONController implements Con
 		}
 
 	}
+
+	public int getStateInstruction() {
+		return stateInstruction;
+	}
+	
+	public int getStateOperation() {
+		return stateOperation;
+	}
+	
+	public int getStatePending() {
+		return statePending;
+	}
+
 	
 	public boolean stateIsFinished () {
 		return stateCurrentFinished;
@@ -712,57 +743,46 @@ public abstract class MetaformaController extends ATRONController implements Con
 
 	public String getModuleInformation() {
 		StringBuffer out = new StringBuffer();
-		out.append("ID: " + getId());
+		out.append("ID: " + getId() + "      [" + getOpStateName() + " # " + stateInstruction + " @ " + statePending + "]" + (stateIsFinished()? " // finished" : ""));
+		out.append("\n");
 		
+		out.append("operation coordinator: " + stateOperationCoordinate);
 		out.append("\n");
 		
 		out.append("angle: " + getAngle());
-
 		out.append("\n");
 		
-		out.append("orientationSwitched NS: " + switchNorthSouth);
-		out.append("\n");
-		out.append("orientationSwitched EW: " + switchEastWest);
+		out.append("orientation flips: ");
+		String flip = "";
+		if (switchNorthSouth) flip = "NORTH-SOUTH ";
+		if (switchEastWest) flip = "EAST-WEST";
 		
-		
-		out.append("\n");
-		
-		out.append("connectornearbydisabled: " + isOtherConnectorNearbyCallDisabled());
-		
+		if (flip.equals("")) {
+			flip = "<none>";
+		}
+		out.append(flip);
 		out.append("\n");
 		
 		out.append("globals: " + globals);
-		
 		out.append("\n");
 		
 		out.append("gradients: " + gradients);
-		
 		out.append("\n");
 		
 		out.append("isrotating: " + isRotating());
-
-		out.append("\n");
-		
-		
-		out.append("\n");
-		
-		out.append("current state: ");
-		out.append("[" + getOpStateName() + " # " + stateInstruction + " @ " + statePending + "]" + (stateIsFinished()? " // finished" : ""));
-
-		
 		out.append("\n");
 
-		out.append("colors: ");
-		if (getColors() != null) {
-			out.append("(" + getColors()[0].getRed() + "," + getColors()[0].getGreen() + "," + getColors()[0].getBlue()
-					+ "),(" + getColors()[1].getRed() + ","
-					+ getColors()[1].getGreen() + "," + getColors()[1].getBlue());
-		}
-		else {
-			out.append("<not set>");
-		}
-
-		out.append("\n");
+//		out.append("colors: ");
+//		if (getColors() != null) {
+//			out.append("(" + getColors()[0].getRed() + "," + getColors()[0].getGreen() + "," + getColors()[0].getBlue()
+//					+ "),(" + getColors()[1].getRed() + ","
+//					+ getColors()[1].getGreen() + "," + getColors()[1].getBlue());
+//		}
+//		else {
+//			out.append("<not set>");
+//		}
+//
+//		out.append("\n");
 
 		out.append("neighbors: ");
 

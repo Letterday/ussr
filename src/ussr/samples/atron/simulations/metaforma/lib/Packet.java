@@ -75,7 +75,7 @@ public class Packet implements Serializable {
 	}
 
 	public String toString () {
-		return "(" + getDir().toString() + ") from: " + getSource().toString() + "(over: " + sourceConnector + ") to: " + getDest().toString() + " - " + getType().toString() + " [" + getStateOperation() + "," + getStateInstruction() + "," + getStatePending() + "]" + (data[0] != 0 ? "(" + data[0] + "," + data[1] + "," + data[2] + ")" : "");
+		return getDir().toString() + "-" + getType().toString() + " from: " + getSource().toString() + "(over " + sourceConnector + ") to: " + getDest().toString() + " - "  + " [" + getStateOperation() + "," + getStateInstruction() + "," + getStatePending() + "]" + (data[0] != 0 ? "(" + data[0] + "," + data[1] + "," + data[2] + ")" : "");
 	}
 	
 	public Packet setSourceConnector (byte c) {

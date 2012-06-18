@@ -37,7 +37,7 @@ public class MetaformaASEController extends MetaformaReflectionEventController {
 	}
 	
 	@Override
-	public void setColors() {
+	public void init() {
 		// TODO Auto-generated method stub
 		
 	}
