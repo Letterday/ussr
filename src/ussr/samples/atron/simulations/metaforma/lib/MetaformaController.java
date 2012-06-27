@@ -38,7 +38,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	private float timeLastBc = 0;
 	private boolean stateCurrentFinished = false;
 	
-	protected HashMap<Byte,Byte> globals = new HashMap<Byte,Byte>();
+	protected HashMap<Byte,Byte> varsGlobal = new HashMap<Byte,Byte>();
 	protected HashMap<Byte,Byte> gradients = new HashMap<Byte,Byte>(); 
 	
 	protected final int NORTH_MALE_WEST = 0;
@@ -67,12 +67,12 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 	
 	private Module previousName;
-	private float stateLastBroadcast;
+	protected float stateLastBroadcast;
 	private boolean switchEastWest;
 	private boolean switchNorthSouth;
 	private byte msgFilter;
 	private boolean stateOperationCoordinate = false;
-	private Random random = new Random(19580427);
+	private Random random;
 	private byte stateOperationMessageIdentifier;
 	
 	public void setMessageFilter (int msg) {
@@ -93,7 +93,16 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 	
 	public boolean stateInstruction(int state) {
-		return stateInstruction == state;
+		if (stateInstructionSimple(state)) {
+			discoverNeighbors();
+			// stateInstruction might be changed during discoverNeighbors!
+			return stateInstructionSimple(state);
+		}
+		return stateInstructionSimple(state);
+	}
+	
+	public boolean stateInstructionSimple (int state) {
+		return stateInstruction == state && !stateIsFinished();	
 	}
 	
 	public void switchEastWest () {
@@ -120,7 +129,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	public void gradientTransit(int id, int value) {
 		gradients.put((byte)id, (byte)value);
-		notification("@gradient transit.");
+		notification("@ Gradient " + id + " transit.");
 		broadcast(new Packet(getId()).setType(Type.GRADIENT).setData(id,value + 1));
 		
 	}
@@ -128,21 +137,24 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	public void gradientCreate(int id) {
 		gradients.put((byte)id, (byte)0);
-		notification("@gradient start.");
+		notification("@ Gradient " + id + " start.");
 		// To make sure eventually one gets through (packet loss)
-		for (int i=0; i<3; i++) {
-			broadcast(new Packet(getId()).setType(Type.GRADIENT).setData(id, 1));
+		broadcast(new Packet(getId()).setType(Type.GRADIENT).setData(id, 1));
+	}
+	
+	public void gradientResetAll() {
+		for (Byte g:gradients.keySet()) {
+			gradientReset(g);
 		}
-		
 	}
 	
 	public void gradientReset(int id) {
-		gradients.put((byte)id, (byte)0);
-		broadcast(new Packet(getId()).setType(Type.GRADIENT_RESET).setData(id));
+		gradients.put((byte)id, (byte)Byte.MAX_VALUE);
+		//broadcast(new Packet(getId()).setType(Type.GRADIENT_RESET).setData(id));
 	}
 	
 	
-	public int getGradient(int id) {
+	public int gradientGet(int id) {
 		if (!gradients.containsKey((byte)id)) {
 			gradients.put((byte)id, Byte.MAX_VALUE);
 		}
@@ -151,13 +163,13 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	
 	public void setGlobal (int index, int value) {
-		globals.put((byte)index, (byte)value);
+		varsGlobal.put((byte)index, (byte)value);
 		broadcast(new Packet(getId(),Module.ALL).setData(index,value).setType(Type.GLOBAL_VAR));
 	}
 	
 	public byte getGlobal (int index) {
-		if (globals.containsKey(index)) {
-			return globals.get(index);
+		if (varsGlobal.containsKey(index)) {
+			return varsGlobal.get(index);
 		}
 		return 0;
 	}
@@ -199,16 +211,20 @@ public abstract class MetaformaController extends ATRONController implements Con
 		return (float) (Math.round(f * Math.pow(10,decimals)) / Math.pow(10,decimals));
 	}
 	
+	protected int pow (int base, int exp) {
+		return (int)Math.pow(base,exp);
+	}
+	
 	protected float timeSpentInState() {
 		return round((time() - stateStartTime),3);
 	}
 
-	protected byte oppositeConnector (int c) {
+	private byte oppositeConnector (int c) {
 		//TODO: How to take into account rotation of two hemispheres?
 		return  (byte)((c+4)%8);
 	}
 	
-	private void connection(Module dest, boolean makeConnection) {
+	protected void connection(Module dest, boolean makeConnection) {
 		byte conToNb = nbs().getConnectorNrTo(dest);
 		byte conFromNb = nbs().getConnectorNrFrom(dest);
 		if (conToNb % 2 == 0 && conFromNb % 2 == 1) {
@@ -234,13 +250,10 @@ public abstract class MetaformaController extends ATRONController implements Con
 			
 	}
 
-	public void waiting() {
-		yield();
-	}
 	
 	
 	public void waitAndDiscover () {
-		if (time() - timeLastBc  > 0.5) {
+		if (time() - timeLastBc  > 2) {
 			discoverNeighbors();
 		}
 		delay(500);
@@ -268,25 +281,34 @@ public abstract class MetaformaController extends ATRONController implements Con
 	public void activate() {
 		setup();
 		info = this.getModule().getDebugInformationProvider();
+		random = new Random(getId().ord());
 		init();
-
+		colorize();
 		while (true) {
 			refresh();
 			
 			handleStates();
 			yield();
-			if (time() - 10 > stateLastBroadcast) {
-				broadcast(new Packet(getId()).setType(Type.STATE_INSTR_UPDATE));
-				if (stateOperationCoordinate) {
-					delay(100);
-					broadcast(new Packet(getId()).setType(Type.STATE_OPERATION_NEW).setData(stateOperation));
-				}
-				stateLastBroadcast = time();
-			}
+			
 			
 		}
 	}
 	
+	protected void stateDisseminate() {
+		broadcast(new Packet(getId()).setType(Type.STATE_INSTR_UPDATE));
+		if (stateOperationCoordinate) {
+			delay(100);
+			stateOperationMessageIdentifier++;
+			broadcast(new Packet(getId()).setType(Type.STATE_OPERATION_NEW).setData(stateOperation,stateOperationMessageIdentifier));
+		}
+		stateLastBroadcast = time();
+		
+	}
+	
+	protected void statePendingBroadcastNr (int nr) {
+		statePendingBroadcast(pow(2,nr-1));
+	}
+
 	protected void statePendingBroadcast(int newState) {
 		if (statePending != (statePending|newState)) {
 			statePending = statePending|newState;
@@ -303,17 +325,18 @@ public abstract class MetaformaController extends ATRONController implements Con
 		return (state&statePending) == state;
 	}
 	
+	protected boolean statePendingCount (int nr) {
+		return pow(2,nr) == statePending + 1;
+	}
 	
 	protected void notification (String msg) {
 		info.addNotification("[" + round(time(),1) + "] - " + msg);
 	}
 
 	protected void initInstrState() {
-		//neighbors.clear();
 		// Instead of throwing all NB's away, only remove the unconnected ones
-//		info.addNotification("Neighbors before:" + neighbors.toString());
+
 		neighbors.deleteUnconnectedOnes();
-//		info.addNotification("Neighbors after:" + neighbors.toString());
 		
 		stateHasReceivedBroadcast = false;
 		stateConnectorNearbyCallDisabled = true;
@@ -344,7 +367,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 	
 	private void printInstrState() {
-		notification("\n\n=================================\nLeft instruction state " + (stateInstruction-1) + ", time spent: " + timeSpentInState() + "\nNew instruction state: " + stateInstruction + "\n=================================");
+		notification("\n\n===========  "+ getId() + "  ==============\nLeft instruction state " + (stateInstruction-1) + ", time spent: " + timeSpentInState() + "\nNew instruction state: " + getOpStateName() + ": " + stateInstruction + "\n=================================");
 	}
 	
 	protected void stateOperationBroadcast (int newState) {
@@ -352,14 +375,16 @@ public abstract class MetaformaController extends ATRONController implements Con
 		stateOperationCoordinate  = true;
 		notification("I will be operation coordinator!");
 		stateLastBroadcast = time();
-		broadcast(4, new Packet(getId(), Module.ALL).setType(Type.STATE_OPERATION_NEW).setData(stateOperation,random.nextInt()));
+		stateOperationMessageIdentifier = 0;
+		broadcast(new Packet(getId(), Module.ALL).setType(Type.STATE_OPERATION_NEW).setData(stateOperation,stateOperationMessageIdentifier + 1));
 	}
 	
 	private void setNewOperationState (int newState) {
 		stateOperation = newState;
 		initInstrState();
 		stateInstruction = 0;
-		notification("\n\n#############################\nnew operation state: " + getOpStateName() + "\n#############################\n");
+		stateOperationMessageIdentifier = 0;
+		notification("\n\n#######  "+ getId() + "  ##########\nnew operation state: " + getOpStateName() + "\n#############################\n");
 	}
 	
 	
@@ -367,7 +392,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		stateConnectorNearbyCallDisabled = true;
 	}
 	
-	protected void stateInstructionBroadcastNext(int newState) {
+	protected void stateInstrBroadcastNext(int newState) {
 		stateInstruction = newState;
 		
 		nextInstrState();
@@ -399,11 +424,10 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	
 	public void discoverNeighbors () {
-		timeLastBc = time();
-		for (int i = 0; i< 5; i++) {
-			broadcast(new Packet(getId()));
-			delay(100);
-		}
+		
+		broadcast(new Packet(getId()));
+		delay(1000);
+
 		
 	}
 
@@ -468,138 +492,65 @@ public abstract class MetaformaController extends ATRONController implements Con
 		byte connector = C(connectorNr);
 		Packet p = new Packet(message);
 		
-		if (p.getType() != Type.STATE_INSTR_UPDATE && p.getType() != Type.DISCOVER && p.getType() != Type.STATE_OPERATION_NEW && (p.getStateInstruction() < stateInstruction || p.getStateOperation() != stateOperation)) {
-			notification("!!! Packet dropped due to state mismatch:");
-			notification(p.toString());
-			return;
-		}
+//		if (p.getType() != Type.STATE_INSTR_UPDATE && p.getType() != Type.DISCOVER && p.getType() != Type.STATE_OPERATION_NEW && (p.getStateInstruction() < stateInstruction || p.getStateOperation() != stateOperation)) {
+//			notification("!!! Packet dropped due to state mismatch:");
+//			notification(p.toString());
+//			return;
+//		}
 		
 		if (p.getDest() == getId() || p.getDest() == Module.ALL) {
 			if ((msgFilter & p.getType().bit()) != 0) notification(".handleMessage = " + p.toString()	+ " over " + connector);
 		}
 		
-		if (p.getType() == Type.CONNECTOR_NR && p.getDir() == Dir.REQ && p.getDest() == getId()) {
-			
-			// Indicates that sender is waiting for an answer, but it does not
-			// come. So try a broadcast.
-			broadcast(new Packet(getId(), p.getSource()).setType(Type.CONNECTOR_NR).setData(p.getSourceConnector()).setDir(Dir.ACK));
-			notification("Answer to " + p.getSource()
-					+ " does not arrive, so try broadcast.");
-		}
-		
+		neighbors.add(p.getSource(), connector, p.getSourceConnector());
 
-		if (p.getType() == Type.CONNECTOR_NR && p.getDir() == Dir.ACK && stateHasReceivedBroadcast == false) {
-			stateHasReceivedBroadcast = true;
-			if (p.getDest() != getId()) {
-				notification("spread broadcast!");
-				broadcast(p,connector);
-			}
-			else {
-				neighbors.add(p.getSource(), p.getData()[0], 1);	// We use an odd number 1 here for a female connector
+		if (p.getSource() == getId()) {
+			try {
+				throw new Exception("Source cannot be myself (" + getId()
+						+ ")!");
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.exit(0);
 			}
 		}
 		
-		if (p.getType() != Type.CONNECTOR_NR) {
-			neighbors.add(p.getSource(), connector, p.getSourceConnector());
-
-			if (p.getSource() == getId()) {
-				try {
-					throw new Exception("Source cannot be myself (" + getId()
-							+ ")!");
-				} catch (Exception e) {
-					e.printStackTrace();
-					System.exit(0);
-				}
-			}
-			
-			if (p.getDest() == getId() || p.getDest() == Module.ALL) {
-			
-				// TODO
-				if (!stateIsFinished()) {
-					if (p.getType() == Type.FIX_SYMMETRY) {
-						
-						if (Connector.isFEMALE(connector)) {
-							if (!Connector.isSOUTH(connector)) {
-								switchNorthSouth();
-							}
-							if (Connector.isNORTH(p.getSourceConnector()) && !Connector.isWEST(connector) || Connector.isSOUTH(p.getSourceConnector()) && !Connector.isEAST(connector)) {
-								switchEastWest();
-							}
-							
-							send(4, p.getBytes(),NORTH_FEMALE_WEST);
-							send(4, p.getBytes(),NORTH_FEMALE_EAST);
-						}
-						else if (Connector.isMALE(connector)) {
-							if (!Connector.isEAST(connector)) {
-								switchEastWest();
-							}
-							if (Connector.isEAST(p.getSourceConnector()) && !Connector.isSOUTH(connector) || Connector.isWEST(p.getSourceConnector()) && !Connector.isNORTH(connector)) {
-								switchNorthSouth();
-							}
-							
-							send(4, p.getBytes(),(NORTH_MALE_WEST));
-							send(4, p.getBytes(),(SOUTH_MALE_WEST));
-						}
-						
-						stateFinish();
-					}
-				}
-					
-				if (p.getType() == Type.GRADIENT && getGradient(p.getData()[0]) > p.getData()[1]) {
-					gradientTransit(p.getData()[0],p.getData()[1]);
-				}
-				
-				if (p.getType() == Type.GRADIENT_RESET && p.getData()[0] != Byte.MAX_VALUE) {
-					gradients.put(p.getData()[0], Byte.MAX_VALUE);
-				}
-				
-				if (p.getType() == Type.STATE_INSTR_UPDATE && p.getStateOperation() == stateOperation) {
-					if (stateInstruction < p.getStateInstruction()) {
-						increaseInstrState(p.getStateInstruction(),p.getStatePending());
-						broadcast(new Packet(p),connector);
-					}
-					else if (stateInstruction == p.getStateInstruction()) {
-						if ((statePending | p.getStatePending()) != statePending) {
-							statePending |=  p.getStatePending();
-							notification("## @ " + stateInstruction +" new pending state received: " + statePending);
-							broadcast(new Packet(p),connector);
-						}
-						
-					}
-					
-					
-				}
-				
-				if (p.getType() == Type.STATE_OPERATION_NEW) {
-					if (stateOperation != p.getData()[0]) {
-						setNewOperationState(p.getData()[0]);
-						stateOperationCoordinate = false;
-					}
-					if (stateOperationMessageIdentifier != p.getData()[1]) {
-						broadcast(new Packet(p),connector);
-						stateOperationMessageIdentifier = p.getData()[1];
-					}
-					
-				}
-								
-				if (p.getType() == Type.GLOBAL_VAR && getGlobal(p.getData()[0]) != p.getData()[1]) {
-					globals.put(p.getData()[0],p.getData()[1]);
+		if (p.getDest() == getId() || p.getDest() == Module.ALL) {
+			if (p.getType() == Type.STATE_INSTR_UPDATE && p.getStateOperation() == stateOperation) {
+				if (stateInstruction < p.getStateInstruction()) {
+					increaseInstrState(p.getStateInstruction(),p.getStatePending());
 					broadcast(new Packet(p),connector);
 				}
-
-				
-
-
-				if (p.getType() == Type.DISCOVER && p.getDir() == Dir.REQ) {
-					send(p.getAck().getBytes(), connector);
+				else if (stateInstruction == p.getStateInstruction()) {
+					if ((statePending | p.getStatePending()) != statePending) {
+						statePending |=  p.getStatePending();
+						notification("## @ " + stateInstruction +" new pending state received: " + statePending);
+						broadcast(new Packet(p),connector);
+					}
+					
 				}
+			}
+			else if (p.getType() == Type.STATE_OPERATION_NEW) {
+				if (stateOperation != p.getData()[0]) {
+					setNewOperationState(p.getData()[0]);
+					stateOperationCoordinate = false;
+				}
+				if (stateOperationMessageIdentifier < p.getData()[1]) {
+					broadcast(new Packet(p),connector);
+					stateOperationMessageIdentifier = p.getData()[1];
+				}
+				
+			}else if (p.getType() == Type.DISCOVER && p.getDir() == Dir.REQ) {
+				send(p.getAck().getBytes(), connector);
+			}
+			else {
+				// Custom message 
+				receiveMessage (p,connectorNr);
 			}
 		}
 	}
+	
+	protected abstract void receiveMessage (Packet p, int connector);
 
-	public void broadcast (int times, Packet p) {	
-		broadcast (times,p,-1);
-	}
 	
 	public void broadcast (Packet p) {	
 		broadcast (p,-1);
@@ -607,6 +558,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		
 	public void broadcast(Packet p,int exceptConnector) {
 		if ((msgFilter & p.getType().bit()) != 0)  notification(".broadcast packet (" + p.toString() + ") ");
+		timeLastBc = time();
 		for (byte c = 0; c < 8; c++) {
 			if (c != exceptConnector) {
 				send(p.getBytes(), c);
@@ -614,12 +566,6 @@ public abstract class MetaformaController extends ATRONController implements Con
 		}
 	}
 	
-	public void broadcast (int times, Packet p, int exceptConnector) {	
-		for (int i = 0; i<times; i++) {
-			broadcast (p,exceptConnector);
-		//	delay(100);
-		}
-	}
 
 	public void send (Packet p) {
 		if ((msgFilter & p.getType().bit()) != 0) notification(".send packet (" + p.toString() + ") ");
@@ -627,21 +573,13 @@ public abstract class MetaformaController extends ATRONController implements Con
 		send(p.setSourceConnector(c).getBytes(), c);
 	}
 
-	public void send (int times, byte[] bs, int connector) {
-		for (int i=0; i<times; i++) {
-			send(bs,connector);
-//			delay(100);
-			// Todo: We have to wait here, but other tasks like message handling must wait
-		}
-	}
-	
+
 	public void send(byte[] bs, int connector) {
 		Packet p = new Packet(bs);
-		if (p.getType() != Type.CONNECTOR_NR) {
-			p.setSourceConnector((byte) connector);
-			p.setSource(getId());
-			p.addState(this);
-		}
+
+		p.setSourceConnector((byte) connector);
+		p.setSource(getId());
+		p.addState(this);
 
 		if ((msgFilter & p.getType().bit()) != 0) notification(".send = " + p.toString() + " over " + connector);
 		
@@ -712,11 +650,11 @@ public abstract class MetaformaController extends ATRONController implements Con
 		
 		
 		
-		if (getId() == m2) {
+//		if (getId() == m2) {
 			if (statePending(PENDING1 + PENDING2)) {
 				stateInstrBroadcastNext();
 			}
-		}
+//		}
 	}
 	
 	
@@ -763,7 +701,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		out.append(flip);
 		out.append("\n");
 		
-		out.append("globals: " + globals);
+		out.append("globals: " + varsGlobal);
 		out.append("\n");
 		
 		out.append("gradients: " + gradients);

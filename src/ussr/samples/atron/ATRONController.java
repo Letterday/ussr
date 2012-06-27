@@ -297,7 +297,7 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
      */
     
     public int getAngle() {
-    	return angle;
+    	return angle%360;
     }
     
     /**

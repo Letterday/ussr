@@ -220,23 +220,22 @@ public class ATRONBuilder {
     	return mPos;
     }
     	
-    private void buildClover(String prefix, boolean useASE, ArrayList<ModulePosition> mPos, VectorDescription pos) {
+    private void buildClover(String prefix, boolean useASE, ArrayList<ModulePosition> mPos, VectorDescription pos,int startId) {
     	
-		mPos.add(new ModulePosition(prefix + Math.random(), aPos (0,0,0, pos), ATRON.ROTATION_NS));;
-		mPos.add(new ModulePosition(prefix + Math.random(), aPos (2,0,0, pos), ATRON.ROTATION_NS));
-		
-		mPos.add(new ModulePosition(prefix + Math.random(), aPos (1,0,-1, pos), ATRON.ROTATION_EW));
-		mPos.add(new ModulePosition(prefix + Math.random(), aPos (1,0,1, pos), ATRON.ROTATION_EW));
+		mPos.add(new ModulePosition(prefix + (startId + 0), aPos (0,0,0, pos), ATRON.ROTATION_NS));;
+		mPos.add(new ModulePosition(prefix + (startId + 1), aPos (2,0,0, pos), ATRON.ROTATION_NS));
+		mPos.add(new ModulePosition(prefix + (startId + 2), aPos (1,0,-1, pos), ATRON.ROTATION_EW));
+		mPos.add(new ModulePosition(prefix + (startId + 3), aPos (1,0,1, pos), ATRON.ROTATION_EW));
 		
     }
     
 	public ArrayList<ModulePosition> buildGrid(int width, int height, String prefix, boolean useASE) {
 		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
 		
-		buildClover(prefix, useASE, mPos, aPos(0,-5,0));
-		buildClover(prefix, useASE, mPos, aPos(2,-5,-2));
-		buildClover(prefix, useASE, mPos, aPos(2,-5,2));
-		buildClover(prefix, useASE, mPos, aPos(4,-5,0));
+		buildClover(prefix, useASE, mPos, aPos(0,-5,0),0);
+		buildClover(prefix, useASE, mPos, aPos(2,-5,-2),4);
+		buildClover(prefix, useASE, mPos, aPos(2,-5,2),8);
+		//buildClover(prefix, useASE, mPos, aPos(4,-5,0),12);
 		
 			
 //    		

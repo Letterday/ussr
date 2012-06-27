@@ -56,4 +56,11 @@ public class MetaformaASEController extends MetaformaReflectionEventController {
 	}
 
 
+	@Override
+	protected void receiveMessage(Packet p, int connector) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
 }
