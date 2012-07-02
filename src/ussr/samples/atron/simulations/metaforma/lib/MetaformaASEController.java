@@ -63,4 +63,18 @@ public class MetaformaASEController extends MetaformaReflectionEventController {
 	}
 
 
+	@Override
+	public void handleEvents() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void handleSyncs() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
 }

@@ -7,6 +7,7 @@
 package ussr.samples.atron;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Random;
 
@@ -229,50 +230,15 @@ public class ATRONBuilder {
 		
     }
     
-	public ArrayList<ModulePosition> buildGrid(int width, int height, String prefix, boolean useASE) {
+	public ArrayList<ModulePosition> buildGrid(BitSet build, String prefix, boolean useASE) {
 		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
 		
-		buildClover(prefix, useASE, mPos, aPos(0,-5,0),0);
-		buildClover(prefix, useASE, mPos, aPos(2,-5,-2),4);
-		buildClover(prefix, useASE, mPos, aPos(2,-5,2),8);
-		//buildClover(prefix, useASE, mPos, aPos(4,-5,0),12);
+		if (build.get(0)) buildClover(prefix, useASE, mPos, aPos(0,-5,0),0);
+		if (build.get(1)) buildClover(prefix, useASE, mPos, aPos(2,-5,-2),4);
+		if (build.get(2)) buildClover(prefix, useASE, mPos, aPos(2,-5,2),8);
+		if (build.get(3)) buildClover(prefix, useASE, mPos, aPos(4,-5,0),12);
 		
-			
-//    		
-//    		for (int w = 0; w < width; w++) {
-//    			for (int h = 0; h < height; h++) {
-//    				
-//    			}
-    			
-    			
-    			
-//        		for (int h = 0; h < height; h++) {
-//        			
-//        			
-//        			RotationDescription rot = null; 
-//    				if (w%2==h%2) {
-//    					rot = ATRON.ROTATION_NS;
-//    				}
-//    				else  {
-//    					rot = ATRON.ROTATION_EW;
-//    				}
-//    	
-//    				if (useASE) {
-//    					mPos.add(new ModulePosition(prefix + (w+w*h), ";portRC=" + (9900+(w+w*h)*2) + ";portEvent=" + (9901+(w+w*h)+1), aPos ((float)w,0,(float)h, pos), rot));
-//    				}
-//    				else {
-//    					mPos.add(new ModulePosition(prefix + (w+w*h), aPos ((float)w,0,(float)h, pos), rot));
-//    				}
-//    				
-//        		}
-    	
-    	
-    	
-    	// Add module to it
-//    	mPos.add(new ModulePosition("m1", aPos (0,1,0, pos ), ATRON.ROTATION_UD ));
-//    	mPos.add(new ModulePosition("m2", aPos (0,2,1, pos ), ATRON.ROTATION_NS ));
-//    	mPos.add(new ModulePosition("m3", aPos (0,1,2, pos ), ATRON.ROTATION_UD ));
-    	
+		
         return mPos;
 	}
     

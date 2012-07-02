@@ -22,7 +22,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 	public NeighborBag neighbors = new NeighborBag(this);
 	
 	private HashMap<Module, Color[]> moduleColors = new HashMap<Module, Color[]>();
-	private Color[] structureColors;
+	private HashMap<Grouping, Color[]> groupingColors = new HashMap<Grouping, Color[]>();
+	private Color[] defaultColors;
 	
 	private int stateOperation = 0;
 	private int stateInstruction = 0;
@@ -40,6 +41,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	protected HashMap<Byte,Byte> varsGlobal = new HashMap<Byte,Byte>();
 	protected HashMap<Byte,Byte> gradients = new HashMap<Byte,Byte>(); 
+	
+	protected HashSet <Module> consensus = new HashSet <Module>(); 
 	
 	protected final int NORTH_MALE_WEST = 0;
 	protected final int NORTH_MALE_EAST = 2;
@@ -74,6 +77,9 @@ public abstract class MetaformaController extends ATRONController implements Con
 	private boolean stateOperationCoordinate = false;
 	private Random random;
 	private byte stateOperationMessageIdentifier;
+	private Grouping previousGrouping;
+	protected boolean stateChangeConsensus;
+	
 	
 	public void setMessageFilter (int msg) {
 		msgFilter = (byte) msg;
@@ -131,7 +137,6 @@ public abstract class MetaformaController extends ATRONController implements Con
 		gradients.put((byte)id, (byte)value);
 		notification("@ Gradient " + id + " transit.");
 		broadcast(new Packet(getId()).setType(Type.GRADIENT).setData(id,value + 1));
-		
 	}
 	
 	
@@ -154,7 +159,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 	
 	
-	public int gradientGet(int id) {
+	public int var(int id) {
 		if (!gradients.containsKey((byte)id)) {
 			gradients.put((byte)id, Byte.MAX_VALUE);
 		}
@@ -274,6 +279,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 		rotateToDegreeInDegrees(angle);
 	}
 
+	public abstract void handleSyncs();
+	public abstract void handleEvents();
 	public abstract void handleStates();
 
 	public abstract void init();
@@ -286,7 +293,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 		colorize();
 		while (true) {
 			refresh();
-			
+			handleSyncs();
+			handleEvents();
 			handleStates();
 			yield();
 			
@@ -344,6 +352,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 		statePending = 0;
 		stateStartTime = time();
 		errInCurrentState = 0;
+		stateChangeConsensus = false;
+		consensus.clear();
 		colorize();
 	}
 	
@@ -421,14 +431,13 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 
 
-	
+	public void broadcastDiscover () {
+		broadcast(new Packet(getId()));
+	}
 	
 	public void discoverNeighbors () {
-		
-		broadcast(new Packet(getId()));
+		broadcastDiscover();
 		delay(1000);
-
-		
 	}
 
 	
@@ -539,8 +548,15 @@ public abstract class MetaformaController extends ATRONController implements Con
 					stateOperationMessageIdentifier = p.getData()[1];
 				}
 				
-			}else if (p.getType() == Type.DISCOVER && p.getDir() == Dir.REQ) {
+			}
+			else if (p.getType() == Type.DISCOVER && p.getDir() == Dir.REQ) {
 				send(p.getAck().getBytes(), connector);
+			}
+			else if (p.getType() == Type.CONSENSUS) {
+				if (!consensus.contains(Module.values()[p.getData()[0]])) {
+					consensus.add(Module.values()[p.getData()[0]]);
+					broadcast(p);
+				}
 			}
 			else {
 				// Custom message 
@@ -597,8 +613,12 @@ public abstract class MetaformaController extends ATRONController implements Con
 		return info;
 	}
 	
-	public void addStructureColors(Color[] colors) {
-		structureColors = colors;
+	public void setGroupingColors(Grouping g, Color[] colors) {
+		groupingColors.put(g, colors);
+	}
+	
+	public void setDefaultColors(Color[] colors) {
+		defaultColors = colors;
 	}
 
 	public void setModuleColors(Module m, Color[] colors) {
@@ -608,8 +628,12 @@ public abstract class MetaformaController extends ATRONController implements Con
 	public Color[] getColors() {
 		if (moduleColors.containsKey(getId())) {
 			return moduleColors.get(getId());
-		} else {
-			return structureColors;
+		}
+		else if (groupingColors.containsKey(getGrouping())) {
+			return groupingColors.get(getGrouping());
+		}
+		else {
+			return defaultColors;
 		}
 
 	}
@@ -661,7 +685,14 @@ public abstract class MetaformaController extends ATRONController implements Con
 	public void renameTo(Module to) {
 		previousName = getId();
 		setId(to);
-		discoverNeighbors();
+		broadcastDiscover();
+	}
+	
+	public void renameGroup(Grouping to) {
+		notification("rename group");
+		previousGrouping = getGrouping();
+		setId(getId().swapGrouping(to));
+		broadcastDiscover();
 	}
 	
 	private void setId(Module id) {
@@ -675,7 +706,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		notification("$$$ restore name " + getId() + " to " + previousName);
 		getModule().setProperty("name", previousName.name());
 		colorize();
-		discoverNeighbors();
+		broadcastDiscover();
 	}
 
 
@@ -706,6 +737,10 @@ public abstract class MetaformaController extends ATRONController implements Con
 		
 		out.append("gradients: " + gradients);
 		out.append("\n");
+		
+		out.append("consensus (" + consensus.size() + "): " + consensus);
+		out.append("\n");
+		
 		
 		out.append("isrotating: " + isRotating());
 		out.append("\n");

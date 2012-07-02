@@ -8,6 +8,7 @@ public enum Type {
 		GRADIENT,
 		GLOBAL_VAR, 
 		GRADIENT_RESET,
+		CONSENSUS,
 		FIX_SYMMETRY;
 		
 	public byte bit() {

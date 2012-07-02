@@ -62,13 +62,9 @@ public class Packet implements Serializable {
 				statePending = (byte)c.getStatePending();
 			}
 		}
-		
-
 		return this;
 	}
-	
-	
-	
+		
 	
 	public byte[] getData() {
 		return data;
