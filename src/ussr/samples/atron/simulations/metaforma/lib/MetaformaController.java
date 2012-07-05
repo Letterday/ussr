@@ -13,13 +13,13 @@ import ussr.model.debugging.DebugInformationProvider;
 import ussr.samples.atron.ATRONController;
 import ussr.samples.atron.simulations.metaforma.gen.*;
 import ussr.samples.atron.simulations.metaforma.lib.Packet;
-import ussr.samples.atron.simulations.metaforma.lib.NeighborBag;
+import ussr.samples.atron.simulations.metaforma.lib.NeighborSet;
 
 public abstract class MetaformaController extends ATRONController implements ControllerInformationProvider{
 
 	
 	protected DebugInformationProvider info;
-	public NeighborBag neighbors = new NeighborBag(this);
+	public NeighborSet neighbors = new NeighborSet(this);
 	
 	private HashMap<Module, Color[]> moduleColors = new HashMap<Module, Color[]>();
 	private HashMap<Grouping, Color[]> groupingColors = new HashMap<Grouping, Color[]>();
@@ -79,6 +79,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	private byte stateOperationMessageIdentifier;
 	private Grouping previousGrouping;
 	protected boolean stateChangeConsensus;
+//	private ModuleSet all = new ModuleSet();
 	
 	
 	public void setMessageFilter (int msg) {
@@ -182,8 +183,19 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	public void rotate(int degrees) {
 		notification("## rotate " + degrees + ", current = " + angle + "; new = " + (degrees + angle) + "");
-		angle = degrees + angle % 360;
-		doRotate(angle);
+		// TODO: There is still a strange issue: when rotating 180 degrees, it is undefined whether it goes CW or CCW (randomly).
+		if (Math.abs(degrees) < 180) {
+			angle = angle + degrees % 360;
+			doRotate(angle);
+		}
+		else {
+			// Therefore we rotate in 2 steps, such that the direction is no longer undefined, but can be chosen by a pos/neg degree
+			angle = angle + (degrees /2) % 360;
+			doRotate(angle);
+			angle = angle + (degrees /2) % 360;
+			doRotate(angle);
+		}
+		
 	}
 	
 	public void rotateTo(int degrees) {
@@ -205,12 +217,22 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 	
 	 public void disconnect(int c) {
-		super.disconnect(C(c));
+		 connection(c, false);
 	 }
 	 
 	 public void connect(int c) {
-		super.connect(C(c));
+		connection(c, true);
 	 }
+	 
+	 protected void connection(int c, boolean connect) {
+		 if (connect && !isConnected(c)) {
+			 super.connect(C(c)); 
+		 }
+		 else if (!connect && isConnected(c)) {
+			 super.disconnect(C(c));
+		 }
+		 waitAndDiscover();
+	}
 
 	private float round (float f, int decimals) {
 		return (float) (Math.round(f * Math.pow(10,decimals)) / Math.pow(10,decimals));
@@ -225,13 +247,16 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 
 	private byte oppositeConnector (int c) {
-		//TODO: How to take into account rotation of two hemispheres?
+		//TODO: How to take into account rotation between two hemispheres?
 		return  (byte)((c+4)%8);
 	}
+	
 	
 	protected void connection(Module dest, boolean makeConnection) {
 		byte conToNb = nbs().getConnectorNrTo(dest);
 		byte conFromNb = nbs().getConnectorNrFrom(dest);
+		String action = makeConnection ? " connect to " : " disconnect from ";
+		notification("# " + getId() + action + dest);
 		if (conToNb % 2 == 0 && conFromNb % 2 == 1) {
 			// Male wants to connect to female. No further action needed
 			if (makeConnection)
@@ -289,6 +314,10 @@ public abstract class MetaformaController extends ATRONController implements Con
 		setup();
 		info = this.getModule().getDebugInformationProvider();
 		random = new Random(getId().ord());
+//		for (Module m: Module.values()) {
+//			all.add(m);
+//		}
+		
 		init();
 		colorize();
 		while (true) {
@@ -440,9 +469,12 @@ public abstract class MetaformaController extends ATRONController implements Con
 		delay(1000);
 	}
 
+//	public ModuleSet all() {
+//		return all;
+//	}
 	
 	
-	public NeighborBag nbs() {
+	public NeighborSet nbs() {
 		return neighbors;
 	}
 	
@@ -557,6 +589,25 @@ public abstract class MetaformaController extends ATRONController implements Con
 					consensus.add(Module.values()[p.getData()[0]]);
 					broadcast(p);
 				}
+//				boolean propagate = false;
+//				if (!consensus.contains(Module.values()[p.getData()[0]])) {
+//					consensus.add(Module.values()[p.getData()[0]]);
+//					propagate = true;
+//				}
+//				if (p.getData()[1] != 0 && !consensus.contains(Module.values()[p.getData()[1]])) {
+//					consensus.add(Module.values()[p.getData()[1]]);
+//					propagate = true;
+//				}
+//				if (p.getData()[2] != 0 && !consensus.contains(Module.values()[p.getData()[2]])) {
+//					consensus.add(Module.values()[p.getData()[2]]);
+//					propagate = true;
+//				}
+//				if (propagate) {
+//					if (p.getData()[1] != 0) {
+//						p.setByte(1,consensus.)
+//					}
+//						broadcast(p);
+//				}
 			}
 			else {
 				// Custom message 
