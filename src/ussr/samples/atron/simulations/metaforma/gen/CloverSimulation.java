@@ -87,15 +87,15 @@ class CloverController extends MetaformaRuntime implements ControllerInformation
 			
 			if (stateInstruction(0)) {
 				waitAndDiscover();
-				if (nbs().female().east().exists() && !nbs().west().exists()){
+				if (nbs(FEMALE&EAST).exists() && !nbs(WEST).exists()){
 					renameTo(Module.Clover_South);
 					stateFinish();
 				}
-				if (nbs().east().contains(Module.Clover_South)){
+				if (nbs(EAST).contains(Module.Clover_South)){
 					renameTo(Module.Clover_West);
 					stateFinish();
 				}
-				if (nbs().west().contains(Module.Clover_South)){
+				if (nbs(WEST).contains(Module.Clover_South)){
 					renameTo(Module.Clover_East);
 					stateFinish();
 				}
@@ -129,7 +129,7 @@ class CloverController extends MetaformaRuntime implements ControllerInformation
 					renameRestore();
 					switchNorthSouth();
 					switchEastWest(); 
-					statePendingBroadcast(pow(2,getId().getNumber()));
+					statePendingBroadcastNr(getId().getNumber());
 				}
 				if (statePendingCount(Grouping.Clover.length())) {
 					stateOperationBroadcast(GETUP);

@@ -30,7 +30,7 @@ class WalkerSimulation extends MetaformaSimulation {
 
 
 
-class LocalWalkerController extends MetaformaController implements ControllerInformationProvider {
+class LocalWalkerController extends MetaformaRuntime implements ControllerInformationProvider {
 
 	
 	private static final byte HORIZONTAL = 0;
@@ -78,21 +78,14 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 			syncGradient = time();
 			discoverNeighbors();
 			
-			if (nbs().male().west().exists() && !nbs().east().exists()) {
+			if (nbs(MALE&WEST).exists() && !nbs(EAST).exists()) {
 				gradientCreate(HORIZONTAL);
 			}
 			
-			if (nbs().female().west().exists() && !nbs().east().exists()) {
+			if (nbs(FEMALE&WEST).exists() && !nbs(EAST).exists()) {
 				gradientCreate(VERTICAL);
 			}
 			
-			if (nbs().male().east().exists() && !nbs().west().exists()) {
-				gradientCreate(HORIZONTAL_BACKWARD);
-			}
-			
-			if (nbs().female().east().exists() && !nbs().west().exists()) {
-				gradientCreate(VERTICAL_BACKWARD);
-			}
 		}
 //		if (time() - stateLastBroadcast > 10) {
 //			stateDisseminate();
@@ -157,20 +150,20 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 		if (stateOperation(GETUP)) {
 			if (stateInstructionSimple(0)) {
 				if (!stateIsFinished()) {
-					if (var(HORIZONTAL) == 0 && var(VERTICAL) == 1){
+					if (gradient(HORIZONTAL) == 0 && gradient(VERTICAL) == 1){
 						renameTo(Module.Walker_Head);
 						stateFinish();
 					}
 					
-					if (nbs().south().female().west().contains(Module.Walker_Head)) {
+					if (nbs(SOUTH&FEMALE&WEST).contains(Module.Walker_Head)) {
 						renameTo(Module.Walker_Left);
 						stateFinish();
 					}
-					if (nbs().south().female().east().contains(Module.Walker_Head)) {
+					if (nbs(SOUTH&FEMALE&EAST).contains(Module.Walker_Head)) {
 						renameTo(Module.Walker_Right);
 						stateFinish();
 					}
-					if (nbs().east().contains(Module.Walker_Left) && nbs().east().contains(Module.Walker_Right)) {
+					if (nbs(EAST).contains(Module.Walker_Left) && nbs(EAST).contains(Module.Walker_Right)) {
 						renameTo(Module.Floor_Uplifter);
 						stateFinish();
 						stateInstrBroadcastNext();
@@ -553,7 +546,7 @@ class LocalWalkerController extends MetaformaController implements ControllerInf
 			}
 		}
 			
-		if (p.getType() == Type.GRADIENT && var(p.getData()[0]) > p.getData()[1]) {
+		if (p.getType() == Type.GRADIENT && gradient(p.getData()[0]) > p.getData()[1]) {
 			gradientTransit(p.getData()[0],p.getData()[1]);
 		}
 		

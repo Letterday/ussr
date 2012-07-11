@@ -1,5 +1,6 @@
 package ussr.samples.atron.simulations.metaforma.gen;
 
+import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -57,5 +58,15 @@ public enum Module implements IModuleHolder {ALL,Walker_Head,Walker_Left,Walker_
 		Set<Module> m = new HashSet<Module>();
 		m.add(this);
 		return m;
+	}
+
+	public static Set<Module> fromBits(BigInteger consensus) {
+		Set<Module> ret = new HashSet<Module>();
+		for (int i=0; i<Module.values().length; i++) {
+			if (consensus.testBit(i)) {
+				ret.add(Module.values()[i]);
+			}
+		}
+		return ret;
 	}
 }
