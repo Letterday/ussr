@@ -16,6 +16,7 @@ import ussr.physics.jme.DebugInformationPicker;
 import ussr.samples.atron.ATRON;
 import ussr.samples.atron.ATRONBuilder;
 import ussr.samples.atron.network.ATRONReflectionEventController;
+import ussr.samples.atron.simulations.metaforma.gen.CloverFlipoverController.StateOperation;
 import ussr.samples.atron.simulations.metaforma.lib.*;
 
 
@@ -50,90 +51,92 @@ class CloverSimulation extends MetaformaSimulation {
 
 
 class CloverController extends MetaformaRuntime implements ControllerInformationProvider {
-
-	private static final int ELECT = 0;
-	private static final int WALK = 1;
-	private static final int WALK2 = 2;
-	private static final int GETUP = 3;
-	private static final int GETDOWN = 4;
-	private static final int REPAIR = 5;
 	
-	public String getOpStateName () {
-		switch (getStateOperation()) {
-			case ELECT:
-				return "ELECT";
-			
-			case WALK:
-				return "WALK";
-			
-			case GETUP:
-				return "GETUP";
-			
-			case GETDOWN:
-				return "GETDOWN";
-				
-			case WALK2:
-				return "WALK2";
-				
-			case REPAIR:
-				return "REPAIR";
-			
+	enum StateOperation implements IStateOperation {
+		DEFAULT, MOVE;
+
+		public byte ord() {
+			return (byte)ordinal();
 		}
-		return null;
+
+		public IStateOperation fromByte(byte b) {
+			return values()[b];
+		}
 	}
 	
 	public void handleStates () {
-		if (stateOperation(GETUP) || stateOperation(ELECT)) {
+		if (stateOperation(StateOperation.DEFAULT)) {
 			
 			if (stateInstruction(0)) {
-				waitAndDiscover();
-				if (nbs(FEMALE&EAST).exists() && !nbs(WEST).exists()){
-					renameTo(Module.Clover_South);
-					stateFinish();
+				discoverNeighbors();
+				if (!stateIsFinished()) {
+					if (nbs(FEMALE&EAST).exists() && !nbs(WEST).exists()){
+						renameTo(Module.Clover_South);
+						commit(true);
+					}
+					if (nbs(EAST).contains(Module.Clover_South)){
+						renameTo(Module.Clover_West);
+						commit(true);
+					}
+					if (nbs(WEST).contains(Module.Clover_South)){
+						renameTo(Module.Clover_East);
+						commit(true);
+					}
+					if (nbs().contains(Module.Clover_East) && nbs().contains(Module.Clover_West)){
+						renameTo(Module.Clover_North);
+						commit(true);
+					}
 				}
-				if (nbs(EAST).contains(Module.Clover_South)){
-					renameTo(Module.Clover_West);
-					stateFinish();
-				}
-				if (nbs(WEST).contains(Module.Clover_South)){
-					renameTo(Module.Clover_East);
-					stateFinish();
-				}
-				if (nbs().contains(Module.Clover_East) && nbs().contains(Module.Clover_West)){
-					renameTo(Module.Clover_North);
-					stateFinish();
-					stateInstrBroadcastNext(1);
-				}
+				consensusIfCompletedNextState(4);
 			}
-		
-			disconnect (Module.Clover_West, Module.Clover_South, new RunSeq(this, 1));
-				
-			rotate (Module.Clover_East,180, new RunSeq(this,2));
-			rotate (Module.Clover_North,180, new RunSeq(this,3));
+
+			if (stateInstruction(12)) {
+				disconnect (Module.Clover_West, Module.Clover_South, new RunSeq(this));
+			}
 			
+			if (stateInstruction(2)) {
+				rotate (Module.Clover_East,180, new RunSeq(this));
+			}
 			
-			connect (Module.Clover_East,Grouping.Floor,new RunSeq(this,4));
-			connect (Module.Clover_South,Grouping.Floor,new RunSeq(this,5));
+			if (stateInstruction(3)) {
+				rotate (Module.Clover_North,180, new RunSeq(this));
+			}
+			
+			if (stateInstruction(4)) {
+				connect (Module.Clover_East,Grouping.Floor,new RunSeq(this));
+			}
+			
+			if (stateInstruction(5)) {
+				connect (Module.Clover_South,Grouping.Floor,new RunSeq(this));
+			}
+ 
+			if (stateInstruction(6)) {
+				disconnect (Module.Clover_West,Grouping.Floor,new RunPar(this));
+				disconnect (Module.Clover_North,Grouping.Floor,new RunPar(this));
+				consensusIfCompletedNextState(2);
+			}
+			
+			if (stateInstruction(7)) {
+				rotate (Module.Clover_North,180,new RunPar(this));
+				rotate (Module.Clover_East,180,new RunPar(this));
+				consensusIfCompletedNextState(2);
+			}
 
-			disconnect (Module.Clover_West,Grouping.Floor,new RunPar(this,6,1,2));
-			disconnect (Module.Clover_North,Grouping.Floor,new RunPar(this,6,2,2));
+			
+			if (stateInstruction(8)) {
+				connect (Module.Clover_South,Module.Clover_West, new RunSeq(this));
+			}
 
-			rotate (Module.Clover_North,180,new RunPar(this,7,1,2));
-			rotate (Module.Clover_East,180,new RunPar(this,7,2,2));
-
-
-			connect (Module.Clover_South,Module.Clover_West, new RunSeq(this,8));
+			
 			
 			if (stateInstruction(9)) {
-				if(getGrouping() == Grouping.Clover && !statePending(pow(2,getId().getNumber()))) {
+				if(getGrouping() == Grouping.Clover) {
 					renameRestore();
 					switchNorthSouth();
 					switchEastWest(); 
-					statePendingBroadcastNr(getId().getNumber());
+					commit(true);
 				}
-				if (statePendingCount(Grouping.Clover.length())) {
-					stateOperationBroadcast(GETUP);
-				}
+				consensusIfCompletedNextState(4);
 			}
 		}
 		
@@ -147,7 +150,10 @@ class CloverController extends MetaformaRuntime implements ControllerInformation
 		setModuleColors (Module.Clover_East,new Color[]{Color.decode("#002222"),Color.decode("#222200")}); 
 		
 		setDefaultColors (new Color[]{Color.decode("#0000FF"),Color.decode("#FF0000")});
-		setMessageFilter(Type.STATE_INSTR_UPDATE.bit() |Type.STATE_OPERATION_NEW.bit());
+		setMessageFilter(Type.DISCOVER.bit() |Type.STATE_OPERATION_NEW.bit());
+		stateOperationInit(StateOperation.DEFAULT);
+		Packet.operationHolder = StateOperation.DEFAULT;
+		Packet.varHolder = Var.DEFAULT;
 	}
 	
 	@Override

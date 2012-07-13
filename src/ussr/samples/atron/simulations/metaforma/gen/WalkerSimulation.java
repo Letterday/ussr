@@ -47,30 +47,7 @@ class LocalWalkerController extends MetaformaRuntime implements ControllerInform
 
 	
 	
-	
-	public String getOpStateName () {
-		switch (getStateOperation()) {
-			case WALK:
-				return "WALK";
-			
-			case GETUP:
-				return "GETUP";
-			
-			case GETDOWN:
-				return "GETDOWN";
-				
-			case WALK2:
-				return "WALK2";
-				
-			case REPAIR:
-				return "REPAIR";
-				
-			case GETDOWN_CHECK:
-				return "GETDOWN_CHECK";
-			
-		}
-		return null;
-	}
+
 	
 	
 	public void handleSyncs () {
@@ -150,7 +127,7 @@ class LocalWalkerController extends MetaformaRuntime implements ControllerInform
 		if (stateOperation(GETUP)) {
 			if (stateInstructionSimple(0)) {
 				if (!stateIsFinished()) {
-					if (gradient(HORIZONTAL) == 0 && gradient(VERTICAL) == 1){
+					if (varGetGradient(HORIZONTAL) == 0 && varGetGradient(VERTICAL) == 1){
 						renameTo(Module.Walker_Head);
 						stateFinish();
 					}
@@ -546,7 +523,7 @@ class LocalWalkerController extends MetaformaRuntime implements ControllerInform
 			}
 		}
 			
-		if (p.getType() == Type.GRADIENT && gradient(p.getData()[0]) > p.getData()[1]) {
+		if (p.getType() == Type.GRADIENT && varGetGradient(p.getData()[0]) > p.getData()[1]) {
 			gradientTransit(p.getData()[0],p.getData()[1]);
 		}
 		
