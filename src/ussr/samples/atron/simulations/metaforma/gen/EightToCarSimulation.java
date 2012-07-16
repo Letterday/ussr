@@ -1,108 +1,159 @@
-//package ussr.samples.atron.simulations.metaforma.gen;
-//import java.awt.Color;
-//import java.util.ArrayList;
+package ussr.samples.atron.simulations.metaforma.gen;
+import java.awt.Color;
+import java.util.ArrayList;
+
+import ussr.description.Robot;
+import ussr.description.geometry.VectorDescription;
+import ussr.description.setup.ModulePosition;
+import ussr.model.Controller;
+import ussr.model.debugging.ControllerInformationProvider;
+import ussr.physics.PhysicsFactory;
+import ussr.physics.PhysicsSimulation;
+import ussr.physics.jme.DebugInformationPicker;
+import ussr.samples.atron.ATRON;
+import ussr.samples.atron.ATRONBuilder;
+import ussr.samples.atron.network.ATRONReflectionEventController;
+import ussr.samples.atron.simulations.metaforma.gen.Clover2Controller.StateOperation;
+import ussr.samples.atron.simulations.metaforma.lib.*;
+
+
+class EightToCarSimulation extends MetaformaSimulation {
+
+	public static void main( String[] args ) {
+		MetaformaSimulation.initSimulator();
+        new EightToCarSimulation().main();
+    }
+	
+	
+	protected Robot getRobot() {
+        ATRON a = new ATRON() {
+            public Controller createController() {
+            	return new EightToCarController();
+            }
+        };
+        return a;
+    }
+	
+	protected ArrayList<ModulePosition> buildRobot() {
+		return new ATRONBuilder().buildEight2(new VectorDescription(0,-5*ATRON.UNIT,0));
+	}
+	
+}
+
+
+//Module 0 disconnecting connector 0 to module 2
+//Module 3 disconnecting connector 4 to module 4
+//Module 4 connected to connector 6 to module 3
+//Module 6 disconnecting connector 2 to module 5
+//Module 0 connected to connector 0 to module 6
 //
-//import ussr.description.Robot;
-//import ussr.description.geometry.VectorDescription;
-//import ussr.description.setup.ModulePosition;
-//import ussr.model.Controller;
-//import ussr.model.debugging.ControllerInformationProvider;
-//import ussr.physics.PhysicsFactory;
-//import ussr.physics.PhysicsSimulation;
-//import ussr.physics.jme.DebugInformationPicker;
-//import ussr.samples.atron.ATRON;
-//import ussr.samples.atron.ATRONBuilder;
-//import ussr.samples.atron.network.ATRONReflectionEventController;
-//import ussr.samples.atron.simulations.metaforma.lib.*;
-//
-//
-//class EightToCarSimulation extends MetaformaSimulation {
-//
-//	public static void main( String[] args ) {
-//		MetaformaSimulation.initSimulator();
-//        new EightToCarSimulation().main();
-//    }
-//	
-//	
-//	protected Robot getRobot() {
-//        ATRON a = new ATRON() {
-//            public Controller createController() {
-//            	return new EightToCarController();
-//            }
-//        };
-//        return a;
-//    }
-//	
-//	protected ArrayList<ModulePosition> buildRobot() {
-//		return new ATRONBuilder().buildEight2(new VectorDescription(0,-5*ATRON.UNIT,0));
-//	}
-//	
-//}
-//
-//
-//
-//class EightToCarController extends MetaformaController implements ControllerInformationProvider {
-//
-//	public void handleStates () {
-//    switch (state) {
-//    	
-//    	case 0: 
-//    		disconnect (Module.Floor_0, Module.Floor_1);
-//    		break;
-//    	
-//    	case 1:
-//    		disconnect (Module.Floor_3, Module.Floor_5);
-//    		break;
-//    		
-//    	case 2: 
-//    		rotate (Module.Floor_3, -90);
-//    		break;
-//    	
-//    	case 3: 
-//    		rotate (Module.Floor_4, 90);
-//    		break;
-//    	
-//    	case 4: 
-//    		connect (Module.Floor_4, Module.Floor_6);
-//    		break;	
-//    		
-//     	case 5: 
-//     		rotate (Module.Floor_1, -90);
-//    		break;	
-//    		
-//     	case 6: 
-//     		rotate (Module.Floor_4, 180);
-//    		break;	
-//    			
-//    		
-//    	case 14: 
-//        	connect (Module.Floor_4, Grouping.Floor);
-//        	break;
-//    		
-//    	case 15: 
-//    		disconnect (Module.Floor_4, Module.Floor_6);
-//    		break;
-//    	case 116: 
-//    		rotate (Module.Floor_5, -90);
-//    		break;
-//    	
-//    }
-//   }
-//  
-//  public void setColors () {
-//		setModuleColors (Module.Floor_0,new Color[]{Color.decode("#00FFFF"),Color.decode("#FFFF00")}); 
-//		setModuleColors (Module.Floor_3,new Color[]{Color.decode("#009999"),Color.decode("#999900")}); 
-//		setModuleColors (Module.Floor_6,new Color[]{Color.decode("#003333"),Color.decode("#333300")}); 
-//		
-//		addStructureColors (new Color[]{Color.decode("#0000FF"),Color.decode("#FF0000")});
-//		
-//	}
-//
-//public boolean connectConstraint(int i, int j) {
-//	return false;
-//}
-//
-//
-//
-//
-//}
+//Module 6 disconnecting connector 6 to module 4
+//Module 5 connected to connector 4 to module 6
+//Module 2 connected to connector 4 to module 6
+//Module 1 connected to connector 4 to module 4
+//Module 4 disconnecting connector 6 to module 3
+
+//Module 3 disconnecting connector 6 to module 1
+//Module 1 connected to connector 6 to module 3
+//Module 3 disconnecting connector 0 to module 5
+//Module 3 disconnecting connector 2 to module 2
+
+class EightToCarController extends MetaformaRuntime implements ControllerInformationProvider {
+
+	public void handleStates () {
+		if (stateInstruction(0)) {	
+    		disconnectPart (Module.Floor_0, NORTH, new RunSeq(this));
+		}
+		
+		if (stateInstruction(1)) {	
+    		disconnectPart (Module.Floor_3, SOUTH, new RunSeq(this));
+		}
+		
+		if (stateInstruction(2)) {	
+    		connectPart (Module.Floor_4, SOUTH&MALE&EAST, new RunSeq(this));
+		}
+		
+		if (stateInstruction(3)) {	
+    		disconnectPart (Module.Floor_6, 2, new RunSeq(this));
+		}
+		
+		if (stateInstruction(4)) {	
+    		connectPart (Module.Floor_0, 0, new RunSeq(this));
+		}
+		
+		if (stateInstruction(5)) {	
+    		disconnectPart (Module.Floor_6, 6, new RunSeq(this));
+		}
+		
+		if (stateInstruction(6)) {	
+    		connectPart (Module.Floor_5, 4, new RunSeq(this));
+		}
+		
+		if (stateInstruction(7)) {	
+    		connectPart (Module.Floor_2, 4, new RunSeq(this));
+		}
+		
+		if (stateInstruction(8)) {	
+    		connectPart (Module.Floor_1, 4, new RunSeq(this));
+		}
+		
+		if (stateInstruction(9)) {	
+    		disconnectPart (Module.Floor_4, 6, new RunSeq(this));
+		}
+		
+		if (stateInstruction(10)) {	
+    		disconnectPart (Module.Floor_3, 6, new RunSeq(this));
+		}
+		
+		if (stateInstruction(11)) {	
+    		connectPart (Module.Floor_6, 1, new RunSeq(this));
+		}
+		
+		if (stateInstruction(12)) {	
+    		disconnectPart (Module.Floor_3, 0, new RunSeq(this));
+		}
+		
+		if (stateInstruction(13)) {	
+    		disconnectPart (Module.Floor_3, 2, new RunSeq(this));
+		}
+    
+   }
+  
+ 
+	
+	@Override
+	public void handleEvents() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	@Override
+	public void handleSyncs() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	@Override
+	public void init() {
+		stateOperationInit(StateOperation.DEFAULT);
+		Packet.operationHolder = StateOperation.DEFAULT;
+		Packet.varHolder = Var.DEFAULT;
+		
+		setModuleColors (Module.Floor_0,new Color[]{Color.decode("#00FFFF"),Color.decode("#FFFF00")}); 
+		setModuleColors (Module.Floor_3,new Color[]{Color.decode("#009999"),Color.decode("#999900")}); 
+		setModuleColors (Module.Floor_6,new Color[]{Color.decode("#003333"),Color.decode("#333300")}); 
+		
+		setDefaultColors(new Color[]{Color.decode("#0000FF"),Color.decode("#FF0000")});
+		
+	}
+	
+	@Override
+	protected void receiveMessage(Packet p, int connector) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+
+}
