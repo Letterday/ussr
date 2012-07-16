@@ -50,13 +50,6 @@ public class MetaformaASEController extends MetaformaReflectionEventController {
 
 
 	@Override
-	public String getOpStateName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	@Override
 	protected void receiveMessage(Packet p, int connector) {
 		// TODO Auto-generated method stub
 		

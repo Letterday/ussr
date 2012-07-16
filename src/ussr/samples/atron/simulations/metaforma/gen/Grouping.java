@@ -5,7 +5,7 @@ import java.util.Set;
 
 import ussr.samples.atron.simulations.metaforma.lib.IModuleHolder;
 
-public enum Grouping implements IModuleHolder{Floor,Walker,ALL, Clover, Left, Right, Struct, None;
+public enum Grouping implements IModuleHolder{Floor,Walker,ALL, Clover, Left, Right, Struct, None, Uplifter;
 	
 
 	@Override

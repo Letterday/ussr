@@ -40,6 +40,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	private boolean stateHasReceivedBroadcast = false;
 	private boolean stateConnectorNearbyCallDisabled = false; // For connecting to neighbors
 	
+	protected float stateStartNext; // Used to wait before entering new state
 	
 	private boolean stateCurrentFinished = false;
 	
@@ -62,20 +63,20 @@ public abstract class MetaformaController extends ATRONController implements Con
 		if (switchNorthSouth) {
 			ret = (byte) ((ret + 4)%8);
 		}
-		if (switchEastWest) {
-			if (ret >= 4) {
-				ret = (byte) (((ret + 2)%4 )+ 4);
-			}
-			else {
-				ret = (byte) ((ret + 2)%4);
-			}
+		if (switchEastWestN && ret <= 3) {
+			ret = (byte) ((ret + 2)%4);
 		}
+		if (switchEastWestS && ret > 4) {
+			ret = (byte) ((ret + 2)%4 + 4);
+		}
+		
 		return ret;
 	}
 	
 	private Module previousName;
 	
-	private boolean switchEastWest;
+	private boolean switchEastWestN;
+	private boolean switchEastWestS;
 	private boolean switchNorthSouth;
 	private byte msgFilter;
 	private boolean stateOperationCoordinate = false;
@@ -95,6 +96,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	protected Scheduler scheduler = new Scheduler(this);
 	private IStateOperation stateOperationReceived;
 	
+	
 	public boolean stateOperation(IStateOperation state) {
 		return stateOperation == state;
 	}
@@ -112,27 +114,48 @@ public abstract class MetaformaController extends ATRONController implements Con
 		return stateInstruction == state && !stateIsFinished();	
 	}
 	
-	public void switchEastWest () {
-		switchEastWest =! switchEastWest;
-		notification("$$$ Switch East West");
+	public void switchEastWest (boolean isCorrect, boolean southSide) {
+		String side = southSide ? " southside " : " northside ";
+		String correct = isCorrect ? " correct " : " incorrect ";
+		notification("$$$ Switch East West " + side + correct);
+		if (southSide) {
+			if (!isCorrect) {
+				switchEastWestS =! switchEastWestS;
+				if (super.getAngle() == 0) {
+					switchEastWestN =! switchEastWestN;
+				} 
+			}
+			else if (super.getAngle() != 0) {
+				switchEastWestN =! switchEastWestN;
+			}
+			
+		}
+		else {
+			if (!isCorrect) {
+				switchEastWestN =! switchEastWestN;
+				if (super.getAngle() == 0) {
+					switchEastWestS = !switchEastWestS;
+				} 
+			}
+			else if (super.getAngle() != 0) {
+				switchEastWestS =! switchEastWestS;
+			}
+		}
 		
-		neighbors.updateSymmetryEW();
-		
+		neighbors.updateSymmetryEW(false);
 		colorize();
-
-	}
-	
-	
-	
+	}	
 	
 	public void switchNorthSouth () {
 		 switchNorthSouth =! switchNorthSouth;
 		 notification("$$$ Switch North South");
-		 
 		 neighbors.updateSymmetryNS();
-		 
 		 colorize();
 	}
+	
+	public int getAngle() {
+    	return super.getAngle() + ((switchEastWestN ^ switchEastWestS) ? 180 : 0) %360;
+    }
 	
 	public void gradientTransit(IVar id) {
 		notification("@ Gradient " + id + " transit.");
@@ -818,7 +841,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		out.append("operation coordinator: " + stateOperationCoordinate);
 		out.append("\n");
 		
-		out.append("angle: " + getAngle());
+		out.append("angle: " + getAngle() + " ("+super.getAngle()+")");
 		out.append("\n");
 		
 		out.append("interval: " + scheduler.intervalMs);
@@ -829,8 +852,9 @@ public abstract class MetaformaController extends ATRONController implements Con
 		
 		out.append("orientation flips: ");
 		String flip = "";
-		if (switchNorthSouth) flip = "NORTH-SOUTH ";
-		if (switchEastWest) flip = "EAST-WEST";
+		if (switchNorthSouth) flip += "NORTH-SOUTH ";
+		if (switchEastWestN) flip += "EAST-WEST-N ";
+		if (switchEastWestS) flip += "EAST-WEST-S ";
 		
 		if (flip.equals("")) {
 			flip = "<none>";
