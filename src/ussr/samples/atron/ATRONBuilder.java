@@ -166,13 +166,13 @@ public class ATRONBuilder {
     }
     
     public ArrayList<ModulePosition> buildEight2(VectorDescription position) {
-        mPos.add(new ModulePosition("Floor_6", aPos(0,0,0,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("Floor_5", aPos(1,0,-1,position), ATRON.ROTATION_NS));
-        mPos.add(new ModulePosition("Floor_4", aPos(-1,0,-1,position), ATRON.ROTATION_NS));
-        mPos.add(new ModulePosition("Floor_3", aPos(0,0,-2,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("Floor_2", aPos(1,0,-3,position), ATRON.ROTATION_NS));
-        mPos.add(new ModulePosition("Floor_1", aPos(-1,0,-3,position), ATRON.ROTATION_NS));
-        mPos.add(new ModulePosition("Floor_0", aPos(0,0,-4,position), ATRON.ROTATION_EW));
+        mPos.add(new ModulePosition("Floor_0", aPos(0,0,0,position), ATRON.ROTATION_EW));
+        mPos.add(new ModulePosition("Floor_1", aPos(1,0,1,position), ATRON.ROTATION_NS));
+        mPos.add(new ModulePosition("Floor_2", aPos(1,0,-1,position), ATRON.ROTATION_NS));
+        mPos.add(new ModulePosition("Floor_3", aPos(2,0,0,position), ATRON.ROTATION_EW));
+        mPos.add(new ModulePosition("Floor_4", aPos(3,0,1,position), ATRON.ROTATION_NS));
+        mPos.add(new ModulePosition("Floor_5", aPos(3,0,-1,position), ATRON.ROTATION_NS));
+        mPos.add(new ModulePosition("Floor_6", aPos(4,0,0,position), ATRON.ROTATION_EW));
         return mPos;
     }
     

@@ -60,13 +60,25 @@ class EightToCarSimulation extends MetaformaSimulation {
 
 class EightToCarController extends MetaformaRuntime implements ControllerInformationProvider {
 
+	enum StateOperation implements IStateOperation {
+		DEFAULT, MOVE;
+
+		public byte ord() {
+			return (byte)ordinal();
+		}
+
+		public IStateOperation fromByte(byte b) {
+			return values()[b];
+		}
+	}
+	
 	public void handleStates () {
 		if (stateInstruction(0)) {	
     		disconnectPart (Module.Floor_0, NORTH, new RunSeq(this));
 		}
 		
 		if (stateInstruction(1)) {	
-    		disconnectPart (Module.Floor_3, SOUTH, new RunSeq(this));
+    		disconnectPart (Module.Floor_3, SOUTH&MALE&WEST, new RunSeq(this));
 		}
 		
 		if (stateInstruction(2)) {	
@@ -74,47 +86,47 @@ class EightToCarController extends MetaformaRuntime implements ControllerInforma
 		}
 		
 		if (stateInstruction(3)) {	
-    		disconnectPart (Module.Floor_6, 2, new RunSeq(this));
+    		disconnectPart (Module.Floor_6, NORTH&MALE&EAST, new RunSeq(this));
 		}
 		
 		if (stateInstruction(4)) {	
-    		connectPart (Module.Floor_0, 0, new RunSeq(this));
+    		connectPart (Module.Floor_0, NORTH, new RunSeq(this));
 		}
 		
 		if (stateInstruction(5)) {	
-    		disconnectPart (Module.Floor_6, 6, new RunSeq(this));
+    		disconnectPart (Module.Floor_6, SOUTH&MALE&EAST, new RunSeq(this));
 		}
 		
 		if (stateInstruction(6)) {	
-    		connectPart (Module.Floor_5, 4, new RunSeq(this));
+    		connectPart (Module.Floor_5, SOUTH&MALE&WEST, new RunSeq(this));
 		}
 		
 		if (stateInstruction(7)) {	
-    		connectPart (Module.Floor_2, 4, new RunSeq(this));
+    		connectPart (Module.Floor_2, SOUTH&MALE&WEST, new RunSeq(this));
 		}
 		
 		if (stateInstruction(8)) {	
-    		connectPart (Module.Floor_1, 4, new RunSeq(this));
+    		connectPart (Module.Floor_1, SOUTH&MALE&WEST, new RunSeq(this));
 		}
 		
 		if (stateInstruction(9)) {	
-    		disconnectPart (Module.Floor_4, 6, new RunSeq(this));
+    		disconnectPart (Module.Floor_4, SOUTH&MALE&EAST, new RunSeq(this));
 		}
 		
 		if (stateInstruction(10)) {	
-    		disconnectPart (Module.Floor_3, 6, new RunSeq(this));
+    		disconnectPart (Module.Floor_3, SOUTH&MALE&EAST, new RunSeq(this));
 		}
 		
 		if (stateInstruction(11)) {	
-    		connectPart (Module.Floor_6, 1, new RunSeq(this));
+    		connectPart (Module.Floor_6, SOUTH&MALE&WEST, new RunSeq(this));
 		}
 		
 		if (stateInstruction(12)) {	
-    		disconnectPart (Module.Floor_3, 0, new RunSeq(this));
+    		disconnectPart (Module.Floor_3, NORTH&MALE&WEST, new RunSeq(this));
 		}
 		
 		if (stateInstruction(13)) {	
-    		disconnectPart (Module.Floor_3, 2, new RunSeq(this));
+    		disconnectPart (Module.Floor_3, NORTH&MALE&EAST, new RunSeq(this));
 		}
     
    }

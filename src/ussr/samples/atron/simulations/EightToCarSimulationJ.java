@@ -685,6 +685,7 @@ public class EightToCarSimulationJ extends GenericATRONSimulation {
         }
 
         private void doRotate(int i) {
+        	System.out.println(getMyID() "rotate " + i);
             this.rotate(i);
             if(!USE_BLOCKING_ROTATE) {
                 while (!isRotating()) super.yield();
