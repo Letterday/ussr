@@ -90,7 +90,7 @@ class EightToCarController extends MetaformaRuntime implements ControllerInforma
 			stateInstrBroadcastNext();
 		}
 		
-		if (stateInstruction(1)) {
+		if (stateInstructionPar(1,7)) {
 			if (nbs().size() == 4) {
 				renameTo(Module.Floor_3);
 				commit(true);
@@ -119,27 +119,23 @@ class EightToCarController extends MetaformaRuntime implements ControllerInforma
 				renameTo(Module.Floor_6);
 				commit(true);
 			}
-			consensusIfCompletedNextState(7);
 		}
 		
+		if (stateInstructionPar(2,2)) {	
+	    	disconnectPart (Module.Floor_0, NORTH&MALE&WEST, new RunPar(this));
+	    	disconnectPart (Module.Floor_3, SOUTH&MALE&WEST, new RunPar(this));
 		
+		}
 		
-//		if (stateInstruction(0)) {	
-//    		disconnectPart (Module.Floor_0, NORTH&MALE&WEST, new RunPar(this));
-//    		disconnectPart (Module.Floor_3, SOUTH&MALE&WEST, new RunPar(this));
-//    		consensusIfCompletedNextState(2);
-//		}
-//		
-//		if (stateInstruction(1)) {	
-//    		rotate(Module.Floor_3,90,new RunPar(this));
-//    		rotate(Module.Floor_4,90,new RunPar(this));
-//    		consensusIfCompletedNextState(2);
-//		}
-//		
-//		if (stateInstruction(2)) {	
-//    		connectPart (Module.Floor_4, SOUTH&MALE&EAST, new RunSeq(this));
-//		}
-//		
+		if (stateInstructionPar(3,2)) {	
+    		rotate(Module.Floor_3,90,new RunPar(this));
+    		rotate(Module.Floor_4,90,new RunPar(this));
+		}
+				
+		if (stateInstruction(4)) {	
+    		connectPart (Module.Floor_4, SOUTH&MALE&EAST, new RunSeq(this));
+		}
+		
 //		if (stateInstruction(3)) {
 //			rotate(Module.Floor_1,90,new RunSeq(this));
 //		}

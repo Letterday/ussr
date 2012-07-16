@@ -95,12 +95,17 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	protected Scheduler scheduler = new Scheduler(this);
 	private IStateOperation stateOperationReceived;
+	private float timeLastPrintConsensus;
 	
 	
 	public boolean stateOperation(IStateOperation state) {
 		return stateOperation == state;
 	}
 	
+	public boolean stateInstructionPar(int state, int consensusCount) {
+		consensusIfCompletedNextState(consensusCount);
+		return stateInstruction(state);
+	}
 		
 	public boolean stateInstruction(int state) {
 		if (stateInstructionSimple(state)) {
@@ -653,7 +658,11 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	protected void consensusIfCompletedNextState (int count, int degradePerc) {
 		float consensusToReach = count - (timeSpentInState() / 10) * (100-degradePerc)/100 * count;
-		notification("Waiting for consensus - " + consensus.bitCount() + " >= " + consensusToReach);
+		if (time() - timeLastPrintConsensus > 4) {
+			notification("Waiting for consensus - " + consensus.bitCount() + " >= " + consensusToReach);
+			timeLastPrintConsensus = time();
+		}
+		
 		if (consensus.bitCount() >= consensusToReach) {
 			stateInstrBroadcastNext();
 		}
