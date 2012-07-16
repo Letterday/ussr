@@ -40,23 +40,32 @@ class EightToCarSimulation extends MetaformaSimulation {
 	
 }
 
-
+//
 //Module 0 disconnecting connector 0 to module 2
 //Module 3 disconnecting connector 4 to module 4
+//Module 3 rotate -1
+//Module 4 rotate -1
 //Module 4 connected to connector 6 to module 3
+//Module 1 rotate -1
 //Module 6 disconnecting connector 2 to module 5
+//Module 4 rotate 1
+//Module 6 rotate 1
 //Module 0 connected to connector 0 to module 6
-//
 //Module 6 disconnecting connector 6 to module 4
+//Module 0 rotate -1
+//Module 1 rotate 1
+//Module 0 rotate 1
 //Module 5 connected to connector 4 to module 6
 //Module 2 connected to connector 4 to module 6
 //Module 1 connected to connector 4 to module 4
 //Module 4 disconnecting connector 6 to module 3
-
 //Module 3 disconnecting connector 6 to module 1
+//Module 1 rotate 1
+//Module 3 rotate 1
 //Module 1 connected to connector 6 to module 3
 //Module 3 disconnecting connector 0 to module 5
 //Module 3 disconnecting connector 2 to module 2
+//Module 1 rotate 1
 
 class EightToCarController extends MetaformaRuntime implements ControllerInformationProvider {
 
@@ -73,35 +82,85 @@ class EightToCarController extends MetaformaRuntime implements ControllerInforma
 	}
 	
 	public void handleStates () {
-		if (stateInstruction(0)) {	
-    		disconnectPart (Module.Floor_0, NORTH, new RunSeq(this));
+		if (stateInstruction(0)) {
+			for (int i=0; i<3; i++) {
+				discoverNeighbors();
+			}
+			
+			stateInstrBroadcastNext();
 		}
 		
-		if (stateInstruction(1)) {	
-    		disconnectPart (Module.Floor_3, SOUTH&MALE&WEST, new RunSeq(this));
+		if (stateInstruction(1)) {
+			if (nbs().size() == 4) {
+				renameTo(Module.Floor_3);
+				commit(true);
+			}
+			if (nbs(SOUTH&EAST).contains(Module.Floor_3)) {
+				renameTo(Module.Floor_2);
+				commit(true);
+			}
+			if (nbs(SOUTH&WEST).contains(Module.Floor_3)) {
+				renameTo(Module.Floor_1);
+				commit(true);
+			}
+			if (nbs(NORTH&EAST).contains(Module.Floor_3)) {
+				renameTo(Module.Floor_5);
+				commit(true);
+			}
+			if (nbs(NORTH&WEST).contains(Module.Floor_3)) {
+				renameTo(Module.Floor_4);
+				commit(true);
+			}
+			if (nbs(WEST&MALE).size() == 2  && nbs().size()==2) {
+				renameTo(Module.Floor_0);
+				commit(true);
+			}
+			if (nbs(EAST&MALE).size() == 2 && nbs().size()==2) {
+				renameTo(Module.Floor_6);
+				commit(true);
+			}
+			consensusIfCompletedNextState(7);
 		}
 		
-		if (stateInstruction(2)) {	
-    		connectPart (Module.Floor_4, SOUTH&MALE&EAST, new RunSeq(this));
-		}
 		
-		if (stateInstruction(3)) {	
+		
+//		if (stateInstruction(0)) {	
+//    		disconnectPart (Module.Floor_0, NORTH&MALE&WEST, new RunPar(this));
+//    		disconnectPart (Module.Floor_3, SOUTH&MALE&WEST, new RunPar(this));
+//    		consensusIfCompletedNextState(2);
+//		}
+//		
+//		if (stateInstruction(1)) {	
+//    		rotate(Module.Floor_3,90,new RunPar(this));
+//    		rotate(Module.Floor_4,90,new RunPar(this));
+//    		consensusIfCompletedNextState(2);
+//		}
+//		
+//		if (stateInstruction(2)) {	
+//    		connectPart (Module.Floor_4, SOUTH&MALE&EAST, new RunSeq(this));
+//		}
+//		
+//		if (stateInstruction(3)) {
+//			rotate(Module.Floor_1,90,new RunSeq(this));
+//		}
+		
+		if (stateInstruction(14)) {	
     		disconnectPart (Module.Floor_6, NORTH&MALE&EAST, new RunSeq(this));
 		}
 		
-		if (stateInstruction(4)) {	
+		if (stateInstruction(15)) {	
     		connectPart (Module.Floor_0, NORTH, new RunSeq(this));
 		}
 		
-		if (stateInstruction(5)) {	
+		if (stateInstruction(51)) {	
     		disconnectPart (Module.Floor_6, SOUTH&MALE&EAST, new RunSeq(this));
 		}
 		
-		if (stateInstruction(6)) {	
+		if (stateInstruction(61)) {	
     		connectPart (Module.Floor_5, SOUTH&MALE&WEST, new RunSeq(this));
 		}
 		
-		if (stateInstruction(7)) {	
+		if (stateInstruction(71)) {	
     		connectPart (Module.Floor_2, SOUTH&MALE&WEST, new RunSeq(this));
 		}
 		

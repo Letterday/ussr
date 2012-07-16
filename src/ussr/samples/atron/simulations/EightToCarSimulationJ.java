@@ -222,7 +222,7 @@ public class EightToCarSimulationJ extends GenericATRONSimulation {
                     //while (isRotating());
                     token[0]=9;
                     break;
-                case 9:
+                case 9: 
                     connect_module(CORRECT_CAR_WHEELS?6:0,3);
                     while (!isConnected(CORRECT_CAR_WHEELS?6:0)) super.yield();
                     token[0]=10;
