@@ -13,7 +13,7 @@ import ussr.physics.jme.DebugInformationPicker;
 import ussr.samples.atron.ATRON;
 import ussr.samples.atron.ATRONBuilder;
 import ussr.samples.atron.network.ATRONReflectionEventController;
-import ussr.samples.atron.simulations.metaforma.gen.Clover2Controller.StateOperation;
+import ussr.samples.atron.simulations.metaforma.gen.CloverFlipthroughController.StateOperation;
 import ussr.samples.atron.simulations.metaforma.lib.*;
 
 
@@ -127,12 +127,15 @@ class EightToCarController extends MetaformaRuntime implements ControllerInforma
 		
 		}
 		
-		if (stateInstructionPar(3,2)) {	
-    		rotate(Module.Floor_3,90,new RunPar(this));
-    		rotate(Module.Floor_4,90,new RunPar(this));
+		if (stateInstruction(3)) {	
+    		rotate(Module.Floor_3,-90,new RunSeq(this));
+		}
+		
+		if (stateInstruction(4)) {	
+    		rotate(Module.Floor_4,90,new RunSeq(this));
 		}
 				
-		if (stateInstruction(4)) {	
+		if (stateInstruction(5)) {	
     		connectPart (Module.Floor_4, SOUTH&MALE&EAST, new RunSeq(this));
 		}
 		

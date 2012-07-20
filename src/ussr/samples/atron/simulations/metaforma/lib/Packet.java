@@ -10,8 +10,8 @@ public class Packet implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private static final int HEADER_LENGTH = 8;
-	public static IStateOperation operationHolder;
-	public static IVar varHolder;
+	private static IStateOperation operationHolder;
+	private static IVar varHolder;
 	
 	Type type = Type.DISCOVER;
 	private Module source;
@@ -21,6 +21,8 @@ public class Packet implements Serializable {
 	private IStateOperation stateOperation = null;
 	private byte stateInstruction = -1;
 	public byte[] data = new byte[]{};
+
+	
 
 
 	public Packet (Module s, Module d) {
@@ -140,7 +142,7 @@ public class Packet implements Serializable {
 		return t.equals(type);
 	}
 	
-	private Dir getDir () {
+	public Dir getDir () {
 		return dir;
 	}
 	
@@ -215,6 +217,10 @@ public class Packet implements Serializable {
 		return getDir() == Dir.REQ;
 	}
 
+	public static void setController (MetaformaController c) {
+		varHolder = c.getVarHolder();
+		operationHolder = c.getStateOperation();
+	}
 	
 	
 }

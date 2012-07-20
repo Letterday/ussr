@@ -5,8 +5,6 @@ public enum Type {
 		STATE_OPERATION_NEW, 
 		DISCOVER,
 		GRADIENT,
-		GLOBAL_VAR, 
-		GRADIENT_RESET,
 		CONSENSUS,
 		FIX_SYMMETRY;
 		
@@ -17,9 +15,5 @@ public enum Type {
 	public byte ord() {
 		return (byte)ordinal();
 	}
-	
-	public boolean shouldBroadcast() {
-		//return equals(STATE_INSTR_INCR) || equals(STATE_INSTR_RESET) || equals(STATE_OPERATION_NEW)  || equals(STATE_PENDING_INCR);
-		return !equals(DISCOVER);
-	}
+
 }

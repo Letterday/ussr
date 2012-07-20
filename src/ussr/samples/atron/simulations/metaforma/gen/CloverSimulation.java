@@ -64,6 +64,8 @@ class CloverController extends MetaformaRuntime implements ControllerInformation
 		}
 	}
 	
+	
+	
 	public void handleStates () {
 		if (stateOperation(StateOperation.DEFAULT)) {
 			
@@ -152,8 +154,8 @@ class CloverController extends MetaformaRuntime implements ControllerInformation
 		setDefaultColors (new Color[]{Color.decode("#0000FF"),Color.decode("#FF0000")});
 		setMessageFilter(Type.DISCOVER.bit() |Type.STATE_OPERATION_NEW.bit());
 		stateOperationInit(StateOperation.DEFAULT);
-		Packet.operationHolder = StateOperation.DEFAULT;
-		Packet.varHolder = Var.DEFAULT;
+		
+		Packet.setController(this);
 	}
 	
 	@Override
