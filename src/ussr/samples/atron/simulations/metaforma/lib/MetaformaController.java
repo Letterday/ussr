@@ -44,12 +44,112 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	private boolean stateCurrentFinished = false;
 	
-//	protected Map<Byte,Byte> varsGlobal = new HashMap<Byte,Byte>();
 	protected Map<IVar,Byte> varsLocal = new HashMap<IVar,Byte>(); 
 	
 	protected BigInteger consensus = BigInteger.ZERO; 
 		
 	protected static final int MAX_BYTE = Byte.MAX_VALUE;
+	
+	private Module previousName;
+	
+	private boolean switchEastWestN;
+	private boolean switchEastWestS;
+	private boolean switchNorthSouth;
+	
+	private byte msgFilter;
+	private boolean stateOperationCoordinate = false;
+
+	protected boolean stateChangeConsensus;
+	private int stateInstructionReceived;
+ 
+	
+	protected Scheduler scheduler = new Scheduler(this);
+	private IStateOperation stateOperationReceived;
+	private float timeLastPrintConsensus;
+	private IVar varHolder;
+	private IStateOperation stateOperationHolder;
+	
+	protected boolean fixedYet;
+	private HashMap<Byte,Float> doRepeat = new HashMap<Byte,Float>();
+	public IVar Ivar;
+	public IStateOperation IstateOperation;
+	private HashMap<String,Boolean> stateBools = new HashMap<String,Boolean>();
+	private HashMap<String,Byte> stateBytes = new HashMap<String,Byte>();
+	
+	protected boolean checkState(IStateOperation stateOperation,	byte stateInstruction) {
+		return getStateInstruction() == stateInstruction && getStateOperation().equals(stateOperation);
+	}
+	
+	public boolean stateGetBoolean(String name) {
+		if (!stateBools.containsKey(name)) {
+			stateBools.put(name, false);
+		}
+		return stateBools.get(name);
+	}
+	
+	public void stateSetVar (String name, byte value) {
+		stateBytes.put(name, value);
+	}
+	
+	public void stateSetVar (String name, boolean value) {
+		stateBools.put(name, value);
+	}
+	
+	public byte stateGetByte(String name) {
+		if (!stateBytes.containsKey(name)) {
+			stateBytes.put(name, (byte)0);
+		}
+		return stateBytes.get(name);
+	}
+	
+	
+	public boolean freqLimit (float interval, int nr) {
+		if (!doRepeat.containsKey((byte)nr) || time() - doRepeat.get((byte)nr)  > interval/1000) {
+			doRepeat.put((byte)nr, time());
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	
+	public boolean doRepeat (int state, float interval, int nr, int consensusCount) {
+		consensusIfCompletedNextState(consensusCount);
+		return (stateInstruction == state && freqLimit(interval, nr));
+	}
+	
+	public boolean stateOperation(IStateOperation state) {
+		return stateOperation == state;
+	}
+	
+	public boolean doOnce(int state, int consensusCount) {
+		if (getStateInstruction() == state) {
+			consensusIfCompletedNextState(consensusCount);
+		}
+		return doOnce(state);
+	}
+		
+	public boolean doOnce(int state) {
+		if (stateInstructionSimple(state)) {
+			discoverNeighbors();
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean stateInstructionSimple (int state) {
+		return stateInstruction == state && !consensusMyself();	
+	}
+	
+	public void switchEastWest () {
+		switchEastWestN =! switchEastWestN;
+		switchEastWestS =! switchEastWestS;
+	}
+	
+
+	public void setMessageFilter (int msg) {
+		msgFilter = (byte) msg;
+	}
 	
 	protected byte C (int nr) {
 		byte ret = (byte) nr;
@@ -59,64 +159,11 @@ public abstract class MetaformaController extends ATRONController implements Con
 		if (switchEastWestN && ret <= 3) {
 			ret = (byte) ((ret + 2)%4);
 		}
-		if (switchEastWestS && ret > 4) {
+		if (switchEastWestS && ret >= 4) {
 			ret = (byte) ((ret + 2)%4 + 4);
 		}
 		
 		return ret;
-	}
-	
-	private Module previousName;
-	
-	private boolean switchEastWestN;
-	private boolean switchEastWestS;
-	private boolean switchNorthSouth;
-	private byte msgFilter;
-	private boolean stateOperationCoordinate = false;
-	private byte stateOperationMessageIdentifier;
-	private Grouping previousGrouping;
-	protected boolean stateChangeConsensus;
-	private int stateInstructionReceived;
-//	private ModuleSet all = new ModuleSet();
-
-	
-	public void setMessageFilter (int msg) {
-		msgFilter = (byte) msg;
-	}
-	
-
-	
-	protected Scheduler scheduler = new Scheduler(this);
-	private IStateOperation stateOperationReceived;
-	private float timeLastPrintConsensus;
-	private IVar varHolder;
-	private IStateOperation stateOperationHolder;
-	
-	
-	public boolean stateOperation(IStateOperation state) {
-		return stateOperation == state;
-	}
-	
-	public boolean stateInstructionPar(int state, int consensusCount) {
-		consensusIfCompletedNextState(consensusCount);
-		return stateInstruction(state);
-	}
-		
-	public boolean stateInstruction(int state) {
-		if (stateInstructionSimple(state)) {
-			discoverNeighbors();
-			return true;
-		}
-		return false;
-	}
-	
-	public boolean stateInstructionSimple (int state) {
-		return stateInstruction == state && !stateIsFinished();	
-	}
-	
-	public void switchEastWest () {
-		switchEastWestN =! switchEastWestN;
-		switchEastWestS =! switchEastWestS;
 	}
 	
 	public void switchEastWestHemisphere (boolean isCorrect, boolean southSide) {
@@ -125,31 +172,46 @@ public abstract class MetaformaController extends ATRONController implements Con
 		notification("$$$ Switch East West " + side + correct);
 		if (southSide) {
 			if (!isCorrect) {
-				switchEastWestS =! switchEastWestS;
+				switchEWS();
 				if (super.getAngle() == 0) {
-					switchEastWestN =! switchEastWestN;
+					switchEWN();
 				} 
 			}
-			else if (super.getAngle() != 0) {
-				switchEastWestN =! switchEastWestN;
+			else { 
+				if (super.getAngle() != 0) {
+					switchEWN();
+				}
 			}
 			
 		}
 		else {
 			if (!isCorrect) {
-				switchEastWestN =! switchEastWestN;
+				switchEWN();
 				if (super.getAngle() == 0) {
-					switchEastWestS = !switchEastWestS;
+					switchEWS();
 				} 
 			}
 			else if (super.getAngle() != 0) {
-				switchEastWestS =! switchEastWestS;
+				switchEWS();
 			}
 		}
 		
-		neighbors.updateSymmetryEW(false);
+		
+		
 		colorize();
 	}	
+	
+	private void switchEWN () {
+		neighbors.updateSymmetryEW(false);
+		switchEastWestN =! switchEastWestN;
+		notification("switch EW N");
+	}
+	
+	private void switchEWS () {
+		neighbors.updateSymmetryEW(true);
+		switchEastWestS =! switchEastWestS;
+		notification("switch EW S");
+	}
 	
 	public void switchNorthSouth () {
 		 switchNorthSouth =! switchNorthSouth;
@@ -273,11 +335,11 @@ public abstract class MetaformaController extends ATRONController implements Con
 		return (float) (Math.round(f * Math.pow(10,decimals)) / Math.pow(10,decimals));
 	}
 	
-	protected int pow (int base, int exp) {
+	protected static int pow (int base, int exp) {
 		return (int)Math.pow(base,exp);
 	}
 	
-	public int pow2(int i) {
+	public static int pow2(int i) {
 		return pow(2,i);
 	}
 	
@@ -322,7 +384,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	
 	public void waitAndDiscover () {
-		scheduler.invokeIfScheduled ("discoverNeighbors");
+		scheduler.invokeIfScheduled ("broadcastDiscover");
 		
 		delay(500);
 		//notification(timeLastBc + " - " + time());
@@ -351,14 +413,13 @@ public abstract class MetaformaController extends ATRONController implements Con
 		setup();
 		info = this.getModule().getDebugInformationProvider();
 		
-		scheduler.setInterval("broadcastDiscover",2000);
-		scheduler.setInterval("broadcastGradient",6000);
-		scheduler.setInterval("broadcastConsensus",2000);
-		scheduler.setInterval("broadcastSymmetry",2000);
+		scheduler.setInterval("broadcastDiscover",5000);
+		scheduler.setInterval("broadcastConsensus",5000);
+//		scheduler.setInterval("broadcastSymmetry",2000);
 		
 		setDefaultColors (new Color[]{Color.decode("#0000FF"),Color.decode("#FF0000")});
 		
-		//setCommFailureRisk(0.25f,0.25f,0.98f,0.125f);
+		setCommFailureRisk(0.25f,0.25f,0.98f,0.125f);
 		
 		init();
 		colorize();
@@ -376,6 +437,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		while (true) {
 			refresh();
 			handleStates();
+			scheduler.sync();
 			
 			if (stateInstructionReceived > stateInstruction) {
 				increaseInstrState(stateInstructionReceived);
@@ -407,7 +469,11 @@ public abstract class MetaformaController extends ATRONController implements Con
 	protected void stateInstrInitNew() {
 		// Instead of throwing all NB's away, only remove the unconnected ones
 		neighbors.deleteUnconnectedOnes();
+		stateBools.clear();
+		stateBytes.clear();
+		doRepeat.clear();
 		
+		stateStartNext = 0;
 		stateHasReceivedBroadcast = false;
 		stateConnectorNearbyCallDisabled = true;
 		stateCurrentFinished = false;
@@ -445,8 +511,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		stateOperationCoordinate  = true;
 		notification("I will be operation coordinator!");
 		scheduler.invokeNow("broadcastDiscover");
-		stateOperationMessageIdentifier = 0;
-		// why stateOperationMessageIdentifier ??
+
 		broadcast(new Packet(getId(), Module.ALL).setType(Type.STATE_OPERATION_NEW));
 	}
 	
@@ -454,7 +519,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		stateOperation = newState; 
 		stateInstrInitNew();
 		stateInstruction = 0;
-		stateOperationMessageIdentifier = 0;
+
 		notification("\n\n#######  "+ getId() + "  ##########\nnew operation state: " + stateOperation + "\n#############################\n");
 	}
 	
@@ -490,16 +555,11 @@ public abstract class MetaformaController extends ATRONController implements Con
 
 
 	
-	
-	
 	public void discoverNeighbors () {
 		scheduler.invokeNow("broadcastDiscover");
-		delay(200);
+		delay(100);
 	}
 
-//	public ModuleSet all() {
-//		return all;
-//	}
 	
 
 	public NeighborSet nbs(int connectors) {
@@ -626,12 +686,12 @@ public abstract class MetaformaController extends ATRONController implements Con
 			if (p.getType() == Type.CONSENSUS){				
 				if (!p.getDataAsInteger().or(consensus).equals(consensus)) {
 					consensus = consensus.or(p.getDataAsInteger()); 
-					scheduler.scheduleNext("broadcastConsensus");
+					//scheduler.invokeNow("broadcastConsensus");
 				}
 			}
 			else {
 				// Custom message 
-				receiveMessage (p.getType(),p.getDir(),p.getSourceConnector(),connector,p.getData());
+				receiveMessage (p.getType(),p.getStateOperation(),p.getStateInstruction(),p.getDir() == Dir.REQ,p.getSourceConnector(),connector,p.getData());
 			}
 		}
 	}
@@ -641,7 +701,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 	
 	protected void consensusIfCompletedNextState (int count, int degradePerc) {
-		float consensusToReach = count - (timeSpentInState() / 10) * (100-degradePerc)/100 * count;
+		float consensusToReach = count - (timeSpentInState() / 100) * (100-degradePerc)/100 * count;
 		if (time() - timeLastPrintConsensus > 4) {
 			notification("Waiting for consensus - " + consensus.bitCount() + " >= " + consensusToReach);
 			timeLastPrintConsensus = time();
@@ -652,10 +712,14 @@ public abstract class MetaformaController extends ATRONController implements Con
 		}
 	}
 	
-	public void commit (boolean currentStateFinshed) {
-		if (currentStateFinshed) stateCurrentFinished = true;
-		consensus = consensus.setBit(getId().ordinal());
-		scheduler.invokeNow("broadcastConsensus");
+	
+	
+	public void commit () {
+		if (consensus.setBit(getId().ordinal()) != consensus) {
+			consensus = consensus.setBit(getId().ordinal());
+			scheduler.invokeNow("broadcastConsensus");
+		}
+		
 		
 	}
 	
@@ -665,25 +729,34 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	
 	
-	protected void broadcastConsensus(boolean check) {
+	public void broadcastConsensus() {
 		if (!consensus.equals(BigInteger.ZERO)) {
 			broadcast(new Packet(getId()).setType(Type.CONSENSUS).setData(consensus));
 		}
 	}
 		
-	public void broadcastDiscover (boolean check) {
+	public void broadcastDiscover () {
 		broadcast(new Packet(getId()));
 	}
 
-	protected abstract void receiveMessage (Type type, Dir dir, byte sourceCon, byte destCon, byte[] data);
+	protected abstract void receiveMessage (Type type, IStateOperation stateOp, byte stateInstr, boolean isReq, byte sourceCon, byte destCon, byte[] data);
 
 	
 	public void broadcast (Packet p) {	
 		broadcast (p,-1);
 	}
 		
-	public void broadcast (Type t, Dir d, byte[] data) {
-		
+	public void broadcast (Type t, boolean isAck, byte[] data) {
+		Dir d = isAck ? Dir.ACK : Dir.REQ;
+		broadcast (new Packet(getId()).setType(t).setDir(d).setData(data));
+	}
+	public void unicast (int connectors, Type t, boolean isAck) {
+		unicast(connectors, t, isAck,new byte[]{});
+	}
+	
+	public void unicast (int connectors, Type t, boolean isAck, byte[] data) {
+		Dir d = isAck ? Dir.ACK : Dir.REQ;
+		unicast (new Packet(getId()).setType(t).setDir(d).setData(data),connectors);
 	}
 	
 	public void broadcast(Packet p,int exceptConnector) {
@@ -698,7 +771,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 	
 	public void unicast (Packet p, int connectors) {
-		if ((msgFilter & p.getType().bit()) != 0) notification(".unicast packet " + connectors + "(" + p.toString() + ") ");
+		if ((msgFilter & p.getType().bit()) != 0) notification(".unicast packet " + "(" + p.toString() + ") ");
 		for (byte i=0; i<8; i++) {
 			if ((connectors&pow2(i))==pow2(i)) {
 				p.setSourceConnector(i);
@@ -827,12 +900,19 @@ public abstract class MetaformaController extends ATRONController implements Con
 
 	public String getModuleInformation() {
 		StringBuffer out = new StringBuffer();
-		out.append("ID: " + getId() + "      [" + stateOperation + " #" + stateInstruction + "]" + (stateIsFinished()? " // finished" : ""));
-		out.append("\n");
 		
-		out.append("received state: #" + stateInstructionReceived);
-		out.append("\n");
+		String flipStr = "";
+		if (switchNorthSouth) flipStr += "NORTH-SOUTH ";
+		if (switchEastWestN) flipStr += "EAST-WEST-N ";
+		if (switchEastWestS) flipStr += "EAST-WEST-S ";
 		
+		if (flipStr.equals("")) {
+			flipStr = "<none>";
+		}
+		
+		out.append("ID: " + getId() + "      [" + stateOperation + " #" + stateInstruction + "]" + (stateIsFinished()? " // finished" : "") + " received: " + stateInstructionReceived + "  flips: " + flipStr);
+		out.append("\n");
+
 		out.append("operation coordinator: " + stateOperationCoordinate);
 		out.append("\n");
 		
@@ -845,22 +925,17 @@ public abstract class MetaformaController extends ATRONController implements Con
 		
 		out.append("\n");
 		
-		out.append("orientation flips: ");
-		String flip = "";
-		if (switchNorthSouth) flip += "NORTH-SOUTH ";
-		if (switchEastWestN) flip += "EAST-WEST-N ";
-		if (switchEastWestS) flip += "EAST-WEST-S ";
 		
-		if (flip.equals("")) {
-			flip = "<none>";
-		}
-		out.append(flip);
-		out.append("\n");
 		
 //		out.append("globals: " + varsGlobal);
 //		out.append("\n");
 		
 		out.append("vars: " + varsLocal);
+		out.append("\n");
+		out.append("do repeat: " + doRepeat);
+		out.append("\n");
+		
+		out.append("stateVars: " + stateBools + " - " + stateBytes);
 		out.append("\n");
 		
 		out.append("consensus (" + consensus.bitCount() + "): " + Module.fromBits(consensus));
@@ -869,18 +944,6 @@ public abstract class MetaformaController extends ATRONController implements Con
 		
 		out.append("isrotating: " + isRotating());
 		out.append("\n");
-
-//		out.append("colors: ");
-//		if (getColors() != null) {
-//			out.append("(" + getColors()[0].getRed() + "," + getColors()[0].getGreen() + "," + getColors()[0].getBlue()
-//					+ "),(" + getColors()[1].getRed() + ","
-//					+ getColors()[1].getGreen() + "," + getColors()[1].getBlue());
-//		}
-//		else {
-//			out.append("<not set>");
-//		}
-//
-//		out.append("\n");
 
 		out.append("neighbors: ");
 
@@ -906,4 +969,32 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 
 
+	protected byte min(int i, int j) {
+		return (byte) Math.min(i, j);
+	}
+
+	public static boolean isNORTH(int c) {
+		return c >= 0 && c <= 3;
+	}
+	
+	public static boolean isSOUTH(int c) {
+		return c >= 4 && c <= 7;
+	}
+	
+	public static boolean isWEST(int c) {
+		return c == 0 || c == 1 || c == 4 || c == 5;
+	}
+	
+	public static boolean isEAST(int c) {
+		return c == 2 || c == 3 || c == 6 || c == 7;
+	}
+	
+	public static boolean isMALE(int c) {
+		return c%2 == 0;
+	}
+	
+	public static boolean isFEMALE(int c) {
+		return c%2 == 1;
+	}
+	
 }

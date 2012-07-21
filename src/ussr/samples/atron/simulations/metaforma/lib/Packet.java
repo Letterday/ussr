@@ -10,9 +10,9 @@ public class Packet implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private static final int HEADER_LENGTH = 8;
-	private static IStateOperation operationHolder;
-	private static IVar varHolder;
-	
+
+	private static MetaformaController ctrl;
+
 	Type type = Type.DISCOVER;
 	private Module source;
 	private Module dest;
@@ -52,7 +52,7 @@ public class Packet implements Serializable {
 		sourceConnector = msg[2];
 		dest = Module.values()[msg[3]];
 		dir = Dir.values()[msg[4]];  
-		stateOperation = operationHolder.fromByte(msg[5]);
+		stateOperation = ctrl.IstateOperation.fromByte(msg[5]);
 		stateInstruction = msg[6];
 		
 		byte payloadLength = msg[7]; 			// the length of the payload is stored in msg[8]
@@ -98,7 +98,7 @@ public class Packet implements Serializable {
 			payload = new BigInteger(data).bitCount() + " ";
 		}
 		else if (getType() == Type.GRADIENT) {
-			payload = varHolder.fromByte(data[0]) + "," + data[1]  + " ";
+			payload = ctrl.Ivar.fromByte(data[0]) + "," + data[1]  + " ";
 		}
 		else {
 			for (int i=0; i<data.length; i++) {
@@ -218,8 +218,7 @@ public class Packet implements Serializable {
 	}
 
 	public static void setController (MetaformaController c) {
-		varHolder = c.getVarHolder();
-		operationHolder = c.getStateOperation();
+		ctrl = c;
 	}
 	
 	

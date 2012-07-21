@@ -6,7 +6,7 @@ public enum Type {
 		DISCOVER,
 		GRADIENT,
 		CONSENSUS,
-		FIX_SYMMETRY;
+		SYMMETRY;
 		
 	public byte bit() {
 		return (byte)Math.pow(2,(byte)ordinal());
