@@ -87,37 +87,37 @@ class CloverController extends MetaformaRuntime implements ControllerInformation
 			}
 
 			if (doOnce(1)) {
-				disconnect (Module.Clover_West, Module.Clover_South, new RunSeq(this));
+				disconnect (Module.Clover_West, Module.Clover_South);
 			}
 			
 			if (doOnce(2)) {
-				rotate (Module.Clover_East,180, new RunSeq(this));
+				rotate (Module.Clover_East,180);
 			}
 			
 			if (doOnce(3)) {
-				rotate (Module.Clover_North,180, new RunSeq(this));
+				rotate (Module.Clover_North,180);
 			}
 			
 			if (doOnce(4)) {
-				connect (Module.Clover_East,Grouping.Floor,new RunSeq(this));
+				connect (Module.Clover_East,Grouping.Floor);
 			}
 			
 			if (doOnce(5)) {
-				connect (Module.Clover_South,Grouping.Floor,new RunSeq(this));
+				connect (Module.Clover_South,Grouping.Floor);
 			}
  
 			if (doOnce(6,2)) {
-				disconnect (Module.Clover_West,Grouping.Floor,new RunPar(this));
-				disconnect (Module.Clover_North,Grouping.Floor,new RunPar(this));
+				disconnect (Module.Clover_West,Grouping.Floor);
+				disconnect (Module.Clover_North,Grouping.Floor);
 			}
 			
 			if (doOnce(7,2)) {
-				rotate (Module.Clover_North,180,new RunPar(this));
-				rotate (Module.Clover_East,180,new RunPar(this));
+				rotate (Module.Clover_North,180);
+				rotate (Module.Clover_East,180);
 			}
 			
 			if (doOnce(8)) {
-				connect (Module.Clover_South,Module.Clover_West, new RunSeq(this));
+				connect (Module.Clover_South,Module.Clover_West);
 			}
 			
 			if (doOnce(9,4)) {
