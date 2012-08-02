@@ -48,7 +48,7 @@ public class Scheduler {
 	}
 
 	public void invokeIfScheduled(String func) {
-		ctrl.notification(".invokeIfScheduled(" + func + ")");
+		//ctrl.notification(".invokeIfScheduled(" + func + ")");
 		if (isScheduled(func)) {
 			ctrl.notification(".YES(" + func + ")");
 			invoke (func);

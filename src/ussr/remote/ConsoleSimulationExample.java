@@ -9,7 +9,7 @@ import java.rmi.RemoteException;
 import ussr.remote.facade.ActiveSimulation;
 import ussr.remote.facade.RemotePhysicsSimulation;
 import ussr.samples.atron.simulations.CrawlerSimulation;
-import ussr.samples.atron.simulations.SnakeCarDemo;
+//import ussr.samples.atron.simulations.SnakeCarDemo;
 
 /**
  * Frontend example: a main application that starts a single simulation using the remote facility 

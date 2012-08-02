@@ -9,7 +9,7 @@ import java.math.BigInteger;
 public class Packet implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	private static final int HEADER_LENGTH = 8;
+	private static final int HEADER_LENGTH = 9;
 
 	private static MetaformaController ctrl;
 
@@ -21,7 +21,7 @@ public class Packet implements Serializable {
 	private IStateOperation stateOperation = null;
 	private byte stateInstruction = -1;
 	public byte[] data = new byte[]{};
-
+	private byte metaId = 0; // 0 is for everyone
 	
 
 
@@ -44,6 +44,7 @@ public class Packet implements Serializable {
 		dir = p.getDir();
 		stateOperation = p.getStateOperation();
 		stateInstruction = p.getStateInstruction();
+		metaId = p.getMetaId();
 	}
 	
 	public Packet (byte[] msg) {
@@ -54,8 +55,9 @@ public class Packet implements Serializable {
 		dir = Dir.values()[msg[4]];  
 		stateOperation = ctrl.IstateOperation.fromByte(msg[5]);
 		stateInstruction = msg[6];
+		metaId = msg[7];
 		
-		byte payloadLength = msg[7]; 			// the length of the payload is stored in msg[8]
+		byte payloadLength = msg[8]; 			// the length of the payload is stored in msg[8]
 		data = new byte[payloadLength];		
 		
 		for (int i=0; i<payloadLength; i++) {
@@ -92,7 +94,7 @@ public class Packet implements Serializable {
 
 		
 	public String toString () {
-		String header = getDir().toString() + " " + getType().toString() + " from: " + getSource().toString() + "(over " + sourceConnector + ") to: " + getDest().toString() + " - "  + " [" + getStateOperation() + "#" + getStateInstruction() + "]";
+		String header = getDir().toString() + " " + getType().toString() + " from: " + getSource().toString() + "(" + metaId + ")" + "(over " + sourceConnector + ") to: " + getDest().toString() + " - "  + " [" + getStateOperation() + "#" + getStateInstruction() + "] " + metaId + " ";
 		String payload = "  ";
 		if (getType() == Type.CONSENSUS) {
 			payload = new BigInteger(data).bitCount() + " ";
@@ -105,7 +107,7 @@ public class Packet implements Serializable {
 				payload += data[i] + ", ";
 			}
 		}
-		return header + " (" + payload.substring(0,payload.length()-1) + ")"; //.substring(payload.length()-1)
+		return header + " (" + payload.substring(0,payload.length()-1) + ")";
 	}
 	
 	public Packet setSourceConnector (byte c) {
@@ -155,7 +157,9 @@ public class Packet implements Serializable {
 		ret[4] = dir.ord();
 		ret[5] = stateOperation.ord();
 		ret[6] = stateInstruction;
-		ret[7] = (byte)data.length;
+		ret[7] = metaId;
+		
+		ret[8] = (byte)data.length;
 
 		for (int i=0; i<data.length; i++) {
 			ret[i+HEADER_LENGTH] = data[i];
@@ -175,6 +179,14 @@ public class Packet implements Serializable {
 
 	public Module getSource() {
 		return source;
+	}
+	
+	public byte getMetaId() {
+		return metaId;
+	}
+	
+	public void setMetaId(byte id) {
+		metaId = id;
 	}
 
 

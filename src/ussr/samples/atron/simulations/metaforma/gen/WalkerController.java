@@ -258,7 +258,7 @@ public class WalkerController extends MetaformaRuntime implements ControllerInfo
 
 	
 
-	protected void receiveMessage(Type type, IStateOperation stateOperation, byte stateInstruction, boolean isReq, byte sourceCon, byte destCon, byte[] data) {
+	protected void receiveMessage(Type type, IStateOperation stateOperation, byte stateInstruction, boolean isReq, byte sourceCon, byte destCon, byte metaId, byte[] data) {
 		if (type == Type.GRADIENT) {
 			if (varGet(Var.NONE.fromByte(data[0])) > data[1]) {
 				varSet(Var.NONE.fromByte(data[0]),data[1]);

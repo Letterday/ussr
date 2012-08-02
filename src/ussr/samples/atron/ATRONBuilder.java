@@ -233,16 +233,29 @@ public class ATRONBuilder {
 	public ArrayList<ModulePosition> buildGrid(BitSet build, String prefix, boolean useASE) {
 		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
 		
-		if (build.get(0)) buildClover(prefix, useASE, mPos, aPos(0,-5,0),0);
-		if (build.get(1)) buildClover(prefix, useASE, mPos, aPos(2,-5,-2),4);
-		if (build.get(2)) buildClover(prefix, useASE, mPos, aPos(2,-5,2),8);
-		if (build.get(3)) buildClover(prefix, useASE, mPos, aPos(4,-5,0),12);
+		buildClover(prefix, useASE, mPos, aPos(2,-5,2),0);
+		buildClover(prefix, useASE, mPos, aPos(4,-5,0),4);
+		buildClover(prefix, useASE, mPos, aPos(6,-5,-2),8);
+		
+		buildClover(prefix, useASE, mPos, aPos(0,-5,0),12);
+		buildClover(prefix, useASE, mPos, aPos(2,-5,-2),16);
+		
+		
+		//if (build.get(3)) buildClover(prefix, useASE, mPos, aPos(4,-5,0),12);
 		
 		
         return mPos;
 	}
     
-    
+	public ArrayList<ModulePosition> buildBlocks (String prefix, boolean useASE) {
+		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
+		
+		buildClover(prefix, useASE, mPos, aPos(2,-5,2),0);
+		buildClover(prefix, useASE, mPos, aPos(4,-5,0),4);
+		buildClover(prefix, useASE, mPos, aPos(0,-5,4),4);
+		
+        return mPos;
+	}
     
     public ArrayList<ModulePosition> build() {
     	float Yoffset = 0.25f;

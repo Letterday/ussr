@@ -74,6 +74,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 	private HashMap<String,Byte> stateBytes = new HashMap<String,Byte>();
 	private IStateOperation stateInstructionOperationReceived;
 	
+	protected byte metaId = 0;
+	
 	protected boolean checkState(IStateOperation stateOperation,	byte stateInstruction) {
 		return getStateInstruction() == stateInstruction && getStateOperation().equals(stateOperation);
 	}
@@ -222,6 +224,14 @@ public abstract class MetaformaController extends ATRONController implements Con
     	return super.getAngle() + ((switchEastWestN ^ switchEastWestS) ? 180 : 0) %360;
     }
 	
+	protected void metaIdSet (int v) {
+		notification(".setMetaID " + v);
+		metaId = (byte)v;
+	}
+	
+	protected boolean metaIdExists () {
+		return metaId != 0;
+	}
 	
 	protected void varSet(IVar id, int v) {
 		if (v < Byte.MAX_VALUE) {
@@ -352,7 +362,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 			pushPull = 1;
 		}
 		
-		for (int i=0; i<3; i++) {
+		for (int i=0; i<5; i++) {
 			discoverNeighbors();
 		}
 		
@@ -482,13 +492,21 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	public void discoverNeighbors () {
 		scheduler.invokeNow("broadcastDiscover");
-		delay(100);
+		delay(500);
 	}
 
 	
 
 	public NeighborSet nbs(int connectors) {
 		return neighbors.filter(connectors);
+	}
+	
+	public NeighborSet nbs(Grouping g) {
+		return neighbors.onGroup(g);
+	}
+	
+	public NeighborSet nbs(int connectors, Grouping g) {
+		return neighbors.filter(connectors).onGroup(g);
 	}
 	
 	public NeighborSet nbs() {
@@ -578,14 +596,14 @@ public abstract class MetaformaController extends ATRONController implements Con
 		
 		neighbors.add(p.getSource(), connector, p.getSourceConnector());
 
-		if (p.getSource() == getId()) {
-			try {
-				throw new Exception("Source cannot be myself (" + getId() + ")!");
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.exit(0);
-			}
-		}
+//		if (p.getSource() == getId()) {
+//			try {
+//				throw new Exception("Source cannot be myself (" + getId() + ")!");
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//				System.exit(0);
+//			}
+//		}
 		
 		if (p.getDest() == getId() || p.getDest() == Module.ALL) {
 			
@@ -597,7 +615,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 			}
 			else {
 				// Custom message 
-				receiveMessage (p.getType(),p.getStateOperation(),p.getStateInstruction(),p.getDir() == Dir.REQ,p.getSourceConnector(),connector,p.getData());
+				receiveMessage (p.getType(),p.getStateOperation(),p.getStateInstruction(),p.getDir() == Dir.REQ,p.getSourceConnector(),connector,p.getMetaId(),p.getData());
 			}
 		}
 	}
@@ -645,7 +663,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 		broadcast(new Packet(getId()));
 	}
 
-	protected abstract void receiveMessage (Type type, IStateOperation stateOp, byte stateInstr, boolean isReq, byte sourceCon, byte destCon, byte[] data);
+	protected abstract void receiveMessage (Type type, IStateOperation stateOp, byte stateInstr, boolean isReq, byte sourceCon, byte destCon, byte sourceMetaId, byte[] data);
 
 	
 	public void broadcast (Packet p) {	
@@ -698,6 +716,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	public void send(Packet p, int connector) {
 		p.setSourceConnector((byte) connector);
 		p.setSource(getId());
+		p.setMetaId(metaId);
 		p.addState(this);
 
 		//if ((msgFilter & p.getType().bit()) != 0) notification(".send = " + p.toString() + " over " + connector);
@@ -778,7 +797,6 @@ public abstract class MetaformaController extends ATRONController implements Con
 //		previousName = getId();
 		setId(to);
 		scheduler.invokeNow("broadcastDiscover");
-		commit();
 	}
 	
 	public void renameGroup(Grouping to) {
@@ -817,7 +835,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 			flipStr = "<none>";
 		}
 		
-		out.append("ID: " + getId() + "      [" + stateOperation + " #" + stateInstruction + "]" + (stateIsFinished()? " // finished" : "") + " received: " + stateInstructionReceived + "  flips: " + flipStr);
+		out.append("ID: " + getId() + " (" + metaId + ")" + "   [" + stateOperation + " #" + stateInstruction + "]" + (stateIsFinished()? " // finished" : "") + " received: " + stateInstructionReceived + "  flips: " + flipStr);
 		out.append("\n");
 
 		out.append("operation coordinator: " + stateOperationCoordinate);

@@ -90,53 +90,53 @@ class EightToCarController extends MetaformaRuntime implements ControllerInforma
 			stateInstrBroadcastNext();
 		}
 		
-		if (doOncePar(1,7)) {
+		if (doOnce(1,7)) {
 			if (nbs().size() == 4) {
 				renameTo(Module.Floor_3);
-				commit(true);
+				commit();
 			}
 			if (nbs(SOUTH&EAST).contains(Module.Floor_3)) {
 				renameTo(Module.Floor_2);
-				commit(true);
+				commit();
 			}
 			if (nbs(SOUTH&WEST).contains(Module.Floor_3)) {
 				renameTo(Module.Floor_1);
-				commit(true);
+				commit();
 			}
 			if (nbs(NORTH&EAST).contains(Module.Floor_3)) {
 				renameTo(Module.Floor_5);
-				commit(true);
+				commit();
 			}
 			if (nbs(NORTH&WEST).contains(Module.Floor_3)) {
 				renameTo(Module.Floor_4);
-				commit(true);
+				commit();
 			}
 			if (nbs(WEST&MALE).size() == 2  && nbs().size()==2) {
 				renameTo(Module.Floor_0);
-				commit(true);
+				commit();
 			}
 			if (nbs(EAST&MALE).size() == 2 && nbs().size()==2) {
 				renameTo(Module.Floor_6);
-				commit(true);
+				commit();
 			}
 		}
 		
-		if (doOncePar(2,2)) {	
-	    	disconnectPart (Module.Floor_0, NORTH&MALE&WEST, new RunPar(this));
-	    	disconnectPart (Module.Floor_3, SOUTH&MALE&WEST, new RunPar(this));
+		if (doOnce(2,2)) {	
+	    	disconnectPart (Module.Floor_0, NORTH&MALE&WEST);
+	    	disconnectPart (Module.Floor_3, SOUTH&MALE&WEST);
 		
 		}
 		
 		if (doOnce(3)) {	
-    		rotate(Module.Floor_3,-90,new RunSeq(this));
+    		rotate(Module.Floor_3,-90);
 		}
 		
 		if (doOnce(4)) {	
-    		rotate(Module.Floor_4,90,new RunSeq(this));
+    		rotate(Module.Floor_4,90);
 		}
 				
 		if (doOnce(5)) {	
-    		connectPart (Module.Floor_4, SOUTH&MALE&EAST, new RunSeq(this));
+    		connectPart (Module.Floor_4, SOUTH&MALE&EAST);
 		}
 		
 //		if (stateInstruction(3)) {
@@ -144,70 +144,59 @@ class EightToCarController extends MetaformaRuntime implements ControllerInforma
 //		}
 		
 		if (doOnce(14)) {	
-    		disconnectPart (Module.Floor_6, NORTH&MALE&EAST, new RunSeq(this));
+    		disconnectPart (Module.Floor_6, NORTH&MALE&EAST);
 		}
 		
 		if (doOnce(15)) {	
-    		connectPart (Module.Floor_0, NORTH, new RunSeq(this));
+    		connectPart (Module.Floor_0, NORTH);
 		}
 		
 		if (doOnce(51)) {	
-    		disconnectPart (Module.Floor_6, SOUTH&MALE&EAST, new RunSeq(this));
+    		disconnectPart (Module.Floor_6, SOUTH&MALE&EAST);
 		}
 		
 		if (doOnce(61)) {	
-    		connectPart (Module.Floor_5, SOUTH&MALE&WEST, new RunSeq(this));
+    		connectPart (Module.Floor_5, SOUTH&MALE&WEST);
 		}
 		
 		if (doOnce(71)) {	
-    		connectPart (Module.Floor_2, SOUTH&MALE&WEST, new RunSeq(this));
+    		connectPart (Module.Floor_2, SOUTH&MALE&WEST);
 		}
 		
 		if (doOnce(8)) {	
-    		connectPart (Module.Floor_1, SOUTH&MALE&WEST, new RunSeq(this));
+    		connectPart (Module.Floor_1, SOUTH&MALE&WEST);
 		}
 		
 		if (doOnce(9)) {	
-    		disconnectPart (Module.Floor_4, SOUTH&MALE&EAST, new RunSeq(this));
+    		disconnectPart (Module.Floor_4, SOUTH&MALE&EAST);
 		}
 		
 		if (doOnce(10)) {	
-    		disconnectPart (Module.Floor_3, SOUTH&MALE&EAST, new RunSeq(this));
+    		disconnectPart (Module.Floor_3, SOUTH&MALE&EAST);
 		}
 		
 		if (doOnce(11)) {	
-    		connectPart (Module.Floor_6, SOUTH&MALE&WEST, new RunSeq(this));
+    		connectPart (Module.Floor_6, SOUTH&MALE&WEST);
 		}
 		
 		if (doOnce(12)) {	
-    		disconnectPart (Module.Floor_3, NORTH&MALE&WEST, new RunSeq(this));
+    		disconnectPart (Module.Floor_3, NORTH&MALE&WEST);
 		}
 		
 		if (doOnce(13)) {	
-    		disconnectPart (Module.Floor_3, NORTH&MALE&EAST, new RunSeq(this));
+    		disconnectPart (Module.Floor_3, NORTH&MALE&EAST);
 		}
     
    }
   
  
 	
-	@Override
-	public void handleEvents() {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	@Override
-	public void handleSyncs() {
-		// TODO Auto-generated method stub
-		
-	}
 	
 	@Override
 	public void init() {
 		stateOperationInit(StateOperation.DEFAULT);
-		Packet.operationHolder = StateOperation.DEFAULT;
-		Packet.varHolder = Var.DEFAULT;
+//		Packet.operationHolder = StateOperation.DEFAULT;
+//		Packet.varHolder = Var.DEFAULT;
 		
 		setModuleColors (Module.Floor_0,new Color[]{Color.decode("#00FFFF"),Color.decode("#FFFF00")}); 
 		setModuleColors (Module.Floor_3,new Color[]{Color.decode("#009999"),Color.decode("#999900")}); 
@@ -216,12 +205,19 @@ class EightToCarController extends MetaformaRuntime implements ControllerInforma
 		setDefaultColors(new Color[]{Color.decode("#0000FF"),Color.decode("#FF0000")});
 		
 	}
-	
+
+
+
+
 	@Override
-	protected void receiveMessage(Packet p, int connector) {
+	protected void receiveMessage(Type type, IStateOperation stateOp,
+			byte stateInstr, boolean isReq, byte sourceCon, byte destCon,byte metaId, 
+			byte[] data) {
 		// TODO Auto-generated method stub
 		
 	}
+	
+
 
 
 

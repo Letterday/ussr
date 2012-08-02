@@ -141,23 +141,6 @@ public class CloverFlipthroughController extends MetaformaRuntime implements Con
 					commit();
 				}
 			}
-//			
-//			if (stateInstruction(11)) {
-//				connect (Module.Uplifter_Right,Grouping.Floor);
-//				
-//			}
-//			
-//			if (stateInstruction(12)) {
-//				disconnectPart (Module.Uplifter_Right,SOUTH,new RunSeq(this));
-//			}
-//			
-//			if (stateInstruction(13)) {
-//				rotate (Module.Uplifter_Right,180,new RunSeq(this));
-//			}
-			
-//			if (stateInstruction(14)) {
-//				rotate (Module.Uplifter_Right,180,new RunSeq(this));
-//			}
 		}
 		
    }
@@ -192,7 +175,7 @@ public class CloverFlipthroughController extends MetaformaRuntime implements Con
 	}
 	
 	
-	protected void receiveMessage(Type type, IStateOperation stateOperation, byte stateInstruction, boolean isReq, byte sourceCon, byte destCon, byte[] data) {
+	protected void receiveMessage(Type type, IStateOperation stateOperation, byte stateInstruction, boolean isReq, byte sourceCon, byte destCon, byte metaId, byte[] data) {
 		if (type == Type.GRADIENT) {
 			if (varGet(Var.NONE.fromByte(data[0])) > data[1]) {
 				varSet(Var.NONE.fromByte(data[0]),data[1]);
