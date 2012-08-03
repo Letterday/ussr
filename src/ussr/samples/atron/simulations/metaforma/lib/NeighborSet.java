@@ -1,8 +1,6 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,11 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import ussr.samples.atron.simulations.metaforma.gen.Grouping;
 import ussr.samples.atron.simulations.metaforma.gen.Module;
 
-//class Neighbor {
-//	byte sourceCon;
-//	byte destCon;
-//	Module m;
-//}
 
 public class NeighborSet implements IModuleHolder {
 	private ConcurrentHashMap<Module, Byte[]> connectors;// = new HashMap<Module, Byte[]>();

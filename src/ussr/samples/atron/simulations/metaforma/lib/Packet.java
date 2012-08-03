@@ -9,7 +9,7 @@ import java.math.BigInteger;
 public class Packet implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	private static final int HEADER_LENGTH = 9;
+	private static final int HEADER_LENGTH = 11;
 
 	private static MetaformaController ctrl;
 
@@ -22,7 +22,9 @@ public class Packet implements Serializable {
 	private byte stateInstruction = -1;
 	public byte[] data = new byte[]{};
 	private byte metaId = 0; // 0 is for everyone
-	
+	boolean connectorConnected = false;
+
+	private byte stateTimer;
 
 
 	public Packet (Module s, Module d) {
@@ -45,6 +47,7 @@ public class Packet implements Serializable {
 		stateOperation = p.getStateOperation();
 		stateInstruction = p.getStateInstruction();
 		metaId = p.getMetaId();
+		connectorConnected = p.getConnectorConnected();
 	}
 	
 	public Packet (byte[] msg) {
@@ -56,8 +59,10 @@ public class Packet implements Serializable {
 		stateOperation = ctrl.IstateOperation.fromByte(msg[5]);
 		stateInstruction = msg[6];
 		metaId = msg[7];
+		connectorConnected = msg[8] == 1;
+		stateTimer = msg[9];
 		
-		byte payloadLength = msg[8]; 			// the length of the payload is stored in msg[8]
+		byte payloadLength = msg[HEADER_LENGTH - 1];	// the length of the payload is stored in last header field
 		data = new byte[payloadLength];		
 		
 		for (int i=0; i<payloadLength; i++) {
@@ -77,9 +82,10 @@ public class Packet implements Serializable {
 		if (stateOperation == null) {
 			stateOperation = c.getStateOperation();
 			if (stateInstruction == -1) {
-				stateInstruction = (byte)c.getStateInstruction();
+				stateInstruction = ctrl.max(c.getStateInstructionReceived(),c.getStateInstruction());
 			}
 		}
+		stateTimer = c.getStateTimer();
 		return this;
 	}
 		
@@ -94,7 +100,7 @@ public class Packet implements Serializable {
 
 		
 	public String toString () {
-		String header = getDir().toString() + " " + getType().toString() + " from: " + getSource().toString() + "(" + metaId + ")" + "(over " + sourceConnector + ") to: " + getDest().toString() + " - "  + " [" + getStateOperation() + "#" + getStateInstruction() + "] " + metaId + " ";
+		String header = getDir().toString() + " " + getType().toString() + " from: " + getSource().toString() + "(" + metaId + ")" + "(over " + sourceConnector + ") to: " + getDest().toString() + " - "  + " [" + getStateOperation() + "#" + getStateInstruction() + " (" + stateTimer + ")] " + metaId + " ";
 		String payload = "  ";
 		if (getType() == Type.CONSENSUS) {
 			payload = new BigInteger(data).bitCount() + " ";
@@ -149,7 +155,7 @@ public class Packet implements Serializable {
 	}
 	
 	public byte[] getBytes () {
-		byte[] ret = new byte[data.length+HEADER_LENGTH];
+		byte[] ret = new byte[data.length+HEADER_LENGTH + 1];
 		ret[0] = type.ord();
 		ret[1] = source.ord();
 		ret[2] = sourceConnector;
@@ -158,8 +164,10 @@ public class Packet implements Serializable {
 		ret[5] = stateOperation.ord();
 		ret[6] = stateInstruction;
 		ret[7] = metaId;
+		ret[8] = (byte) (connectorConnected ? 1:0);
+		ret[9] = stateTimer;
 		
-		ret[8] = (byte)data.length;
+		ret[10] = (byte)data.length;
 
 		for (int i=0; i<data.length; i++) {
 			ret[i+HEADER_LENGTH] = data[i];
@@ -232,6 +240,17 @@ public class Packet implements Serializable {
 	public static void setController (MetaformaController c) {
 		ctrl = c;
 	}
+
+	public void setConnectorConnected(boolean connected) {
+		connectorConnected = connected;
+	}
 	
+	public boolean getConnectorConnected () {
+		return connectorConnected;
+	}
+
+	public float getStateNextTimer() {
+		return stateTimer;
+	}
 	
 }

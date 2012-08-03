@@ -70,125 +70,100 @@ public class CloverFlipoverController extends MetaformaRuntime implements Contro
 		if (stateOperation(StateOperation.DEFAULT)) {
 			waitAndDiscover();
 			
-			if (doOnce(0))  {
-				scheduler.setInterval("gradientCreate",200);
-				if (stateStartNext == 0) {
-					stateStartNext = time() + 5;
-				}
-				if (stateStartNext< time()) {
-					stateInstrBroadcastNext();
-				}
-			}
-	
-			 
-			if (doOnce(1) )  {
-				stateInstrBroadcastNext();
-				scheduler.setInterval("gradientCreate",10000);
-			}
-			
-			if (doOnce(2,10))  {
-				renameStore();
-				if (varGet(Var.GRADIENT_H) == 0 && varGet(Var.GRADIENT_V) < 3 || varGet(Var.GRADIENT_V) == 0 && varGet(Var.GRADIENT_H) < 3) {
-					renameGroup(Grouping.Left);
-					commit();
-				}
-				if (varGet(Var.GRADIENT_H) > 0 && varGet(Var.GRADIENT_V) > 0) {
-					renameGroup(Grouping.Right);
+			if (doOnce(0,true)) {
+				if (getId() == Module.Floor_0) {
 					commit();
 				}
 			}
 			
-			if (doOnce(3,4)) {		
-				disconnect(Grouping.Left, Grouping.Right);
+			if (doOnce(1)) {
+				setModuleColors(getId(), new Color[]{Color.CYAN,Color.CYAN});
+				colorize();
 			}
 			
-
-			
-			if (doOnce(4,4)) {
-				if (varGet(Var.GRADIENT_H) == 3 && varGet(Var.GRADIENT_V) == 1) {
-					renameTo(Module.Right_Bottom);
-					commit();
-				}
-				if (varGet(Var.GRADIENT_H) == 1 && varGet(Var.GRADIENT_V) == 3) {
-					renameTo(Module.Right_Top);
-					commit();
-				}
-				if (varGet(Var.GRADIENT_H) == 2 && varGet(Var.GRADIENT_V) == 0) {
-					renameTo(Module.Left_Bottom);
-					commit();
-				}
-				if (varGet(Var.GRADIENT_H) == 0 && varGet(Var.GRADIENT_V) == 2) {
-					renameTo(Module.Left_Top);
-					commit();
-				}
-			}	
-			
-			if (doOnce(5,2)) {
-				rotate(Module.Right_Bottom,-180);
-				rotate(Module.Right_Top,180);
-			}		
-			
-			if (doOnce(6,2)) {
-				rotate(Module.Left_Bottom,-180);
-				rotate(Module.Left_Top,180);
-			}
-			
-			if (doOnce(7,4)) {
-				connect(Grouping.Left,Grouping.Right);
-			}
-			
-//			if (stateInstruction(10)) {
-//				disconnectPart(Module.Left_Top,SOUTH);
-//				disconnectPart(Module.Left_Bottom,NORTH);
-//				consensusIfCompletedNextState(2);
+//			if (doOnce(0))  {
+//				scheduler.setInterval("gradientCreate",200);
+//				if (stateStartNext == 0) {
+//					stateStartNext = time() + 5;
+//				}
+//				if (stateStartNext< time()) {
+//					stateInstrBroadcastNext();
+//				}
 //			}
-//			
-//			if (stateInstruction(11)) {
-//				rotate(Module.Left_Top,180);
-//				rotate(Module.Left_Bottom,180);
-//				consensusIfCompletedNextState(2);
-//			}
-//			
-//			if (stateInstruction(12)) {
-//				connectPart(Module.Left_Top,SOUTH);
-//				connectPart(Module.Left_Bottom,NORTH);
-//				consensusIfCompletedNextState(2);
-//			}
-//			
 //	
-//			if (stateInstruction(13)) {
-//				disconnectPart(Module.Right_Top,SOUTH);
-//				disconnectPart(Module.Right_Bottom,NORTH);
-//				consensusIfCompletedNextState(2);
+//			  
+//			if (doOnce(1) )  {
+//				stateInstrBroadcastNext();
+//				scheduler.setInterval("gradientCreate",10000);
 //			}
 //			
-//			if (stateInstruction(14)) {
-//				rotate(Module.Right_Top,180);
-//				rotate(Module.Right_Bottom,180);
-//				consensusIfCompletedNextState(2);
+//			if (doOnce(2,10))  {
+//				renameStore();
+//				if (varGet(Var.GRADIENT_H) == 0 && varGet(Var.GRADIENT_V) < 3 || varGet(Var.GRADIENT_V) == 0 && varGet(Var.GRADIENT_H) < 3) {
+//					renameGroup(Grouping.Left);
+//					commit();
+//				}
+//				if (varGet(Var.GRADIENT_H) > 0 && varGet(Var.GRADIENT_V) > 0) {
+//					renameGroup(Grouping.Right);
+//					commit();
+//				}
 //			}
 //			
-//			if (stateInstruction(15)) {
-//				connectPart(Module.Right_Top,SOUTH);
-//				connectPart(Module.Right_Bottom,NORTH);
-//				consensusIfCompletedNextState(2);
+//			if (doOnce(3,4)) {
+//				disconnect(Grouping.Left, Grouping.Right);
 //			}
-			
-			
-		
-			if (doRepeat(8,1000,2,12)) {
-				notification("TTTTest");
-				if (nbs(WEST).onGroup(Grouping.Left).size() == 1 && nbs(WEST).onGroup(Grouping.Right).size() == 1 && nbs().size() == 2) {
-					unicast(new Packet(getId()).setType(Type.SYMMETRY),MALE&WEST);
-					commit();
-				}
-			}
-			
-			if (doOnce(9,10)) {
-				if (getGrouping() != Grouping.Floor) {
-					renameRestore();
-				}
-			}
+//			
+//
+//			
+//			if (doOnce(4,4,true)) {
+//				if (varGet(Var.GRADIENT_H) == 3 && varGet(Var.GRADIENT_V) == 1) {
+//					renameTo(Module.Right_Bottom);
+//					commit();
+//				}
+//				if (varGet(Var.GRADIENT_H) == 1 && varGet(Var.GRADIENT_V) == 3) {
+//					renameTo(Module.Right_Top);
+//					commit();
+//				}
+//				if (varGet(Var.GRADIENT_H) == 2 && varGet(Var.GRADIENT_V) == 0) {
+//					renameTo(Module.Left_Bottom);
+//					commit();
+//				}
+//				if (varGet(Var.GRADIENT_H) == 0 && varGet(Var.GRADIENT_V) == 2) {
+//					renameTo(Module.Left_Top);
+//					commit();
+//				}
+//			}	
+//			
+//			
+//			if (doOnce(5,2,false)) {
+//				setModuleColors(getId(), new Color[]{Color.CYAN,Color.CYAN});
+//				colorize();
+//			
+////				rotate(Module.Right_Bottom,-180);
+////				rotate(Module.Right_Top,180);
+//			}		
+//			
+//			if (doOnce(6,2)) {
+//				rotate(Module.Left_Bottom,-180);
+//				rotate(Module.Left_Top,180);
+//			}
+//			
+//			if (doOnce(7,4)) {
+//				connect(Grouping.Left,Grouping.Right);
+//			}
+//					
+//			if (doRepeat(8,1000,2,12)) {
+//				if (nbs(WEST).onGroup(Grouping.Left).size() == 1 && nbs(WEST).onGroup(Grouping.Right).size() == 1 && nbs().size() == 2) {
+//					unicast(new Packet(getId()).setType(Type.SYMMETRY),MALE&WEST);
+//					commit();
+//				}
+//			}
+//			
+//			if (doOnce(9,10)) {
+//				if (getGrouping() != Grouping.Floor) {
+//					renameRestore();
+//				}
+//			}
 			
 			
 		}
@@ -278,7 +253,14 @@ public class CloverFlipoverController extends MetaformaRuntime implements Contro
 		
    }
 	
-	
+
+
+	private boolean countdown(int i) {
+		return true;
+	}
+
+
+
 	public void init () {
 		setModuleColors (Module.Clover_North,new Color[]{Color.decode("#00FFFF"),Color.decode("#FFFF00")}); 
 		setModuleColors (Module.Clover_South,new Color[]{Color.decode("#00AAAA"),Color.decode("#AAAA00")}); 
@@ -288,7 +270,7 @@ public class CloverFlipoverController extends MetaformaRuntime implements Contro
 		setGroupingColors (Grouping.Left,new Color[]{Color.BLACK,Color.GRAY});
 		setGroupingColors (Grouping.Right,new Color[]{Color.DARK_GRAY,Color.WHITE});
 		
-		setMessageFilter(Type.SYMMETRY.bit() | Type.GRADIENT.bit() );
+		setMessageFilter(Type.DISCOVER.bit() );
 		 
 		Packet.setController(this);
 		IstateOperation = StateOperation.DEFAULT;

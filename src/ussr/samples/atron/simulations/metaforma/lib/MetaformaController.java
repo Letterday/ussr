@@ -31,12 +31,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	private int stateInstruction = 0;
 
 	private float stateStartTime;
-	
-	protected int errInPreviousState;
-	protected int errInCurrentState;
-	
-	protected int pushPull = 0;
-	
+		
 	private boolean stateConnectorNearbyCallDisabled = false; // For connecting to neighbors
 	
 	protected float stateStartNext; // Used to wait before entering new state
@@ -63,7 +58,6 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	protected Scheduler scheduler = new Scheduler(this);
 	private IStateOperation stateOperationReceived;
-	private float timeLastPrintConsensus;
 	private IVar varHolder;
 	
 	protected boolean fixedYet;
@@ -75,6 +69,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 	private IStateOperation stateInstructionOperationReceived;
 	
 	protected byte metaId = 0;
+	private boolean[] connectors = new boolean[8];
+	private float stateTimer;
 	
 	protected boolean checkState(IStateOperation stateOperation,	byte stateInstruction) {
 		return getStateInstruction() == stateInstruction && getStateOperation().equals(stateOperation);
@@ -114,7 +110,9 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 	
 	public boolean doRepeat (int state, float interval, int nr, int consensusCount) {
-		consensusIfCompletedNextState(consensusCount);
+		if (getStateInstruction() == state) {
+			consensusIfCompletedNextState(consensusCount,false);
+		}
 		return (stateInstruction == state && freqLimit(interval, nr));
 	}
 	
@@ -123,8 +121,13 @@ public abstract class MetaformaController extends ATRONController implements Con
 	}
 	
 	public boolean doOnce(int state, int consensusCount) {
+		return doOnce(state, consensusCount,false);
+	}
+	
+	public boolean doOnce(int state, int consensusCount, boolean useSync) {
 		if (getStateInstruction() == state) {
-			consensusIfCompletedNextState(consensusCount);
+			notification(state+"=="+getStateInstruction());
+			consensusIfCompletedNextState(consensusCount,useSync);
 		}
 		if (stateInstructionSimple(state)) {
 			discoverNeighbors();
@@ -133,6 +136,10 @@ public abstract class MetaformaController extends ATRONController implements Con
 		return false;
 	}
 		
+	public boolean doOnce(int state,boolean useSync) {
+		return doOnce(state,1,useSync);
+	}
+	
 	public boolean doOnce(int state) {
 		return doOnce(state,1);
 	}
@@ -182,7 +189,6 @@ public abstract class MetaformaController extends ATRONController implements Con
 					switchEWN();
 				}
 			}
-			
 		}
 		else {
 			if (!isCorrect) {
@@ -195,8 +201,6 @@ public abstract class MetaformaController extends ATRONController implements Con
 				switchEWS();
 			}
 		}
-		
-		
 		
 		colorize();
 	}	
@@ -284,7 +288,17 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	public boolean isConnected (int c) {
 		if (c == -1) return false;
-		return super.isConnected(C(c));
+		
+		if (c%2==1) {
+			// The female connectors of the physical modules are COMPLETELY PASSIVE
+			// So we cant use the isConnected call for female connectors on the female modules
+			// To avoid cheating, we store connection info in a table and retrieve it
+			return connectors [c];
+		}
+		else {
+			return super.isConnected(C(c));
+		}
+		
 	}
 	
 	 public void disconnect(int c) {
@@ -351,17 +365,13 @@ public abstract class MetaformaController extends ATRONController implements Con
 		
 		setDefaultColors (new Color[]{Color.decode("#0000FF"),Color.decode("#FF0000")});
 		
-		setCommFailureRisk(0.25f,0.25f,0.98f,0.125f);
+//		setCommFailureRisk(0.25f,0.25f,0.98f,0.125f);
+		setCommFailureRisk(0.25f,0.25f,0.98f,0.25f);
 		
 		init();
 		colorize();
 		
-		
-		// For push pull algorithm to determine the structure size
-		if (getId().ord() == 0) {
-			pushPull = 1;
-		}
-		
+				
 		for (int i=0; i<5; i++) {
 			discoverNeighbors();
 		}
@@ -374,9 +384,12 @@ public abstract class MetaformaController extends ATRONController implements Con
 			if (stateOperationReceived != stateOperation) {
 				stateOperationNew(stateOperationReceived);
 			}
-			
-			if (stateInstructionReceived > stateInstruction && stateInstructionOperationReceived == stateOperation) {
+			 
+			if (stateInstructionReceived > stateInstruction && stateInstructionOperationReceived == stateOperation && time() > stateTimer) {
 				stateInstrIncr(stateInstructionReceived);
+			}
+			else {
+//				notification((stateInstructionReceived > stateInstruction) + "," + (stateInstructionOperationReceived == stateOperation) + "," + (time() > stateTimer));
 			}
 			//TODO: operation state merge
 			
@@ -400,7 +413,6 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	protected void stateInstrInit(int i) {
 		stateInstruction = i;
-		
 	}
 	
 	protected void stateInstrInitNew() {
@@ -409,12 +421,11 @@ public abstract class MetaformaController extends ATRONController implements Con
 		stateBools.clear();
 		stateBytes.clear();
 		doRepeat.clear();
-		
+		stateTimer = time();
 		stateStartNext = 0;
 		stateConnectorNearbyCallDisabled = true;
 		stateCurrentFinished = false;
 		stateStartTime = time();
-		errInCurrentState = 0;
 		consensus = BigInteger.ZERO;
 		colorize();
 	}
@@ -423,19 +434,14 @@ public abstract class MetaformaController extends ATRONController implements Con
 		if (newStateInstruction > stateInstruction + 1) {
 			notification("!!! I might have missed a state, from " + stateInstruction + " to " + newStateInstruction);
 		}
+		stateInstrInitNew();
 		stateInstruction = newStateInstruction;
 		
 		printInstrState();
-		stateInstrInitNew();
+		
 	}
 	
 		
-	
-	protected void increaseInstrState() {
-		stateInstrInitNew();
-		stateInstruction++;
-		printInstrState();
-	}
 	
 	private void printInstrState() {
 		notification("\n\n===========  "+ getId() + "  ==============\nLeft instruction state, time spent: " + timeSpentInState() + "\nNew instruction state: " + stateOperation + ": " + stateInstruction + "\n=================================");
@@ -457,29 +463,34 @@ public abstract class MetaformaController extends ATRONController implements Con
 		stateInstructionReceived = 0;
 		notification("\n\n#######  "+ getId() + "  ##########\nnew operation state: " + stateOperation + "\n#############################\n");
 	}
-	
-	
-	public void disableConnectorNearby() {
-		stateConnectorNearbyCallDisabled = true;
-	}
-	
-	protected void stateInstrBroadcastNext(int newState) {
-		stateInstruction = newState;
 		
-		nextInstrState();
-	}
 	
 	protected void stateInstrBroadcastNext() {
-		stateInstruction++;
-		nextInstrState();
+		stateInstrBroadcastNext(false);	
+	}
+	
+	protected void stateInstrBroadcastNext(boolean useTimerDelay) {
+		notification(".stateInstrBroadcastNext");
+		if (useTimerDelay) {
+			if (stateInstructionReceived == stateInstruction) {
+				notification(".stateInstrBroadcastNext()");
+				stateInstructionReceived = stateInstruction+1;
+				
+				stateTimer = time();
+				stateTimer += 10;
+	
+			}
+		}
+		else {
+			stateInstruction++;
+			stateInstrNext();
+		}
 		
 	}
 	
-	private void nextInstrState() {
+	private void stateInstrNext() {
 		printInstrState();
-		if (errInCurrentState == 1) {
-			notification("\n(the following error occured in this state: " + errInCurrentState + ") ");
-		}
+
 		stateInstrInitNew();	
 		scheduler.invokeNow("broadcastDiscover");
 	}
@@ -564,13 +575,25 @@ public abstract class MetaformaController extends ATRONController implements Con
 		
 		Packet p = new Packet(message);
 		
+		if (isFEMALE(connectorNr)) {
+			connectors[connectorNr] = p.getConnectorConnected();
+		}
+		
 		if (p.getStateOperation() == stateOperation) {
+			
+			boolean shareNow = false;
 			if (stateInstructionReceived < p.getStateInstruction()) {
-				stateInstructionReceived = p.getStateInstruction();
-				stateInstructionOperationReceived = p.getStateOperation();
 //				broadcast(new Packet(p),connector);
+				shareNow  = true;
+			}
+			stateInstructionReceived = p.getStateInstruction();
+			stateTimer = Math.max(time() + p.getStateNextTimer()/10,stateTimer);
+			stateInstructionOperationReceived = p.getStateOperation();
+			
+			if (shareNow) {
 				scheduler.invokeNow("broadcastDiscover");
 			}
+			
 			if (stateInstruction != p.getStateInstruction() && p.getType() != Type.DISCOVER) {
 				notification("!!! Packet dropped due to state mismatch:");
 				notification(p.toString());
@@ -620,19 +643,20 @@ public abstract class MetaformaController extends ATRONController implements Con
 		}
 	}
 	
-	protected void consensusIfCompletedNextState (int count) {
-		consensusIfCompletedNextState (count,96);
+	protected void consensusIfCompletedNextState (int count,boolean useSync) {
+		consensusIfCompletedNextState (count,96,useSync);
 	}
 	
-	protected void consensusIfCompletedNextState (int count, int degradePerc) {
+	protected void consensusIfCompletedNextState (int count, int degradePerc, boolean useSync) {
 		float consensusToReach = count - (timeSpentInState() / 100) * (100-degradePerc)/100 * count;
-		if (time() - timeLastPrintConsensus > 4) {
-			notification("Waiting for consensus - " + consensus.bitCount() + " >= " + consensusToReach);
-			timeLastPrintConsensus = time();
-		}
+		
 		
 		if (consensus.bitCount() >= consensusToReach) {
-			stateInstrBroadcastNext();
+			notification("Consensus " + consensusToReach + " PASSED");
+			stateInstrBroadcastNext(useSync);
+		}
+		else if (freqLimit(2000, 123)) {
+			notification("Consensus waiting - " + consensus.bitCount() + " >= " + consensusToReach);
 		}
 	}
 	
@@ -685,6 +709,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	public void broadcast(Packet p,int exceptConnector) {
 		p.addState(this);
+		
 		if ((msgFilter & p.getType().bit()) != 0)  notification(".broadcast (" + p.toString() + ") ");
 
 		for (byte c = 0; c < 8; c++) {
@@ -718,8 +743,9 @@ public abstract class MetaformaController extends ATRONController implements Con
 		p.setSource(getId());
 		p.setMetaId(metaId);
 		p.addState(this);
-
-		//if ((msgFilter & p.getType().bit()) != 0) notification(".send = " + p.toString() + " over " + connector);
+		if (connector%2 == 0) {
+			p.setConnectorConnected(isConnected(connector));
+		}
 		
 		if (connector < 0 || connector > 7) {
 			System.err.println("Connector has invalid nr " + connector);
@@ -763,6 +789,10 @@ public abstract class MetaformaController extends ATRONController implements Con
 
 	public int getStateInstruction() {
 		return stateInstruction;
+	}
+	
+	public int getStateInstructionReceived() {
+		return stateInstructionReceived;
 	}
 	
 	public IStateOperation getStateOperation() {
@@ -835,7 +865,7 @@ public abstract class MetaformaController extends ATRONController implements Con
 			flipStr = "<none>";
 		}
 		
-		out.append("ID: " + getId() + " (" + metaId + ")" + "   [" + stateOperation + " #" + stateInstruction + "]" + (stateIsFinished()? " // finished" : "") + " received: " + stateInstructionReceived + "  flips: " + flipStr);
+		out.append("ID: " + getId() + " (" + metaId + ")" + "   [" + stateOperation + " #" + stateInstruction + "]" + (stateIsFinished()? " // finished" : "") + " received: " + stateInstructionReceived + " ("+(stateTimer - time())+") " + "  flips: " + flipStr);
 		out.append("\n");
 
 		out.append("operation coordinator: " + stateOperationCoordinate);
@@ -854,6 +884,9 @@ public abstract class MetaformaController extends ATRONController implements Con
 		
 //		out.append("globals: " + varsGlobal);
 //		out.append("\n");
+		
+		out.append("connectors: [" + connectors[1] + "," + connectors[3] + "," + connectors[5] + "," + connectors[7] + "]");
+		out.append("\n");
 		
 		out.append("vars: " + varsLocal);
 		out.append("\n");
@@ -897,6 +930,10 @@ public abstract class MetaformaController extends ATRONController implements Con
 	protected byte min(int i, int j) {
 		return (byte) Math.min(i, j);
 	}
+	
+	protected byte max(int i, int j) {
+		return (byte) Math.max(i, j);
+	}
 
 	public static boolean isNORTH(int c) {
 		return c >= 0 && c <= 3;
@@ -920,6 +957,10 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	public static boolean isFEMALE(int c) {
 		return c%2 == 1;
+	}
+
+	public byte getStateTimer() {
+		return max((byte) ((stateTimer - time())*10),0) ;
 	}
 	
 }

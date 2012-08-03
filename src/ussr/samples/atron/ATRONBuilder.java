@@ -251,8 +251,8 @@ public class ATRONBuilder {
 		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
 		
 		buildClover(prefix, useASE, mPos, aPos(2,-5,2),0);
-		buildClover(prefix, useASE, mPos, aPos(4,-5,0),4);
-		buildClover(prefix, useASE, mPos, aPos(0,-5,4),4);
+		buildClover(prefix, useASE, mPos, aPos(6,-5,2),4);
+		buildClover(prefix, useASE, mPos, aPos(4,-5,4),8);
 		
         return mPos;
 	}

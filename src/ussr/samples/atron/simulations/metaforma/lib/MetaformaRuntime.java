@@ -54,7 +54,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 		byte conToNb = nbs().getConnectorNrTo(dest);
 		byte conFromNb = nbs().getConnectorNrFrom(dest);
 		String action = makeConnection ? " connect to " : " disconnect from ";
-		notification("# " + getId() + action + dest);
+		//notification("# " + getId() + action + dest); too many?
 		if (conToNb % 2 == 0 && conFromNb % 2 == 1) {
 			if (makeConnection)
 				connect(conToNb);
@@ -121,7 +121,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	protected void gradientSend(IVar v, boolean isSource) {
 		if (isSource) {
 			varSet(v,0);
-			notification("I am source for " + v);
+//			notification("I am source for " + v);
 		}
 		
 		broadcast(Type.GRADIENT,REQ,new byte[]{v.index(),min(varGet(v)+1,MAX_BYTE)});
