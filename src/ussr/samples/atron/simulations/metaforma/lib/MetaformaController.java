@@ -561,8 +561,13 @@ public abstract class MetaformaController extends ATRONController implements Con
 		// Translate absolute connector to relative connector (symmetry feature)
 		byte connector = C(connectorNr);
 		
+
 		
 		Packet p = new Packet(message);
+		if (isFEMALE(connectorNr)) {
+			connectors[connectorNr] = p.getConnectorConnected();
+		}
+		
 		
 		if (p.getStateOperation() == stateOperation) {
 			if (stateInstructionReceived < p.getStateInstruction()) {
