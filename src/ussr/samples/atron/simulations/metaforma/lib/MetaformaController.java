@@ -76,6 +76,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 	
 	protected byte metaId = 0;
 	
+	private boolean[] connectors = new boolean[8];
+	
 	protected boolean checkState(IStateOperation stateOperation,	byte stateInstruction) {
 		return getStateInstruction() == stateInstruction && getStateOperation().equals(stateOperation);
 	}
@@ -282,9 +284,18 @@ public abstract class MetaformaController extends ATRONController implements Con
 		}
 	}
 	
+	
+	
+	
 	public boolean isConnected (int c) {
 		if (c == -1) return false;
-		return super.isConnected(C(c));
+		
+		if (isFEMALE(c)){
+			return connectors[c];
+		}
+		else {
+			return super.isConnected(C(c));
+		}
 	}
 	
 	 public void disconnect(int c) {
@@ -855,7 +866,8 @@ public abstract class MetaformaController extends ATRONController implements Con
 		
 		out.append("\n");
 		
-		
+		out.append("connectors: [" + connectors[1] + "," + connectors[3] + "," + connectors[5] + "," + connectors[7] + "]");
+		out.append("\n");
 		
 //		out.append("globals: " + varsGlobal);
 //		out.append("\n");
