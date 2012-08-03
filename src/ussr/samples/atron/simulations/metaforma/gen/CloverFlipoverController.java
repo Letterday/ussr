@@ -33,7 +33,7 @@ class CloverFlipoverSimulation extends MetaformaSimulation {
     }
 	
 	protected ArrayList<ModulePosition> buildRobot() {
-		return new ATRONBuilder().buildBlocks("Floor_",false);
+		return new ATRONBuilder().buildFlipover("Floor_",false);
 	}
 	
 }

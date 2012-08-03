@@ -247,12 +247,12 @@ public class ATRONBuilder {
         return mPos;
 	}
     
-	public ArrayList<ModulePosition> buildBlocks (String prefix, boolean useASE) {
+	public ArrayList<ModulePosition> buildFlipover (String prefix, boolean useASE) {
 		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
 		
 		buildClover(prefix, useASE, mPos, aPos(2,-5,2),0);
 		buildClover(prefix, useASE, mPos, aPos(4,-5,0),4);
-		buildClover(prefix, useASE, mPos, aPos(0,-5,4),4);
+		buildClover(prefix, useASE, mPos, aPos(0,-5,0),8);
 		
         return mPos;
 	}
