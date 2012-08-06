@@ -176,7 +176,7 @@ public class CloverFlipthroughController extends MetaformaRuntime implements Con
 	
 	
 	
-	protected void receiveMessage(Type type, IStateOperation stateOperation, byte stateInstruction, boolean isReq, byte sourceCon, byte destCon, byte metaId, byte[] data) {
+	protected void receiveMessage(Type type, byte stateInstruction, boolean isReq, byte sourceCon, byte destCon, byte metaId, byte[] data) {
 		if (type == Type.GRADIENT) {
 			if (varGet(Var.NONE.fromByte(data[0])) > data[1]) {
 				varSet(Var.NONE.fromByte(data[0]),data[1]);
@@ -186,7 +186,7 @@ public class CloverFlipthroughController extends MetaformaRuntime implements Con
 		}
 		
 		if (type == Type.SYMMETRY) {
-			if (checkState(stateOperation,stateInstruction)) {
+			if (getStateInstruction() == stateInstruction) {
 				if (freqLimit(500,1)) {
 					symmetryFix (isReq,sourceCon, destCon, data);
 				}
