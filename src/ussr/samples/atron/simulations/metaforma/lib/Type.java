@@ -2,7 +2,6 @@ package ussr.samples.atron.simulations.metaforma.lib;
 
 
 public enum Type {
-		STATE_OPERATION_NEW, 
 		DISCOVER,
 		GRADIENT,
 		CONSENSUS,

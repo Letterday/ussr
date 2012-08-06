@@ -7,6 +7,7 @@
 package ussr.model;
 
 import java.awt.Color;
+import java.awt.GraphicsConfiguration;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -441,4 +442,6 @@ public class Module extends Entity{
     public String toString() {
         return "Module("+this.uniqueID+")"+super.toString();
     }
+
+	
 }

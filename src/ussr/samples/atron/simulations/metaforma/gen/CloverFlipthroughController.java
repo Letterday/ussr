@@ -163,7 +163,7 @@ public class CloverFlipthroughController extends MetaformaRuntime implements Con
 		visual.setModuleColors (Module.Uplifter_Bottom,new Color[]{Color.decode("#002222"),Color.decode("#222200")}); 
 		
 		visual.setDefaultColors (new Color[]{Color.decode("#0000FF"),Color.decode("#FF0000")});
-		visual.setMessageFilter(Type.STATE_OPERATION_NEW.bit()  |Type.SYMMETRY.bit() |Type.DISCOVER.bit());
+		visual.setMessageFilter(Type.SYMMETRY.bit() |Type.DISCOVER.bit());
 		stateOperationInit(StateOperation.DEFAULT);
 		
 		IstateOperation = StateOperation.DEFAULT;

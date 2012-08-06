@@ -6,6 +6,8 @@
  */
 package ussr.model;
 
+import java.awt.GraphicsConfiguration;
+
 /**
  * Interface the simulator expects user-defined controllers to implement, allowing
  * hardware to be associated with the controller and the controller to be started
@@ -38,5 +40,7 @@ public interface Controller {
      * @return the representation of the module hardware
      */
 	public Module getModule();
+
+	
 	
 }

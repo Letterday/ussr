@@ -1,9 +1,5 @@
 package ussr.model.debugging;
 
-import java.awt.Rectangle;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -11,6 +7,7 @@ import javax.swing.JTextArea;
 
 import ussr.model.Module;
 import ussr.physics.PhysicsFactory.DebugProviderFactory;
+import ussr.samples.atron.simulations.metaforma.lib.MetaformaController;
 
 /**
  * A debug information provider that provides a continuously updating per-module information window
@@ -49,7 +46,14 @@ public class SimpleWindowedInformationProvider extends ConsoleInformationProvide
      * Create window
      */
     private void createWindow() {
-        frame = new JFrame(module.getProperty("name"));
+//    	if (module.getController() instanceof MetaformaController) {
+//    		frame = new JFrame(((MetaformaController)module.getController()).getTitle());
+//    	}
+//    	else {
+    		frame = new JFrame(module.getProperty("name"));
+//    	}
+//        The title is not updated dynamically :(
+    		
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         text = new JTextArea("(no information)");
         JScrollPane spane = new JScrollPane(text);

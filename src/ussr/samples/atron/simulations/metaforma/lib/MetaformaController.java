@@ -33,6 +33,7 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	private HashMap<IVar,Byte> varsMeta = new HashMap<IVar,Byte>();
 	private HashMap<IVar,Byte> varsMetaSequenceNrs = new HashMap<IVar,Byte>();
 	
+	private BigInteger consensusMeta = BigInteger.ZERO;
 	private BigInteger consensus = BigInteger.ZERO; 
 	
 	private Module previousName;
@@ -41,7 +42,6 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	protected IStateOperation stateInstructionOperationReceived;
 	
 	
-	private IStateOperation stateOperationReceived;
 	private IVar varHolder;
 	
 	private HashMap<Byte,Float> doRepeat = new HashMap<Byte,Float>();
@@ -55,7 +55,8 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	
 	protected byte metaId = 0;
 	protected byte metaBossId = 0;
-	protected IPart metaPart;
+	protected IPart metaPart = null;
+	private int metaModuleSize = 4;
 	
 	
 	public byte metaVarGet(IVar id) {
@@ -76,7 +77,7 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	}
 	
 	public boolean metaVarSet(IVar id, byte value) {
-		if (metaVarGet(id, false) != value) {
+		if (metaVarGet(id) != value) {
 			varsMeta.put(id,value);
 			varsMetaSequenceNrs.put(id,(byte)(metaVarGet(id,true)+1));
 			broadcastMetaVar(id);
@@ -125,8 +126,16 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 		}
 	}
 	
+	public boolean doRepeatMeta(int state, float interval, int nr) {
+		return doRepeat(state,interval,nr,metaModuleSize ,true);
+	}
+
 	public boolean doRepeat (int state, float interval, int nr, int consensusCount) {
-		consensusIfCompletedNextState(consensusCount);
+		return doRepeat(state,interval,nr,consensusCount,false);
+	}
+	
+	public boolean doRepeat (int state, float interval, int nr, int consensusCount,boolean metaConsensus) {
+		consensusIfCompletedNextState(consensusCount,metaConsensus);
 		return (stateInstruction == state && freqLimit(interval, nr));
 	}
 	
@@ -136,7 +145,7 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	
 	public boolean doOnce(int state, int consensusCount) {
 		if (getStateInstruction() == state) {
-			consensusIfCompletedNextState(consensusCount);
+			consensusIfCompletedNextState(consensusCount,false);
 		}
 		if (stateInstructionSimple(state)) {
 			discoverNeighbors();
@@ -163,6 +172,10 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	
 	protected boolean metaIdExists () {
 		return metaId != 0;
+	}
+	
+	protected boolean metaPartExists () {
+		return metaPart != null;
 	}
 	
 	protected void varSet(IVar id, int v) {
@@ -267,18 +280,14 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 			refresh();
 			handleStates();
 			scheduler.sync();
-			
-			if (stateOperationReceived != stateOperation) {
-				stateOperationNew(stateOperationReceived);
-			}
-			
+						
 			if (stateInstructionReceived > stateInstruction && stateInstructionOperationReceived == stateOperation) {
 				stateInstrIncr(stateInstructionReceived);
 			}
 			//TODO: operation state merge
 			
 			yield();
-
+			visual.colorize();
 			
 		}
 	}
@@ -290,7 +299,6 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 
 	protected void stateOperationInit (IStateOperation state) {
 		stateOperation = state;
-		stateOperationReceived = state;
 	}
 	
 	protected void stateInstrInit(int i) {
@@ -332,14 +340,14 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	
 	
 	
-	protected void stateOperationBroadcast (IStateOperation newState) {
-		stateOperationNew(newState);
-		scheduler.invokeNow("broadcastDiscover");
-
-		broadcast(new Packet(getId(), Module.ALL).setType(Type.STATE_OPERATION_NEW));
-	}
+//	protected void stateOperationBroadcast (IStateOperation newState) {
+//		stateOperationNew(newState);
+//		scheduler.invokeNow("broadcastDiscover");
+//
+//		broadcast(new Packet(getId(), Module.ALL).setType(Type.STATE_OPERATION_NEW));
+//	}
 	
-	private void stateOperationNew (IStateOperation newState) {
+	protected void stateOperationNew (IStateOperation newState) {
 		stateOperation = newState; 
 		stateInstrInitNew();
 		stateInstruction = 0;
@@ -422,31 +430,44 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 
 	
 	
-	protected void consensusIfCompletedNextState (int count) {
-		consensusIfCompletedNextState (count,96);
-	}
-	
-	protected void consensusIfCompletedNextState (int count, int degradePerc) {
-		float consensusToReach = count - (timeSpentInState() / 100) * (100-degradePerc)/100 * count;
-		if (freqLimit(4000, 21)) {
-			visual.print("Waiting for consensus - " + consensus.bitCount() + " >= " + consensusToReach);
-		}
-		
-		if (consensus.bitCount() >= consensusToReach) {
+	protected void consensusIfCompletedNextState (int count, boolean metaConsensus) {
+		if (consensusReached(count,metaConsensus)) {
 			stateInstrBroadcastNext();
 		}
 	}
 	
+	protected void consensusIfCompletedNextState (int count, int degradePerc, boolean metaConsensus) {
+		if (consensusReached(count, degradePerc,metaConsensus)) {
+			stateInstrBroadcastNext();
+		}
+	}
 	
+	public boolean consensusReached(int count, boolean metaConsensus) {
+		return consensusReached(count, 98,metaConsensus);
+	}
 	
-	public void commit () {
+	public boolean consensusReached(int count, int degradePerc,  boolean metaConsensus) {
+		float consensusToReach = count - (timeSpentInState() / 100) * (100-degradePerc)/100 * count;
+		if (freqLimit(4000, 21)) {
+			visual.print("Waiting for consensus - " + consensus.bitCount() + " >= " + consensusToReach);
+		}
+		if (metaConsensus) {
+			return (getMetaConsensusCount()) >= consensusToReach;
+		}
+		else {
+			return consensus.bitCount() >= consensusToReach;
+		}
+	}
+	
+	public void commit (boolean metaConsensus) {
+		visual.print(".commit() " + consensus.bitCount());
 		if (consensus.setBit(getId().ordinal()) != consensus) {
 			consensus = consensus.setBit(getId().ordinal());
 			scheduler.invokeNow("broadcastConsensus");
 		}
-		
-		
 	}
+	
+	
 	
 	public boolean consensusMyself () {
 		return consensus.testBit(getId().ordinal());
@@ -514,11 +535,11 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	public void renameSwitch (Module m1, Module m2) {
 		if (getId() == m1 && !consensusMyself()) {
 			setId(m2);
-			commit();
+			commit(false);
 		}
 		if (getId() == m2 && !consensusMyself()) {
 			setId(m1);
-			commit();
+			commit(false);
 		}
 	}
 	
@@ -578,11 +599,11 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	}
 
 
-
-
-	public void setMetaBossId(byte metaId) {
-		broadcast(new MetaPacket(getMetaId(),metaId).setType(MetaType.SET_BOSS));
+	public void setMetaBossId(byte metaId, IStateOperation state) {
+		visual.print(".setMetaBossId " + metaId + ": " + state);
+		broadcast(new MetaPacket(getMetaId(),metaId).setType(MetaType.SET_BOSS).setData(state.ord()));
 		metaBossId = getMetaId();
+		stateOperationNew(state);
 	}
 
 	
@@ -601,9 +622,11 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 			
 			if (p.getDest() == metaId) {
 				visual.print(".RECEIVE : " + p);
-				if (p.getType() == MetaType.SET_BOSS) {
+				if (p.getType() == MetaType.SET_BOSS && stateOperation(IstateOperation.fromByte(p.getData()[0]))) {
 					// the origin is the boss
 					metaBossId = p.getSource();
+					stateOperationNew(IstateOperation.fromByte(p.getData()[0]));
+					commit(false);
 				}
 				else {
 					receiveMetaMessage (p.getType(),p.getSource(),p.getDest(),p.getData());
@@ -613,6 +636,12 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 		}
 		else {
 			Packet p = new Packet(message);
+			
+			if (metaBossIdExists() && p.getMetaId() != getMetaBossId()) {
+				visual.print("Packet ignore from outside broadcast field: " +p);
+				return;
+			}
+			
 			if (isFEMALE(connectorNr)) {
 				context.setFemaleConnected(connectorNr,p.getConnectorConnected());
 			}
@@ -623,27 +652,20 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 			}
 			
 			
-			if (p.getStateOperation() == stateOperation) {
-				if (stateInstructionReceived < p.getStateInstruction()) {
-					stateInstructionReceived = p.getStateInstruction();
-					stateInstructionOperationReceived = p.getStateOperation();
-	//				broadcast(new Packet(p),connector);
-					scheduler.invokeNow("broadcastDiscover");
-				}
-				if (stateInstruction != p.getStateInstruction() && p.getType() != Type.DISCOVER) {
-					visual.print("!!! Packet dropped due to state mismatch:");
-					visual.print(p.toString());
-					return;
-				}
+		
+			if (stateInstructionReceived < p.getStateInstruction()) {
+				stateInstructionReceived = p.getStateInstruction();
+				stateInstructionOperationReceived = p.getStateOperation();
+//				broadcast(new Packet(p),connector);
+				scheduler.invokeNow("broadcastDiscover");
 			}
-			else if (p.getType() == Type.STATE_OPERATION_NEW) {
-				stateOperationReceived = p.getStateOperation();
-			}
-			else {
+			if (stateInstruction != p.getStateInstruction() && p.getType() != Type.DISCOVER) {
 				visual.print("!!! Packet dropped due to state mismatch:");
 				visual.print(p.toString());
-				return;	
+				return;
 			}
+			
+			
 			
 			
 			if (p.getDest() == getId() || p.getDest() == Module.ALL) {
@@ -686,18 +708,19 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 		
 
 	public void broadcast (MetaPacket p) {
-		if (p.getLastHop() != getMetaId()) {
+//		if (p.getLastHop() != getMetaId()) {
 			p.decreaseTTL();
-		}
+//		}
 		p.setLastHop(getMetaId());
-		visual.print(".BROADCAST " + p.toString());
+		
 		if (!p.isDying()) {
+			visual.print(".BROADCAST " + p.toString());
 			for (byte c = 0; c < 8; c++) {
 				sendMessage(p.getBytes(), (byte) p.getBytes().length, context.abs2rel(c));
 			}
 		}
 		else {
-			visual.print("DIE " + p);
+//			visual.print("DIE " + p);
 		}
 	}
 	
@@ -778,6 +801,10 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 		return metaId;
 	}
 	
+	public boolean metaBossIdExists(){
+		return metaBossId != 0;
+	}
+	
 	public byte getMetaBossId() {
 		return metaBossId;
 	}
@@ -829,5 +856,14 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	
 	public String getModuleInformation () {
 		return visual.getModuleInformation();
+	}
+	
+	public String getTitle() {
+		return visual.getTitle();
+	}
+
+	public byte getMetaConsensusCount() {
+		// TODO Auto-generated method stub
+		return (byte) (32-Integer.numberOfLeadingZeros(consensusMeta));
 	}
 }
