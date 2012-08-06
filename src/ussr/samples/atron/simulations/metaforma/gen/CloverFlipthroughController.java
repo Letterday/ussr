@@ -157,13 +157,13 @@ public class CloverFlipthroughController extends MetaformaRuntime implements Con
 
 
 	public void init () {
-		setModuleColors (Module.Uplifter_Left,new Color[]{Color.decode("#00FFFF"),Color.decode("#FFFF00")}); 
-		setModuleColors (Module.Uplifter_Right,new Color[]{Color.decode("#00AAAA"),Color.decode("#AAAA00")}); 
-		setModuleColors (Module.Uplifter_Top,new Color[]{Color.decode("#006666"),Color.decode("#666600")}); 
-		setModuleColors (Module.Uplifter_Bottom,new Color[]{Color.decode("#002222"),Color.decode("#222200")}); 
+		visual.setModuleColors (Module.Uplifter_Left,new Color[]{Color.decode("#00FFFF"),Color.decode("#FFFF00")}); 
+		visual.setModuleColors (Module.Uplifter_Right,new Color[]{Color.decode("#00AAAA"),Color.decode("#AAAA00")}); 
+		visual.setModuleColors (Module.Uplifter_Top,new Color[]{Color.decode("#006666"),Color.decode("#666600")}); 
+		visual.setModuleColors (Module.Uplifter_Bottom,new Color[]{Color.decode("#002222"),Color.decode("#222200")}); 
 		
-		setDefaultColors (new Color[]{Color.decode("#0000FF"),Color.decode("#FF0000")});
-		setMessageFilter(Type.STATE_OPERATION_NEW.bit()  |Type.SYMMETRY.bit() |Type.DISCOVER.bit());
+		visual.setDefaultColors (new Color[]{Color.decode("#0000FF"),Color.decode("#FF0000")});
+		visual.setMessageFilter(Type.STATE_OPERATION_NEW.bit()  |Type.SYMMETRY.bit() |Type.DISCOVER.bit());
 		stateOperationInit(StateOperation.DEFAULT);
 		
 		IstateOperation = StateOperation.DEFAULT;
@@ -173,6 +173,7 @@ public class CloverFlipthroughController extends MetaformaRuntime implements Con
 		varSet(Var.gradH, MAX_BYTE);
 		varSet(Var.gradV, MAX_BYTE);
 	}
+	
 	
 	
 	protected void receiveMessage(Type type, IStateOperation stateOperation, byte stateInstruction, boolean isReq, byte sourceCon, byte destCon, byte metaId, byte[] data) {
@@ -203,6 +204,26 @@ public class CloverFlipthroughController extends MetaformaRuntime implements Con
 		boolean sourceV = nbs(EAST&MALE).size() == 2 && nbs(WEST&NORTH&MALE).isEmpty() || nbs(WEST&FEMALE).size() == 2 && nbs(EAST&NORTH&FEMALE).isEmpty();
 		gradientSend(Var.gradH,sourceH);
 		gradientSend(Var.gradV,sourceV);			
+	}
+
+
+	public void metaNeighborHook(int connectorNr) {
+		
+	}
+
+
+	@Override
+	public void metaNeighborHook(int connectorNr, byte metaId) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	protected void receiveMetaMessage(MetaType type, byte source, byte dest,
+			byte[] data) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 

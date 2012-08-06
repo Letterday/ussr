@@ -115,7 +115,7 @@ public class ATRONSnakeController2 extends ATRONController {
 			
 			/*Step 3*/
 			if(globalState==2 && (role==0||role==3)) {
-				System.out.println("Prøver "+role);
+				System.out.println("Prï¿½ver "+role);
 				while(countNeighbors()==1) Thread.yield();
 				spreadState(globalState,role);
 				char seenOtherRole=0;

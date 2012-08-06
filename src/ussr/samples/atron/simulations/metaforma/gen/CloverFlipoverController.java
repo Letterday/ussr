@@ -41,6 +41,8 @@ class CloverFlipoverSimulation extends MetaformaSimulation {
  
 
 public class CloverFlipoverController extends MetaformaRuntime implements ControllerInformationProvider {
+	
+	
 	enum StateOperation implements IStateOperation {
 		DEFAULT, MOVE;
 
@@ -177,7 +179,6 @@ public class CloverFlipoverController extends MetaformaRuntime implements Contro
 			
 		
 			if (doRepeat(8,1000,2,12)) {
-				notification("TTTTest");
 				if (nbs(WEST).onGroup(Grouping.Left).size() == 1 && nbs(WEST).onGroup(Grouping.Right).size() == 1 && nbs().size() == 2) {
 					unicast(new Packet(getId()).setType(Type.SYMMETRY),MALE&WEST);
 					commit();
@@ -280,15 +281,15 @@ public class CloverFlipoverController extends MetaformaRuntime implements Contro
 	
 	
 	public void init () {
-		setModuleColors (Module.Clover_North,new Color[]{Color.decode("#00FFFF"),Color.decode("#FFFF00")}); 
-		setModuleColors (Module.Clover_South,new Color[]{Color.decode("#00AAAA"),Color.decode("#AAAA00")}); 
-		setModuleColors (Module.Clover_West,new Color[]{Color.decode("#006666"),Color.decode("#666600")}); 
-		setModuleColors (Module.Clover_East,new Color[]{Color.decode("#002222"),Color.decode("#222200")}); 
+		visual.setModuleColors (Module.Clover_North,new Color[]{Color.decode("#00FFFF"),Color.decode("#FFFF00")}); 
+		visual.setModuleColors (Module.Clover_South,new Color[]{Color.decode("#00AAAA"),Color.decode("#AAAA00")}); 
+		visual.setModuleColors (Module.Clover_West,new Color[]{Color.decode("#006666"),Color.decode("#666600")}); 
+		visual.setModuleColors (Module.Clover_East,new Color[]{Color.decode("#002222"),Color.decode("#222200")}); 
 		
-		setGroupingColors (Grouping.Left,new Color[]{Color.BLACK,Color.GRAY});
-		setGroupingColors (Grouping.Right,new Color[]{Color.DARK_GRAY,Color.WHITE});
+		visual.setGroupingColors (Grouping.Left,new Color[]{Color.BLACK,Color.GRAY});
+		visual.setGroupingColors (Grouping.Right,new Color[]{Color.DARK_GRAY,Color.WHITE});
 		
-		setMessageFilter(Type.SYMMETRY.bit() | Type.GRADIENT.bit() );
+		visual.setMessageFilter(Type.SYMMETRY.bit() | Type.GRADIENT.bit() );
 		 
 		Packet.setController(this);
 		IstateOperation = StateOperation.DEFAULT;
@@ -332,6 +333,21 @@ public class CloverFlipoverController extends MetaformaRuntime implements Contro
 				}
 			}
 		}
+		
+	}
+
+
+	@Override
+	public void metaNeighborHook(int connectorNr, byte metaId) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	protected void receiveMetaMessage(MetaType type, byte source, byte dest,
+			byte[] data) {
+		// TODO Auto-generated method stub
 		
 	}
 

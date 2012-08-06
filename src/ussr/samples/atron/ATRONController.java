@@ -9,6 +9,8 @@ package ussr.samples.atron;
 
 import java.util.Random;
 
+import com.sun.media.rtsp.protocol.PauseMessage;
+
 import ussr.comm.Packet;
 import ussr.comm.PacketReceivedObserver;
 import ussr.comm.RadioReceiver;
@@ -368,6 +370,15 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	 * @see ussr.samples.atron.IATRONAPI#isConnected(int)
 	 */
     public boolean isConnected(int i) {
+    	if (i%2 ==1) {
+    		try {
+				throw new Exception("isConnected() NOT ALLOWED ON FEMALE CONNECTOR!!");
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		getModule().getSimulation().setPause(true);
+    	}
     	return module.getConnectors().get(i).isConnected();
     }
     
@@ -441,7 +452,7 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
     public byte sendMessage(byte[] message, byte messageSize, byte connector, String sourceModule, String destModule) 
 	{
     	
-    	if(connector<8 && (isOtherConnectorNearby(connector) || ((MetaformaController)this).isOtherConnectorNearbyCallDisabled() )) {
+    	if(connector<8 && (isOtherConnectorNearby(connector)  )) {
     		//System.out.println("-- send from " + sourceModule + " to " + destModule + " over " + connector );
 			module.getTransmitters().get(connector).send(new Packet(message).setSourceModule(sourceModule).setDestModule(destModule));
 			if(packetCountingActive) incPacketsSentCount();
@@ -461,7 +472,6 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	}
       
     public byte sendMessage(byte[] message, byte messageSize, byte connector) {
-    	System.exit(0);
     	return sendMessage(message,messageSize,connector,"???","???");
     	
     }

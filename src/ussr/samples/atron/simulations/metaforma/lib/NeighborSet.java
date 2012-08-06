@@ -1,9 +1,6 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,16 +9,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import ussr.samples.atron.simulations.metaforma.gen.Grouping;
 import ussr.samples.atron.simulations.metaforma.gen.Module;
 
-//class Neighbor {
-//	byte sourceCon;
-//	byte destCon;
-//	Module m;
-//}
 
 public class NeighborSet implements IModuleHolder {
 	private ConcurrentHashMap<Module, Byte[]> connectors;// = new HashMap<Module, Byte[]>();
 	private ConcurrentHashMap<Byte, Module> modules;// = new HashMap<Byte, Module>();
 	private MetaformaRuntime ctrl;
+
 	
 	public NeighborSet (MetaformaRuntime c) {
 		ctrl = c;
@@ -55,18 +48,15 @@ public class NeighborSet implements IModuleHolder {
 	
 	public void add (Module nb, int conToNb, int conFromNb) { 
 		if (getConnectorNrTo(nb) != conToNb || getConnectorNrFrom(nb) != conFromNb) {
-			ctrl.notification(".addNeighbor " + nb + " [" + conToNb + "," + conFromNb + "] (" + nb + "=" + conToNb + "!= " +getConnectorNrTo(nb)+")");
+			ctrl.getVisual().print(".addNeighbor " + nb + " [" + conToNb + "," + conFromNb + "] (" + nb + "=" + conToNb + "!= " +getConnectorNrTo(nb)+")");
 			assoc (nb,conToNb,conFromNb);
 		}
 	}
 	
 	private void assoc (Module nb, int conToNb, int conFromNb) {
 		if (!getModuleByConnector(conToNb).equals(nb)) {
-//			ctrl.notification("before: " + toString());
 			delete(nb);
 			delete(conToNb);
-//			ctrl.notification("delete " + conToNb);
-//			ctrl.notification("after  : " + toString());
 		}
 		connectors.put(nb, new Byte[]{(byte)conToNb,(byte)conFromNb});
 		modules.put((byte)conToNb, nb);
@@ -104,22 +94,6 @@ public class NeighborSet implements IModuleHolder {
 		return !modules.isEmpty();
 	}
 	
-//	public NeighborBag filter (NeighborBag neighbors, ArrayList<Filter> filters) {
-//		NeighborBag ret = new NeighborBag(ctrl);
-//		
-//		for (Map.Entry<Module, Byte[]>entry : neighbors.entrySet()) {
-//			boolean match = true;
-//			for (Filter f : filters) {
-//				if (!f.apply(entry)) {
-//					match = false;
-//				}
-//			}
-//			if (match) {
-//				ret.assoc(entry.getKey(),entry.getValue()[0],entry.getValue()[1]);
-//			}
-//		}
-//		return ret;
-//	}
 
 	public Set<Map.Entry<Module,Byte[]>> entrySet() {
 		return connectors.entrySet();
@@ -140,7 +114,7 @@ public class NeighborSet implements IModuleHolder {
 		String r = "";
 		for (Map.Entry<Module, Byte[]> e : connectors.entrySet()) {
 			String m = e.getKey() + " [" + e.getValue()[0] + ", "+ e.getValue()[1] + "], ";
-			if (ctrl.isConnected(e.getValue()[0])) {
+			if (ctrl.getContext().isConnConnected(e.getValue()[0])) {
 					m = m.toUpperCase();
 				}
 				r += m;
@@ -176,7 +150,7 @@ public class NeighborSet implements IModuleHolder {
 	public NeighborSet isConnected(boolean connected) {
 		NeighborSet ret = new NeighborSet(this.ctrl);
 		for (Map.Entry<Module, Byte []> e : entrySet()) {
-			if (ctrl.isConnected(e.getValue()[0]) == connected) {
+			if (ctrl.getContext().isConnConnected(e.getValue()[0]) == connected) {
 				ret.assoc(e);
 			}
 		}
@@ -214,47 +188,14 @@ public class NeighborSet implements IModuleHolder {
 		return ret;
 	}
 	
-	private NeighborSet matchConnectors(List<Integer> connectors) {
-		NeighborSet ret = new NeighborSet(this.ctrl);
-		for (Map.Entry<Module, Byte []> e : entrySet()) {
-			if (connectors.contains((int)e.getValue()[0])) {
-				ret.assoc(e);
-			}
-		}
-		return ret;
-	}
-
-	public NeighborSet male() {
-		return matchConnectors(Arrays.asList(0,2,4,6));
-	}
 	
-	public NeighborSet female() {
-		return matchConnectors(Arrays.asList(1,3,5,7));
-	}
-	
-	public NeighborSet north() {
-		return matchConnectors(Arrays.asList(0,1,2,3));
-	}
-	
-	public NeighborSet south() {
-		return matchConnectors(Arrays.asList(4,5,6,7));
-	}
-	
-	public NeighborSet west() {
-		return matchConnectors(Arrays.asList(0,1,4,5));
-	}
-	
-	public NeighborSet east() {
-		return matchConnectors(Arrays.asList(2,3,6,7));
-	}
-
 	public Set<Module> modules() {
 		return connectors.keySet();
 	}
 
 	public void deleteUnconnectedOnes() {
 		for (byte c : modules.keySet()) {
-			if (!ctrl.isConnected(c)) {				
+			if (!ctrl.getContext().isConnConnected(c)) {				
 				delete(c);
 			}
 		}
@@ -312,45 +253,4 @@ public class NeighborSet implements IModuleHolder {
 	}
 	
 }
-
-
-
-
-
-
-//
-//
-//abstract class Filter {
-//	public abstract boolean apply (Map.Entry<Module, Byte[]> entry);
-//}
-//
-//class Male extends Filter{
-//	public boolean apply (Map.Entry<Module, Byte[]> entry) {
-//		return Connector.isMALE(entry.getValue()[0]);
-//	}
-//}
-//
-//class Female extends Filter{
-//	public boolean apply (Map.Entry<Module, Byte[]> entry) {
-//		return Connector.isFEMALE(entry.getValue()[0]);
-//	}
-//}
-//
-//class North extends Filter{
-//	public boolean apply (Map.Entry<Module, Byte[]> entry) {
-//		return Connector.isNORTH(entry.getValue()[0]);
-//	}
-//}
-//
-//class InGroup extends Filter {
-//	private Grouping grouping;
-//	
-//	public InGroup (Grouping g) {
-//		grouping = g;
-//	}
-//	
-//	public boolean apply (Map.Entry<Module, Byte[]> entry) {
-//		return entry.getKey().belongsTo(grouping);
-//	}
-//}
 

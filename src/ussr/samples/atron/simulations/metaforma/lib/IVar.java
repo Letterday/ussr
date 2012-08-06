@@ -4,4 +4,6 @@ public interface IVar {
 	public byte index();
 	
 	public IVar fromByte(byte b);
+
 }
+

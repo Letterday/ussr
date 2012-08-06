@@ -19,6 +19,35 @@ public abstract class MetaformaRuntime extends MetaformaController {
 		super();
 	}
 	
+	public void rotate(int degrees) {
+		visual.print("## rotate " + degrees + ", current = " + angle + "; new = " + (degrees + angle) + "");
+		// TODO: There is still a strange issue: when rotating 180 degrees, it is undefined whether it goes CW or CCW (randomly).
+		if (Math.abs(degrees) < 180) {
+			angle = angle + degrees % 360;
+			doRotate(angle);
+		}
+		else {
+			// Therefore we rotate in 2 steps, such that the direction is no longer undefined, but can be chosen by a pos/neg degree
+			angle = angle + (degrees /2) % 360;
+			doRotate(angle);
+			angle = angle + (degrees /2) % 360;
+			doRotate(angle);
+		}
+		
+	}
+	
+	public void rotateTo(int degrees) {
+		visual.print("## rotateTo " + degrees + ", current = " + angle);
+		angle = degrees;
+		doRotate(angle);
+	}
+	
+	private void doRotate (int degrees) {
+		rotateToDegreeInDegrees(degrees);
+		while (isRotating()) {
+			yield();
+		}
+	}
 	
 	
 	public void rotate(IModuleHolder g, int degrees) {
@@ -54,7 +83,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 		byte conToNb = nbs().getConnectorNrTo(dest);
 		byte conFromNb = nbs().getConnectorNrFrom(dest);
 		String action = makeConnection ? " connect to " : " disconnect from ";
-		notification("# " + getId() + action + dest);
+		visual.print("# " + getId() + action + dest);
 		if (conToNb % 2 == 0 && conFromNb % 2 == 1) {
 			if (makeConnection)
 				connect(conToNb);
@@ -72,26 +101,26 @@ public abstract class MetaformaRuntime extends MetaformaController {
 					connection(m2,c);
 				}
 				commit();
-				notification("# "  + action + " from " + m1 + " to " + m2);
+				visual.print("# "  + action + " from " + m1 + " to " + m2);
 			}
 		}
 		
 	}
 	
 	protected void connectionPart (IModuleHolder g, int part, boolean connect) {
-			notification("# " + g + " disconnectPart " + part);
+		visual.print("# " + g + " disconnectPart " + part);
 			for (int i=0; i<8; i++) {
 				if ((part&pow2(i))==pow2(i)) {
 					if (g.contains(getId())) {
-						notification(i + " matches");
-						if (isConnected(i) == !connect && isMale(i)) {
+						visual.print(i + " matches");
+						if (context.isConnConnected(i) == !connect && isMale(i)) {
 							//notification(i + " is male and connected");
 							connection(i,connect);
 							//stateTrans.commit();
 						}
 					}
 					for (Module m: nbs(MALE).in(g).isConnected(!connect).usingConnector(i).modules()) {
-						notification("# " + getId() + " has connector " + i + " matches");
+						visual.print("# " + getId() + " has connector " + i + " matches");
 						connection(m,connect);
 						//stateTrans.commit();
 						// this should be done by the module in question
@@ -121,7 +150,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	protected void gradientSend(IVar v, boolean isSource) {
 		if (isSource) {
 			varSet(v,0);
-			notification("I am source for " + v);
+			visual.print("I am source for " + v);
 		}
 		
 		broadcast(Type.GRADIENT,REQ,new byte[]{v.index(),min(varGet(v)+1,MAX_BYTE)});
@@ -133,9 +162,9 @@ public abstract class MetaformaRuntime extends MetaformaController {
 
 		if (isFEMALE(conDest)) {
 			if (!stateGetBoolean("fixedYet")) {
-				if (isReq == isNORTH(conDest)) switchNorthSouth();
+				if (isReq == isNORTH(conDest)) context.switchNorthSouth();
 							
-				switchEastWestHemisphere(isNORTH(conSource) == isWEST(conDest), isSOUTH(conDest));
+				context.switchEastWestHemisphere(isNORTH(conSource) == isWEST(conDest), isSOUTH(conDest));
 			}				
 			
 			if (isReq) {  
@@ -145,10 +174,10 @@ public abstract class MetaformaRuntime extends MetaformaController {
 		}
 		else if (isMALE(conDest)) {
 			if (!stateGetBoolean("fixedYet")) {
-				switchEastWestHemisphere(isSOUTH(conSource) == isWEST(conDest), isSOUTH(conDest));
+				context.switchEastWestHemisphere(isSOUTH(conSource) == isWEST(conDest), isSOUTH(conDest));
 
 				if (isWEST(conSource) == isSOUTH(conDest)) {
-					switchNorthSouth();
+					context.switchNorthSouth();
 				}
 			}
 			
@@ -160,5 +189,9 @@ public abstract class MetaformaRuntime extends MetaformaController {
 		stateSetVar("fixedYet", true);
 		commit();
 	}
+
+
+
+	
 
 }

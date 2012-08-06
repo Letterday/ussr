@@ -9,7 +9,7 @@ import java.math.BigInteger;
 public class Packet implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	private static final int HEADER_LENGTH = 9;
+	private static final int HEADER_LENGTH = 10;
 
 	private static MetaformaController ctrl;
 
@@ -22,6 +22,7 @@ public class Packet implements Serializable {
 	private byte stateInstruction = -1;
 	public byte[] data = new byte[]{};
 	private byte metaId = 0; // 0 is for everyone
+	private boolean connectorConnected;
 	
 
 
@@ -56,8 +57,9 @@ public class Packet implements Serializable {
 		stateOperation = ctrl.IstateOperation.fromByte(msg[5]);
 		stateInstruction = msg[6];
 		metaId = msg[7];
+		connectorConnected = msg[8] == 1;
 		
-		byte payloadLength = msg[8]; 			// the length of the payload is stored in msg[8]
+		byte payloadLength = msg[9]; 			// the length of the payload is stored in msg[8]
 		data = new byte[payloadLength];		
 		
 		for (int i=0; i<payloadLength; i++) {
@@ -158,8 +160,8 @@ public class Packet implements Serializable {
 		ret[5] = stateOperation.ord();
 		ret[6] = stateInstruction;
 		ret[7] = metaId;
-		
-		ret[8] = (byte)data.length;
+		ret[8] = (byte) (connectorConnected ? 1 : 0);
+		ret[9] = (byte)data.length;
 
 		for (int i=0; i<data.length; i++) {
 			ret[i+HEADER_LENGTH] = data[i];
@@ -231,6 +233,14 @@ public class Packet implements Serializable {
 
 	public static void setController (MetaformaController c) {
 		ctrl = c;
+	}
+
+	public boolean getConnectorConnected() {
+		return connectorConnected;
+	}
+	
+	public void setConnectorConnected(boolean c) {
+		connectorConnected = c;
 	}
 	
 	
