@@ -24,6 +24,9 @@ public class Packet implements Serializable {
 	private boolean connectorConnected;
 	private byte metaSourceId;
 	
+	
+	private IMetaPart part;
+	
 
 
 	public Packet (Module s, Module d) {
@@ -51,9 +54,9 @@ public class Packet implements Serializable {
 	
 	public byte[] getBytes () {
 		byte[] ret = new byte[data.length+HEADER_LENGTH];
-		ret[0] = (byte) (dir.ord() + (connectorConnected ? 2 : 0));
+		ret[0] = (byte) (sourceConnector + ((dir.ord() == 1) ? 16 : 0) + (connectorConnected ? 32 : 0));
 		ret[1] = source.ord();
-		ret[2] = sourceConnector;
+		ret[2] = part.index();
 		ret[3] = dest.ord();
 		ret[4] = type.ord();
 		ret[5] = stateInstruction;
@@ -68,10 +71,11 @@ public class Packet implements Serializable {
 	}
 	
 	public Packet (byte[] msg) {
-		dir = Dir.values()[(msg[0]&1)==1?1:0];
-		connectorConnected = (msg[0]&2)==2;
+		dir = Dir.values()[(msg[0]&16)==16?1:0];
+		connectorConnected = (msg[0]&32)==32;
 		source = Module.values()[msg[1]];
-		sourceConnector = msg[2];
+		sourceConnector = (byte) (msg[0]%8);
+		part =  ctrl.getMetaPart().fromByte(msg[2]);
 		dest = Module.values()[msg[3]];
 		type = Type.values()[msg[4]];  
 		stateInstruction = msg[5];
@@ -86,6 +90,13 @@ public class Packet implements Serializable {
 		}
 	}
 	
+	public IMetaPart getMetaPart () {
+		return part;
+	}
+	
+	public void setMetaPart (IMetaPart p) {
+		part = p;
+	}
 	
 	
 	public byte getStateInstruction() {
@@ -112,7 +123,7 @@ public class Packet implements Serializable {
 
 		
 	public String toString () {
-		String header = getDir().toString() + " " + getType().toString() + " from: " + getSource().toString() + "(" + metaId + ")" + "(over " + sourceConnector + ") to: " + getDest().toString() + " - "  + " [" + "#" + getStateInstruction() + "] " + metaId + " ";
+		String header = getDir().toString() + " " + getType().toString() + " from: " + getSource().toString() + "(" + metaSourceId + " using "+metaId+")" + "(over " + sourceConnector + ") to: " + getDest().toString() + " - "  + " [" + "#" + getStateInstruction() + "] " + metaId + " ";
 		String payload = "  ";
 		if (getType() == Type.CONSENSUS) {
 			payload = new BigInteger(data).bitCount() + " ";

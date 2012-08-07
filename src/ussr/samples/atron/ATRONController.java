@@ -452,7 +452,7 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
     public byte sendMessage(byte[] message, byte messageSize, byte connector, String sourceModule, String destModule) 
 	{
     	
-    	if(connector<8 && (isOtherConnectorNearby(connector)  )) {
+    	if(connector<8 /*&& (isOtherConnectorNearby(connector) ) */) {
     		//System.out.println("-- send from " + sourceModule + " to " + destModule + " over " + connector );
 			module.getTransmitters().get(connector).send(new Packet(message).setSourceModule(sourceModule).setDestModule(destModule));
 			if(packetCountingActive) incPacketsSentCount();
