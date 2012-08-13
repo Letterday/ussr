@@ -23,14 +23,14 @@ public abstract class MetaformaRuntime extends MetaformaController {
 		visual.print("## rotate " + degrees + ", current = " + angle + "; new = " + (degrees + angle) + "");
 		// TODO: There is still a strange issue: when rotating 180 degrees, it is undefined whether it goes CW or CCW (randomly).
 		if (Math.abs(degrees) < 180) {
-			angle = angle + degrees % 360;
+			angle = (360 + angle + degrees) % 360;
 			doRotate(angle);
 		}
 		else {
 			// Therefore we rotate in 2 steps, such that the direction is no longer undefined, but can be chosen by a pos/neg degree
-			angle = angle + (degrees /2) % 360;
+			angle = (360 + angle + (degrees /2)) %360;
 			doRotate(angle);
-			angle = angle + (degrees /2) % 360;
+			angle = (360 + angle + (degrees /2)) %360;
 			doRotate(angle);
 		}
 		

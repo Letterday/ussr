@@ -15,7 +15,7 @@ import ussr.samples.atron.simulations.metaforma.lib.NeighborSet;
 public abstract class MetaformaController extends MetaformaApi implements ControllerInformationProvider{
 
 	public enum CoreVar implements IVar {
-		NONE, Completed;
+		NONE, Completed,BossId;
 
 		public byte index() {
 			return (byte) (127-ordinal());
@@ -64,8 +64,8 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	
 	
 	protected byte metaId = 0;
-	protected byte metaBossId = 0;
-	protected IMetaPart metaPart = null;
+//	protected byte metaBossId = 0;
+	protected IMetaRole metaRole = null;
 	private int metaModuleSize = 4;
 	
 	
@@ -86,10 +86,10 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 
 	}
 	
-	public boolean metaVarSet(IVar id, byte value) {
+	public boolean metaVarSet(IVar id, int value) {
 		visual.print(".metaVarSet " + id + ", " + value);
 		if (metaVarGet(id) != value) {
-			varsMeta.put(id,value);
+			varsMeta.put(id,(byte) value);
 			varsMetaSequenceNrs.put(id,(byte)(metaVarGet(id,true)+1));
 			broadcastMetaVar(id);
 			return true;
@@ -283,7 +283,9 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 			//TODO: operation state merge
 			
 			yield();
-			visual.colorize();
+			if (freqLimit(500, 73)) {		
+				visual.colorize();
+			}
 			
 		}
 	}
@@ -343,10 +345,12 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 //		broadcast(new Packet(getId(), Module.ALL).setType(Type.STATE_OPERATION_NEW));
 //	}
 	
-	protected void stateOperationNew (IStateOperation newState) {
+	protected void stateOperationNew (IStateOperation newState, boolean preClean) {
 		stateOperation = newState; 
-		stateInstrInitNew();
-		stateInstruction = 0;
+		if (preClean) {
+			stateInstrInitNew();
+			stateInstruction = 0;
+		}
 		stateInstructionReceived = 0;
 		visual.printOperationState();
 	}
@@ -393,8 +397,8 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 		return context.nbs().onGroup(g);
 	}
 	
-	public NeighborSet nbs(int connectors, IMetaPart p) {
-		return context.nbs().filter(connectors).isMetaPart(p);
+	public NeighborSet nbs(int connectors, IMetaRole r) {
+		return context.nbs().filter(connectors).isMetaRole(r);
 	}
 	
 	public NeighborSet nbs(int connectors, Grouping g) {
@@ -486,6 +490,9 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 			varsMeta.put(var, value);
 			varsMetaSequenceNrs.put(var, sequenceNr);
 			broadcastMetaVar(var);
+			if (var.equals(CoreVar.BossId) || value == 0) {
+				commit();
+			}
 		}
 	}
 	
@@ -589,15 +596,15 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 		return stateOperation;
 	}
 
-	protected void setMetaPart(IMetaPart p) {
-		visual.print(".setPart " + p);
-		metaPart = p;
+	protected void setMetaRole(IMetaRole r) {
+		visual.print(".setMetaRole " + r);
+		metaRole = r;
 		
 	}
 	
 
 	public boolean isLocked() {
-		return metaBossId != 0;
+		return metaVarGet(CoreVar.BossId) != 0;
 	}
 
 	
@@ -606,47 +613,43 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 		metaId = (byte)v;
 		
 	}
-	protected void metaPartSet (IMetaPart p) {
-		visual.print(".metaPartSet " + p);
-		metaPart = p;
-		
-	}
 	 
 	
 	protected boolean metaIdExists () {
 		return metaId != 0;
 	}
 	
-	protected boolean metaPartExists () {
-		return metaPart != null;
+	protected boolean metaRoleExists () {
+		return metaRole != null;
 	}
 	
 	public byte getMetaId() {
 		return metaId;
 	}
 	
-	public boolean metaBossIdExists(){
-		return metaBossId != 0;
-	}
 	
 	public byte getMetaBossId() {
-		return metaBossId;
+		return metaVarGet(CoreVar.BossId);
 	}
 	
-	public IMetaPart getMetaPart () {
-		return metaPart;
+	public boolean metaBossMyself() {
+		return getMetaId() == getMetaBossId();
+	}
+
+	
+	public IMetaRole getMetaRole () {
+		return metaRole;
 	}
 	
 	public void metaBossIdUnlock() {
 		visual.print(".metaBossIdUnlock ");
-		metaBossId = 0;
+		metaVarSet(CoreVar.BossId, 0);
 	}
 
-	public void metaBossIdSet(byte metaId, IStateOperation state) {
-		visual.print(".setMetaBossId " + metaId + ": " + state);
-		broadcast(new MetaPacket(getMetaId(),metaId).setType(MetaType.SET_BOSS).setData(state.ord()));
-		metaBossId = getMetaId();
-		stateOperationNew(state);
+	public void metaBossIdSet(byte metaId) {
+		visual.print(".setMetaBossId " + metaId + ": " + stateOperation);
+		broadcast(new MetaPacket(getMetaId(),metaId).setType(MetaType.SET_BOSS).setData(stateOperation.ord()));
+		metaVarSet(CoreVar.BossId, getMetaId());
 	}
 
 	
@@ -663,16 +666,16 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 				visual.print(p,".RECEIVE " + p);
 			}
 			
-			// TODO: The packet should go to an other metamodule immediately
+			// TODO: The packet should go to an other meta module immediately
 			if (!p.isDying() ) {
 				broadcast(p);
 			}
 			
-			if (p.getDest() == metaId) {
+			if (p.getDest() == getMetaId()) {
 				if (p.getType() == MetaType.SET_BOSS && !stateOperation(IstateOperation.fromByte(p.getData()[0]))) {
-					// the origin is the boss
-					metaBossId = p.getSource();
-					stateOperationNew(IstateOperation.fromByte(p.getData()[0]));
+					// the origin will become the boss
+					metaVarSet(CoreVar.BossId, p.getSource());
+					stateOperationNew(IstateOperation.fromByte(p.getData()[0]),false);
 					commit();
 				}
 				else {
@@ -684,7 +687,7 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 		else {
 			Packet p = new Packet(message);
 			
-			if (p.getMetaId() != getMetaBossId()) {
+			if (p.getMetaId() != getMetaBossId() && p.getMetaSourceId() != getMetaId()) {
 				visual.print("Packet ignore from outside broadcast field: " +p);
 				return;
 			}
@@ -700,7 +703,7 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 			
 			
 		
-			if (stateInstructionReceived < p.getStateInstruction()) {
+			if (stateInstructionReceived < p.getStateInstruction() && p.getMetaId() == getMetaBossId()) {
 				stateInstructionReceived = p.getStateInstruction();
 //				broadcast(new Packet(p),connector);
 				scheduler.invokeNow("broadcastDiscover");
@@ -718,7 +721,7 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 				visual.print(p,".receive on " + connector + ": " + p);
 			}
 			
-			context.addNeighbor(p.getSource(), connector, p.getSourceConnector(),p.getMetaPart());
+			context.addNeighbor(p.getSource(), connector, p.getSourceConnector(),p.getMetaRole());
 			
 	
 			if (p.getSource() == getId()) {
@@ -828,7 +831,7 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 		p.setSourceConnector((byte) connector);
 		p.setSource(getId());
 		p.setMetaId(getMetaBossId());
-		p.setMetaPart(getMetaPart());
+		p.setMetaRole(getMetaRole());
 		if (metaVarGet(CoreVar.Completed) == 1) {
 			p.setMetaSourceId(getMetaId());
 		}

@@ -232,15 +232,16 @@ public class ATRONBuilder {
     
 	public ArrayList<ModulePosition> buildGrid(BitSet build, String prefix, boolean useASE) {
 		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
+		int height = -5;
+		buildClover(prefix, useASE, mPos, aPos(-2,height,2),12);
+		buildClover(prefix, useASE, mPos, aPos(0,height,4),20);
+		buildClover(prefix, useASE, mPos, aPos(2,height,2),0);
 		
-		buildClover(prefix, useASE, mPos, aPos(-2,-5,2),12);
-		buildClover(prefix, useASE, mPos, aPos(0,-5,4),20);
-		buildClover(prefix, useASE, mPos, aPos(2,-5,2),0);
+		buildClover(prefix, useASE, mPos, aPos(4,height,0),4);
+		buildClover(prefix, useASE, mPos, aPos(6,height,-2),8);
 		
-		buildClover(prefix, useASE, mPos, aPos(4,-5,0),4);
-		buildClover(prefix, useASE, mPos, aPos(6,-5,-2),8);
-		
-		buildClover(prefix, useASE, mPos, aPos(2,-5,-2),16);
+		buildClover(prefix, useASE, mPos, aPos(2,height,-2),16);
+		buildClover(prefix, useASE, mPos, aPos(8,height,-4),24);
 		
 		
 		//if (build.get(3)) buildClover(prefix, useASE, mPos, aPos(4,-5,0),12);

@@ -25,7 +25,7 @@ public class Packet implements Serializable {
 	private byte metaSourceId;
 	
 	
-	private IMetaPart part;
+	private IMetaRole metaRole;
 	
 
 
@@ -56,7 +56,7 @@ public class Packet implements Serializable {
 		byte[] ret = new byte[data.length+HEADER_LENGTH];
 		ret[0] = (byte) (sourceConnector + ((dir.ord() == 1) ? 16 : 0) + (connectorConnected ? 32 : 0));
 		ret[1] = source.ord();
-		ret[2] = part.index();
+		ret[2] = metaRole.index();
 		ret[3] = dest.ord();
 		ret[4] = type.ord();
 		ret[5] = stateInstruction;
@@ -75,7 +75,7 @@ public class Packet implements Serializable {
 		connectorConnected = (msg[0]&32)==32;
 		source = Module.values()[msg[1]];
 		sourceConnector = (byte) (msg[0]%8);
-		part =  ctrl.getMetaPart().fromByte(msg[2]);
+		metaRole =  ctrl.getMetaRole().fromByte(msg[2]);
 		dest = Module.values()[msg[3]];
 		type = Type.values()[msg[4]];  
 		stateInstruction = msg[5];
@@ -90,12 +90,12 @@ public class Packet implements Serializable {
 		}
 	}
 	
-	public IMetaPart getMetaPart () {
-		return part;
+	public IMetaRole getMetaRole () {
+		return metaRole;
 	}
 	
-	public void setMetaPart (IMetaPart p) {
-		part = p;
+	public void setMetaRole (IMetaRole p) {
+		metaRole = p;
 	}
 	
 	
