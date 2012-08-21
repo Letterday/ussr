@@ -20,12 +20,12 @@ public class Packet implements Serializable {
 	Dir dir = Dir.REQ;
 	private byte stateInstruction = -1;
 	public byte[] data = new byte[]{};
-	private byte metaId = 0; // 0 is for everyone
+	private byte metaBossId = 0; // 0 is for everyone
 	private boolean connectorConnected;
 	private byte metaSourceId;
 	
 	
-	private IMetaRole metaRole;
+	private IRole metaRole;
 	
 
 
@@ -48,7 +48,7 @@ public class Packet implements Serializable {
 		dir = p.getDir();
 
 		stateInstruction = p.getStateInstruction();
-		metaId = p.getMetaId();
+		metaBossId = p.getMetaBossId();
 		metaSourceId = p.getMetaSourceId();
 	}
 	
@@ -60,7 +60,7 @@ public class Packet implements Serializable {
 		ret[3] = dest.ord();
 		ret[4] = type.ord();
 		ret[5] = stateInstruction;
-		ret[6] = metaId;
+		ret[6] = metaBossId;
 		ret[7] = metaSourceId;
 		ret[8] = (byte)data.length;
 
@@ -75,11 +75,11 @@ public class Packet implements Serializable {
 		connectorConnected = (msg[0]&32)==32;
 		source = Module.values()[msg[1]];
 		sourceConnector = (byte) (msg[0]%8);
-		metaRole =  ctrl.getMetaRole().fromByte(msg[2]);
+		metaRole =  ctrl.moduleRoleGet().fromByte(msg[2]);
 		dest = Module.values()[msg[3]];
 		type = Type.values()[msg[4]];  
 		stateInstruction = msg[5];
-		metaId = msg[6];
+		metaBossId = msg[6];
 		metaSourceId = msg[7];
 		
 		byte payloadLength = msg[8]; 			// the length of the payload is stored in msg[8]
@@ -90,11 +90,11 @@ public class Packet implements Serializable {
 		}
 	}
 	
-	public IMetaRole getMetaRole () {
+	public IRole getModRole () {
 		return metaRole;
 	}
 	
-	public void setMetaRole (IMetaRole p) {
+	public void setModRole (IRole p) {
 		metaRole = p;
 	}
 	
@@ -123,7 +123,7 @@ public class Packet implements Serializable {
 
 		
 	public String toString () {
-		String header = getDir().toString() + " " + getType().toString() + " from: " + getSource().toString() + "(" + metaSourceId + " using "+metaId+")" + "(over " + sourceConnector + ") to: " + getDest().toString() + " - "  + " [" + "#" + getStateInstruction() + "] " + metaId + " ";
+		String header = getDir().toString() + " " + getType().toString() + " from: " + getSource().toString() + "(" + metaSourceId + " using "+metaBossId+")" + "(over " + sourceConnector + ") to: " + getDest().toString() + " - "  + " [" + "#" + getStateInstruction() + "] " + metaBossId + " ";
 		String payload = "  ";
 		if (getType() == Type.CONSENSUS) {
 			payload = new BigInteger(data).bitCount() + " ";
@@ -188,12 +188,12 @@ public class Packet implements Serializable {
 		return source;
 	}
 	
-	public byte getMetaId() {
-		return metaId;
+	public byte getMetaBossId() {
+		return metaBossId;
 	}
 	
-	public void setMetaId(byte id) {
-		metaId = id;
+	public void setMetaBossId(byte id) {
+		metaBossId = id;
 	}
 	
 	public void setMetaSourceId(byte id) {
