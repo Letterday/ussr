@@ -237,7 +237,7 @@ public class NeighborSet implements IModuleHolder {
 				assoc(entry.getKey(), (entry.getValue()[0] + 2) % 4, entry.getValue()[1],entry.getValue()[2]);
 			}
 			else if (entry.getValue()[0] >= 4 && south) { 
-				assoc(entry.getKey(), ((entry.getValue()[0] + 2) % 4) + 4, entry.getValue()[1],entry.getValue()[1]);
+				assoc(entry.getKey(), ((entry.getValue()[0] + 2) % 4) + 4, entry.getValue()[1],entry.getValue()[2]);
 			}
 		}
 	}

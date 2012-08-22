@@ -67,6 +67,24 @@ public class CloverFlipthroughController extends MetaformaRuntime implements Con
 		public Var fromByte(byte b) {
 			return values()[b];
 		}
+
+		@Override
+		public boolean isLocal() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public boolean isMeta() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public boolean isMetaGroup() {
+			// TODO Auto-generated method stub
+			return false;
+		}
 	}
 
 	
@@ -166,8 +184,7 @@ public class CloverFlipthroughController extends MetaformaRuntime implements Con
 		visual.setMessageFilter(Type.SYMMETRY.bit() |Type.DISCOVER.bit());
 		stateOperationInit(StateOperation.DEFAULT);
 		
-		IstateOperation = StateOperation.DEFAULT;
-		Ivar = Var.NONE;
+
 		Packet.setController(this);
 		
 		varSet(Var.gradH, MAX_BYTE);
@@ -224,6 +241,34 @@ public class CloverFlipthroughController extends MetaformaRuntime implements Con
 			byte[] data) {
 		// TODO Auto-generated method stub
 		
+	}
+
+
+	@Override
+	public IStateOperation getStateOperation() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public IVar varFromByteLocal(byte index) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public IVar varFromByteMeta(byte index) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public IVar varFromByteMetaGroup(byte index) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 

@@ -129,7 +129,7 @@ public class Packet implements Serializable {
 			payload = new BigInteger(data).bitCount() + " ";
 		}
 		else if (getType() == Type.GRADIENT) {
-			payload = ctrl.Ivar.fromByte(data[0]) + "," + data[1]  + " ";
+			payload = ctrl.varFromByteLocal(data[0]) + "," + data[1]  + " ";
 		}
 		else {
 			for (int i=0; i<data.length; i++) {

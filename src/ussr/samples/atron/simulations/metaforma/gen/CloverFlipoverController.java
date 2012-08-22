@@ -65,6 +65,24 @@ public class CloverFlipoverController extends MetaformaRuntime implements Contro
 		public IVar fromByte(byte b) {
 			return values()[b];
 		}
+
+		@Override
+		public boolean isLocal() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public boolean isMeta() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public boolean isMetaGroup() {
+			// TODO Auto-generated method stub
+			return false;
+		}
 	}
 
 	
@@ -292,8 +310,6 @@ public class CloverFlipoverController extends MetaformaRuntime implements Contro
 		visual.setMessageFilter(Type.SYMMETRY.bit() | Type.GRADIENT.bit() );
 		 
 		Packet.setController(this);
-		IstateOperation = StateOperation.DEFAULT;
-		Ivar = Var.NONE;
 		
 		varSet(Var.GRADIENT_H, MAX_BYTE);
 		varSet(Var.GRADIENT_V, MAX_BYTE);
@@ -349,6 +365,34 @@ public class CloverFlipoverController extends MetaformaRuntime implements Contro
 			byte[] data) {
 		// TODO Auto-generated method stub
 		
+	}
+
+
+	@Override
+	public IStateOperation getStateOperation() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public IVar varFromByteLocal(byte index) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public IVar varFromByteMeta(byte index) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public IVar varFromByteMetaGroup(byte index) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	

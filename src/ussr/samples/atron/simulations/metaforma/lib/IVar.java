@@ -5,5 +5,9 @@ public interface IVar {
 	
 	public IVar fromByte(byte b);
 
+	public boolean isLocal();
+	public boolean isMeta();
+	public boolean isMetaGroup();
+
 }
 
