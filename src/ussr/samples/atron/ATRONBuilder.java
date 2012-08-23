@@ -240,8 +240,8 @@ public class ATRONBuilder {
 		buildClover(prefix, useASE, mPos, aPos(4,height,0),12);
 		buildClover(prefix, useASE, mPos, aPos(2,height,-2),16);
 
-		buildClover(prefix, useASE, mPos, aPos(6,height,-2),20);
-		buildClover(prefix, useASE, mPos, aPos(8,height,-4),24);
+//		buildClover(prefix, useASE, mPos, aPos(6,height,-2),20);
+//		buildClover(prefix, useASE, mPos, aPos(8,height,-4),24);
 		
 		
 		//if (build.get(3)) buildClover(prefix, useASE, mPos, aPos(4,-5,0),12);

@@ -10,6 +10,7 @@ import java.awt.Color;
 
 import com.jme.math.Quaternion;
 import com.jme.math.Vector3f;
+import com.jme.scene.shape.RoundedBox;
 
 import ussr.description.Robot;
 import ussr.description.geometry.MeshShape;
@@ -65,6 +66,8 @@ public abstract class ATRON implements Robot {
         // Module components
         float pi = (float)Math.PI;
         MeshShape hemi1, hemi2;
+//        RoundedBox ring;
+        
         hemi1 = new MeshShape("ATRON", smooth ? 0.9f : 0.935f, new VectorDescription(0f,0f,-0.00f),new RotationDescription(0,pi,pi/4)); //north
         hemi1.setProperty("north", true);
         hemi2 = new MeshShape("ATRON", smooth ? 0.9f : 0.935f, new VectorDescription(0f,0f,0.00f),new RotationDescription(0,0f,pi/4)); //south

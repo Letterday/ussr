@@ -48,12 +48,13 @@ public class JMEATRONFactory implements ModuleFactory {
     public void createModule(int module_id, Module module, Robot robot, String module_name) {
         if(!robot.getDescription().getType().startsWith("ATRON")) throw new Error("Illegal module type: "+robot.getDescription().getType());
         
-        if(robot.getDescription().getModuleComponents().size()!=2) throw new RuntimeException("Not an ATRON");
+//        if(robot.getDescription().getModuleComponents().size()!=2) throw new RuntimeException("Not an ATRON");
         createModuleComponents(module, robot, module_id, module_name);
         
         JMEModuleComponent northComponent = (JMEModuleComponent)module.getComponent(0);
         JMEModuleComponent southComponent = (JMEModuleComponent)module.getComponent(1);
-
+//        JMEModuleComponent ringComponent = (JMEModuleComponent)module.getComponent(2);
+        
         setMass(0.4f,northComponent.getModuleNode());
         setMass(0.4f,southComponent.getModuleNode());
         setMaterials(module, robot,module_name);
@@ -75,6 +76,7 @@ public class JMEATRONFactory implements ModuleFactory {
 	private void createModuleComponents(Module module, Robot robot, int module_id, String module_name) {
 	    ModuleComponentDescription northDescription = robot.getDescription().getModuleComponents().get(0);
 	    ModuleComponentDescription southDescription = robot.getDescription().getModuleComponents().get(1);
+//	    ModuleComponentDescription ringDescription = robot.getDescription().getModuleComponents().get(2);
         //AtronShape northShape = (AtronShape) northDescription.getGeometry();
 	    //AtronShape southShape = (AtronShape) southDescription.getGeometry();
         
@@ -86,12 +88,18 @@ public class JMEATRONFactory implements ModuleFactory {
         DynamicPhysicsNode southNode = simulation.getPhysicsSpace().createDynamicNode();
         JMEModuleComponent southComponent = new JMEModuleComponent(simulation,robot,southDescription,module_name+"module#"+Integer.toString(module_id)+".south",module,southNode);
         southNode.setName("AtronSouth");
+//        
+//        DynamicPhysicsNode ringNode = simulation.getPhysicsSpace().createDynamicNode();
+//        JMEModuleComponent ringComponent = new JMEModuleComponent(simulation,robot,ringDescription,module_name+"module#"+Integer.toString(module_id)+".ring",module,ringNode);
+//        southNode.setName("AtronRing");
 
         module.addComponent(northComponent);
         module.addComponent(southComponent); //hvad skal h�ndteres ved fx placering af moduler?
+//        module.addComponent(ringComponent);
         
         simulation.getModuleComponents().add(northComponent);
         simulation.getModuleComponents().add(southComponent);
+//        simulation.getModuleComponents().add(ringComponent);
 	}
     
 	private void setMaterials(Module module, Robot robot, String module_name) {

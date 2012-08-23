@@ -5,27 +5,35 @@ import ussr.samples.atron.simulations.metaforma.gen.*;
 import java.io.Serializable;
 import java.math.BigInteger;
 
+// There is chosen to use manual serialization instead of Java's built in serialization
+// Reason: Much fewer bytes needed to transport on infrared!
 
 public class Packet implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	private static final int HEADER_LENGTH = 9;
+	private static final int HEADER_LENGTH = 6;
 
 	private static MetaformaController ctrl;
 
-	Type type = Type.DISCOVER;
-	private Module source;
-	private Module dest;
-	private byte sourceConnector = -1;
-	Dir dir = Dir.REQ;
-	private byte stateInstruction = -1;
+	private Module source;				// 8bits
+	
+	private Module dest;				// 8bits
+	
+	private Type type = Type.DISCOVER;	// 3bits
+	private byte sourceConnector = -1;	// 3bits
+	private Dir dir = Dir.REQ;			// 1bit
+	private boolean connectorConnected;	// 1bit
+	
+	private byte stateInstruction = -1;	// 5bits
+	private IRole moduleRole;			// 3bits
+	
+	private byte metaBossId = 0; 	// 0 is for everyone
+	
+	private byte metaSourceId = 0;
 	public byte[] data = new byte[]{};
-	private byte metaBossId = 0; // 0 is for everyone
-	private boolean connectorConnected;
-	private byte metaSourceId;
 	
 	
-	private IRole metaRole;
+	
 	
 
 
@@ -39,30 +47,18 @@ public class Packet implements Serializable {
 		dest = Module.ALL;
 	}
 	
-	public Packet (Packet p) {
-		type = p.getType();
-		source = p.getSource();
-		sourceConnector = p.getSourceConnector();
-		dest = p.getDest();
-		data = p.getData();
-		dir = p.getDir();
-
-		stateInstruction = p.getStateInstruction();
-		metaBossId = p.getMetaBossId();
-		metaSourceId = p.getMetaSourceId();
-	}
 	
 	public byte[] getBytes () {
 		byte[] ret = new byte[data.length+HEADER_LENGTH];
-		ret[0] = (byte) (sourceConnector + ((dir.ord() == 1) ? 16 : 0) + (connectorConnected ? 32 : 0));
-		ret[1] = source.ord();
-		ret[2] = metaRole.index();
-		ret[3] = dest.ord();
-		ret[4] = type.ord();
-		ret[5] = stateInstruction;
-		ret[6] = metaBossId;
-		ret[7] = metaSourceId;
-		ret[8] = (byte)data.length;
+		if (sourceConnector == -1) {
+			throw new Error("sourceConnector = -1");
+		}
+		ret[0] = source.ord();
+		ret[1] = dest.ord();
+		ret[2] = (byte) (type.ord() | (sourceConnector<<3) | (dir.ord()<<6) |((connectorConnected?1:0)<<7));
+		ret[3] = (byte) (stateInstruction | moduleRole.index()<<5);
+		ret[4] = metaBossId;
+		ret[5] = metaSourceId;
 
 		for (int i=0; i<data.length; i++) {
 			ret[i+HEADER_LENGTH] = data[i];
@@ -71,31 +67,34 @@ public class Packet implements Serializable {
 	}
 	
 	public Packet (byte[] msg) {
-		dir = Dir.values()[(msg[0]&16)==16?1:0];
-		connectorConnected = (msg[0]&32)==32;
-		source = Module.values()[msg[1]];
-		sourceConnector = (byte) (msg[0]%8);
-		metaRole =  ctrl.moduleRoleGet().fromByte(msg[2]);
-		dest = Module.values()[msg[3]];
-		type = Type.values()[msg[4]];  
-		stateInstruction = msg[5];
-		metaBossId = msg[6];
-		metaSourceId = msg[7];
+		source = Module.values()[msg[0]];
+		dest = Module.values()[msg[1]];
 		
-		byte payloadLength = msg[8]; 			// the length of the payload is stored in msg[8]
-		data = new byte[payloadLength];		
+		type = Type.values()     	[(msg[2]&255>>0)%8];  
+		sourceConnector = (byte) 	((msg[2]&255>>3)%8);
+		dir = Dir.values()			[(msg[2]&255>>6)%1];
+		connectorConnected =		((msg[2]&255>>7)==1);
 		
-		for (int i=0; i<payloadLength; i++) {
+		stateInstruction = (byte) ((msg[3]&255)%32);
+		moduleRole =  ctrl.moduleRoleGet().fromByte((byte) ((msg[3]&255)>>5));
+		
+		metaBossId = msg[4];
+		metaSourceId = msg[5];
+		
+		
+		data = new byte[ msg.length-HEADER_LENGTH ];		
+		
+		for (int i=0; i<data.length; i++) {
 			data[i] = msg[i+HEADER_LENGTH];
 		}
 	}
 	
 	public IRole getModRole () {
-		return metaRole;
+		return moduleRole;
 	}
 	
 	public void setModRole (IRole p) {
-		metaRole = p;
+		moduleRole = p;
 	}
 	
 	

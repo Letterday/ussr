@@ -44,22 +44,22 @@ public class NeighborSet implements IModuleHolder {
 	}
 	
 	public void assoc (Map.Entry<Module, Byte[]> e) {
-		assoc(e.getKey(),e.getValue()[0],e.getValue()[1],e.getValue()[2]);
+		assoc(e.getKey(),e.getValue()[0],e.getValue()[1],e.getValue()[2],e.getValue()[3]);
 	}
 	
-	public void add (Module nb, int conToNb, int conFromNb, IRole metaPart) { 
-		if (getConnectorNrTo(nb) != conToNb || getConnectorNrFrom(nb) != conFromNb || getMetaPart(nb) != metaPart.index()) {
-			ctrl.getVisual().print(".addNeighbor " + nb + " [" + conToNb + "," + conFromNb + "," + metaPart + "] (" + nb + "=" + conToNb + "!= " +getConnectorNrTo(nb)+")");
-			assoc (nb,conToNb,conFromNb, metaPart.index());
+	public void add (Module nb, int conToNb, int conFromNb, IRole moduleRole, int metaId) { 
+		if (getConnectorNrTo(nb) != conToNb || getConnectorNrFrom(nb) != conFromNb || getModuleRole(nb) != moduleRole.index() || getMetaId(nb) != metaId) {
+			ctrl.getVisual().print(".addNeighbor " + nb + " [" + conToNb + "," + conFromNb + "," + moduleRole + "," + metaId + "] (" + nb + "=" + conToNb + "!= " +getConnectorNrTo(nb)+")");
+			assoc (nb,conToNb,conFromNb, moduleRole.index(),metaId);
 		}
 	}
 	
-	private void assoc (Module nb, int conToNb, int conFromNb, int metaPart) {
+	private void assoc (Module nb, int conToNb, int conFromNb, int moduleRole, int metaId) {
 		if (!getModuleByConnector(conToNb).equals(nb)) {
 			delete(nb);
 			delete(conToNb);
 		}
-		connectors.put(nb, new Byte[]{(byte)conToNb,(byte)conFromNb, (byte)metaPart});
+		connectors.put(nb, new Byte[]{(byte)conToNb,(byte)conFromNb, (byte)moduleRole, (byte)metaId});
 		modules.put((byte)conToNb, nb);
 	}
 	
@@ -82,7 +82,7 @@ public class NeighborSet implements IModuleHolder {
 		}		
 	}
 	
-	public byte getMetaPart (Module mod) {
+	public byte getModuleRole (Module mod) {
 		if (connectors.containsKey(mod)) {
 			return connectors.get(mod)[2];
 		}
@@ -91,6 +91,14 @@ public class NeighborSet implements IModuleHolder {
 		}		
 	}
 	
+	public byte getMetaId (Module mod) {
+		if (connectors.containsKey(mod)) {
+			return connectors.get(mod)[3];
+		}
+		else {
+			return -1;
+		}		
+	}
 	
 	
 	public Module getModuleByConnector (int con) {
@@ -125,7 +133,7 @@ public class NeighborSet implements IModuleHolder {
 	public String toString() {
 		String r = "  ";
 		for (Map.Entry<Module, Byte[]> e : connectors.entrySet()) {
-			String m = e.getKey() + " ("+ ctrl.moduleRoleGet().fromByte(e.getValue()[2]) + ") [" + e.getValue()[0] + ", "+ e.getValue()[1] + "], ";
+			String m = e.getKey() + " ("+ ctrl.moduleRoleGet().fromByte(e.getValue()[2]) + ", "+ e.getValue()[3] + ") [" + e.getValue()[0] + ", "+ e.getValue()[1] + "], ";
 			if (ctrl.getContext().isConnConnected(e.getValue()[0])) {
 					m = m.toUpperCase();
 				}
@@ -179,6 +187,16 @@ public class NeighborSet implements IModuleHolder {
 		return ret;
 	}
 	
+	public NeighborSet inMetaGoup() {
+		NeighborSet ret = new NeighborSet(this.ctrl);
+		for (Map.Entry<Module, Byte []> e : entrySet()) {
+			if (e.getValue()[3] == ctrl.metaBossIdGet()) {
+				ret.assoc(e);
+			}
+		}
+		return ret;
+	}
+	
 	public NeighborSet maleAlignedWithFemale () {
 		NeighborSet ret = new NeighborSet(this.ctrl);
 		for (Map.Entry<Module, Byte []> e : entrySet()) {
@@ -226,7 +244,7 @@ public class NeighborSet implements IModuleHolder {
 	
 	public void updateSymmetryNS () {
 		for (Map.Entry<Module, Byte[]> entry : nbs().entrySet()) {
-			assoc(entry.getKey(), (entry.getValue()[0] + 4) % 8, entry.getValue()[1],entry.getValue()[2]);
+			assoc(entry.getKey(), (entry.getValue()[0] + 4) % 8, entry.getValue()[1],entry.getValue()[2],entry.getValue()[3]);
 		}
 	}
 	
@@ -234,10 +252,10 @@ public class NeighborSet implements IModuleHolder {
 	public void updateSymmetryEW (boolean south) {
 		for (Map.Entry<Module, Byte[]> entry : nbs().entrySet()) {
 			if (entry.getValue()[0] < 4 && !south) {
-				assoc(entry.getKey(), (entry.getValue()[0] + 2) % 4, entry.getValue()[1],entry.getValue()[2]);
+				assoc(entry.getKey(), (entry.getValue()[0] + 2) % 4, entry.getValue()[1],entry.getValue()[2],entry.getValue()[3]);
 			}
 			else if (entry.getValue()[0] >= 4 && south) { 
-				assoc(entry.getKey(), ((entry.getValue()[0] + 2) % 4) + 4, entry.getValue()[1],entry.getValue()[2]);
+				assoc(entry.getKey(), ((entry.getValue()[0] + 2) % 4) + 4, entry.getValue()[1],entry.getValue()[2],entry.getValue()[3]);
 			}
 		}
 	}

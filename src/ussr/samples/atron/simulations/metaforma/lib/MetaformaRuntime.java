@@ -53,7 +53,6 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	public void rotate(IModuleHolder g, int degrees) {
 		if (g.contains(getId()) ) {
 			rotate(degrees);
-			commit();
 		}
 	}
 
@@ -80,15 +79,18 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	}
 	
 	private void connection(Module dest, boolean makeConnection) {
-		byte conToNb = nbs().getConnectorNrTo(dest);
-		byte conFromNb = nbs().getConnectorNrFrom(dest);
-		String action = makeConnection ? " connect to " : " disconnect from ";
-		visual.print("# " + getId() + action + dest);
-		if (conToNb % 2 == 0 && conFromNb % 2 == 1) {
-			if (makeConnection)
-				connect(conToNb);
-			else
-				disconnect(conToNb);
+		if (!consensusMyself()) {
+			byte conToNb = nbs().getConnectorNrTo(dest);
+			byte conFromNb = nbs().getConnectorNrFrom(dest);
+			String action = makeConnection ? " connect to " : " disconnect from ";
+			visual.print("# " + getId() + action + dest);
+			if (conToNb % 2 == 0 && conFromNb % 2 == 1) {
+				if (makeConnection)
+					connect(conToNb);
+				else
+					disconnect(conToNb);
+			}
+			
 		}
 	}
 	
@@ -100,7 +102,6 @@ public abstract class MetaformaRuntime extends MetaformaController {
 				while (!nbs(MALE).isConnected(c).contains(m2)) {
 					connection(m2,c);
 				}
-				commit();
 				visual.print("# "  + action + " from " + m1 + " to " + m2);
 			}
 		}
@@ -128,8 +129,8 @@ public abstract class MetaformaRuntime extends MetaformaController {
 
 				}
 			}
-			if (g.contains(getId()) && nbs(part).isConnected(!connect).isEmpty()) {
-				commit(); 
+			while (g.contains(getId()) && !nbs(part).isConnected(!connect).isEmpty()) {
+				yield(); 
 			}
 		
 	}
@@ -162,15 +163,17 @@ public abstract class MetaformaRuntime extends MetaformaController {
 
 		if (isFEMALE(conDest)) {
 			if (!stateGetBoolean("fixedYet")) {
-				if (isReq == isNORTH(conDest)) context.switchNorthSouth();
+				if (isWEST(conSource) == isNORTH(conDest)) {
+					context.switchNorthSouth();
+				}
 							
 				context.switchEastWestHemisphere(isNORTH(conSource) == isWEST(conDest), isSOUTH(conDest));
 			}				
 			
 			if (isReq) {  
-				unicast(FEMALE&NORTH, Type.SYMMETRY, REQ);
+				unicast(FEMALE&EAST, Type.SYMMETRY, REQ);
 			}
-			unicast(FEMALE&SOUTH,Type.SYMMETRY, ACK);
+			unicast(FEMALE&WEST,Type.SYMMETRY, ACK);
 		}
 		else if (isMALE(conDest)) {
 			if (!stateGetBoolean("fixedYet")) {
@@ -182,9 +185,9 @@ public abstract class MetaformaRuntime extends MetaformaController {
 			}
 			
 			if (isReq) {  
-				unicast(MALE&WEST,Type.SYMMETRY, REQ);
+				unicast(MALE&NORTH,Type.SYMMETRY, REQ);
 			} 
-			unicast( MALE&EAST, Type.SYMMETRY, ACK);
+			unicast( MALE&SOUTH, Type.SYMMETRY, ACK);
 		}
 		stateSetVar("fixedYet", true);
 		commit();

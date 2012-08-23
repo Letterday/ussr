@@ -1,7 +1,7 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
 
-public enum Type {
+public enum Type { // Max 8
 		DISCOVER,
 		GRADIENT,
 		CONSENSUS,
