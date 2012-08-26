@@ -4,69 +4,126 @@ import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 
+import sun.security.util.BigInt;
+import ussr.samples.atron.simulations.metaforma.lib.IModule;
 import ussr.samples.atron.simulations.metaforma.lib.IModuleHolder;
 
-public enum Module implements IModuleHolder {ALL,Walker_Head,Walker_Left,Walker_Right,Floor_0,Floor_1,Floor_2,Floor_3,Floor_4,Floor_5,Floor_6,Floor_7,Floor_8,Floor_9,Floor_10,Floor_11,Floor_12,Floor_13,Floor_14,Floor_15,Floor_16,Floor_17,Floor_18,Floor_19,Floor_20,Floor_21,Floor_22,Floor_23,Floor_24,Floor_25, Floor_26,Floor_27,Floor_28,Floor_29,Floor_30,Floor_31,Floor_32, Floor_33,Floor_34,Floor_35,Floor_36,Walker_Left2,Clover_North,Clover_South,Clover_West,Clover_East, Floor_Uplifter,Floor_Downlifter, None, Floor_UplifterTop, Floor_Top, Floor_Bottom, Floor_UplifterBottom,Left_0,Left_1,Left_2,Left_3,Left_4,Left_5,Left_6,Left_7,Left_8,Left_9,Left_10,Left_11,Left_12,Left_13,Left_14,Left_15,Left_16,Left_17,Left_18
-,Right_0,Right_1,Right_2,Right_3,Right_4,Right_5,Right_6,Right_7,Right_8,Right_9,Right_10,Right_11,Right_12,Right_13,Right_14,Right_15,Right_16,Right_17,Right_18, Left_Bottom, Right_Top, Left_Top, Right_Bottom,Uplifter_Left,Uplifter_Right, Uplifter_Top, Uplifter_Bottom;
 
-	public Grouping getGrouping () {
-		return Grouping.valueOf(name().split("_")[0]);
-	}
+public class Module implements IModuleHolder,IModule {
+
+	public Mod mod;
+	public byte number;
 	
-	public static Module getOnNumber (int g, int i) {
-		return getOnNumber (Grouping.values()[g],i);
-	}
-	
-	public static Module getOnNumber (Grouping s, int i) {
-		String group = s.toString();
-		int j = 0;
-		while (!values()[j].toString().startsWith(group + "_")) {
-			j++;
+	@Override
+	public int hashCode () {
+		if (number == 0) {
+			return mod.hashCode();
 		}
-		//System.out.println(".getOnNumber " + s.toString() + " " + i + " = " + j);
-		return values()[i + j];
+		else {
+			return mod.hashCode() ^ number;
+		}
+	}
+	
+	@Override
+	public boolean contains(IModule m) {
+		return equals(m);
+	}	
+	
+	public boolean equals (Object m) {
+		return mod.equals(((IModule)m).getModule()) && number == ((IModule)m).getNr();		
+	}
+
+	public Module () {
+		mod = Mod.NONE;
+	}
+	
+	public Module (Mod m) {
+		this(m,0);
+	}
+
+	public Module (Mod m, int nr) {
+		mod = m;
+		number = (byte) nr;
 	}
 	
 	public byte ord() {
-		return (byte)ordinal();
+		return (byte) (mod.ord() + number);
 	}
-	
-	public boolean belongsTo (Grouping s) {
-		return name().startsWith(s.name());
-	}
-
-	public int getNumber() {
-		int j = 0;
-		while (!values()[j].toString().startsWith(getGrouping().toString() + "_")) {
-			j++;
+		 
+	public static Module value(String name) {
+		String parts[] = name.split("_");
+		if (parts.length != 2) {
+			throw new IllegalArgumentException(name);
 		}
-		return ordinal() - j;
-	}
-	
-	
-	public Module swapGrouping (Grouping to) {
-		return valueOf(to + "_" + name().split("_")[1]);
+		for(Mod m : Mod.values()) {
+			if (m.name().equalsIgnoreCase(name)) {
+				return new Module(m);
+			}
+			if (m.name().equalsIgnoreCase(parts[0])) {
+				return new Module(m,Integer.parseInt(parts[1]));
+			}
+		}
 		
-	}
-
-	@Override
-	public boolean contains(Module m) {
-		return equals(m);
+		return new Module();
 	}
 	
-	public Set<Module> modules() {
-		Set<Module> m = new HashSet<Module>();
+	public static Module value(int index) {
+		byte s = 0;
+		for (Mod m:Mod.values()) {
+			if (s + m.count <= index) {
+				s += m.count;
+			}
+			else {
+				return new Module(m,index-s);
+			}
+		}
+		return new Module();
+	}
+	
+	public Set<IModule> modules() {
+		Set<IModule> m = new HashSet<IModule>();
 		m.add(this);
 		return m;
 	}
 
 	public static Set<Module> fromBits(BigInteger consensus) {
 		Set<Module> ret = new HashSet<Module>();
-		for (int i=0; i<Module.values().length; i++) {
+		
+		
+		for (int i=0; i<consensus.bitLength(); i++) {
 			if (consensus.testBit(i)) {
-				ret.add(Module.values()[i]);
+				ret.add(Module.value(i));
 			}
 		}
 		return ret;
 	}
+	
+	public String toString () {
+		return mod.toString() + ((mod.getCount()!=1) ? "_" + number : "");
+	}
+	
+	public Module swapGrouping (Grouping to) {
+		return new Module(Mod.valueOf(to + "_" + mod.name().split("_")[1]));
+		
+	}
+	
+	public Grouping getGrouping () {
+		return Grouping.valueOf(mod.name().split("_")[0]);
+	}
+
+	public static Module modAll() {
+		return new Module(Mod.ALL);
+	}
+
+	@Override
+	public byte getNr() {
+		return number;
+	}
+
+	@Override
+	public Mod getModule() {
+		return mod;
+	}
+	
 }
+

@@ -8,11 +8,11 @@ import ussr.samples.atron.simulations.metaforma.gen.Module;
 
 
 public class ModuleSet implements IModuleHolder {
-	private HashSet<Module> modules = new HashSet<Module>();
+	private HashSet<IModule> modules = new HashSet<IModule>();
 	
 	
 	
-	public ModuleSet add (Module m) { 
+	public ModuleSet add (IModule m) { 
 		modules.add(m);
 		return this;
 	}
@@ -33,7 +33,7 @@ public class ModuleSet implements IModuleHolder {
 
 	public ModuleSet onGroup (Grouping g) {
 		ModuleSet ret = new ModuleSet();
-		for (Module m: modules) {
+		for (IModule m: modules) {
 			if (m.getGrouping().equals(g)) {
 				ret.add(m);
 			}
@@ -41,14 +41,17 @@ public class ModuleSet implements IModuleHolder {
 		return ret;
 	}
 	
-	public HashSet<Module> modules () {
+	public HashSet<IModule> modules () {
 		return modules;
 	}
 
 
 	@Override
-	public boolean contains(Module m) {
+	public boolean contains(IModule m) {
 		return modules.contains(m);
 	}
+
+
+	
 	
 }

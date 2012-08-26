@@ -23,7 +23,7 @@ public abstract class MetaformaSimulation extends GenericATRONSimulation {
 		PhysicsParameters.get().setRealisticCollision(true);
 		
 		PhysicsParameters.get().setPhysicsSimulationStepSize(0.004f);
-		
+		PhysicsFactory.getOptions().setStartPaused(false);
 		ussr.physics.jme.robots.JMEATRONFactory.setConnectorMaxAlignmentForce(10f);
 		ussr.physics.jme.robots.JMEATRONFactory.setConnectorMaxAlignmentDistance(0.02f);
 		ussr.physics.jme.robots.JMEATRONFactory.setConnectorEpsilonAlignmentDistance(0.01f);

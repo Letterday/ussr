@@ -3,20 +3,20 @@ package ussr.samples.atron.simulations.metaforma.gen;
 import java.util.HashSet;
 import java.util.Set;
 
+import ussr.samples.atron.simulations.metaforma.lib.IModule;
 import ussr.samples.atron.simulations.metaforma.lib.IModuleHolder;
 
-public enum Grouping implements IModuleHolder{Floor,Walker,ALL, Clover, Left, Right, Struct, None, Uplifter;
+public enum Grouping implements IModuleHolder{ALL, NONE, Floor,Walker, Clover, Left, Right, Uplifter;
 	
 
-	@Override
-	public boolean contains(Module m) {
+	public boolean contains(IModule m) {
 		return equals(m.getGrouping());
 	}
 
-	@Override
-	public Set<Module> modules() {
-		Set<Module> mods = new HashSet<Module>();
-		for (Module m: Module.values()) {
+
+	public Set<IModule> modules() {
+		Set<IModule> mods = new HashSet<IModule>();
+		for (IModule m: Mod.values()) {
 			if (m.toString().startsWith(toString() + "_")) {
 				mods.add(m);
 			}
@@ -25,11 +25,4 @@ public enum Grouping implements IModuleHolder{Floor,Walker,ALL, Clover, Left, Ri
 		
 	}
 	
-	public int length() {
-		int j = 0;
-		while (!Module.values()[j].toString().startsWith(toString() + "_")) {
-			j++;
-		}
-		return j;
-	}
 }

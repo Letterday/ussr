@@ -449,12 +449,12 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
     /**
 	 * @see ussr.samples.atron.IATRONAPI#sendMessage(byte[], byte, byte)
 	 */
-    public byte sendMessage(byte[] message, byte messageSize, byte connector, String sourceModule, String destModule) 
+    public byte sendMessage(byte[] message, byte messageSize, byte connector) 
 	{
     	
     	if(connector<8 /*&& (isOtherConnectorNearby(connector) ) */) {
     		//System.out.println("-- send from " + sourceModule + " to " + destModule + " over " + connector );
-			module.getTransmitters().get(connector).send(new Packet(message).setSourceModule(sourceModule).setDestModule(destModule));
+			module.getTransmitters().get(connector).send(new Packet(message));
 			if(packetCountingActive) incPacketsSentCount();
 			return 1;
 		}
@@ -471,10 +471,6 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 		return 0;
 	}
       
-    public byte sendMessage(byte[] message, byte messageSize, byte connector) {
-    	return sendMessage(message,messageSize,connector,"???","???");
-    	
-    }
     
     /**
      * Called when a packet is received by the module

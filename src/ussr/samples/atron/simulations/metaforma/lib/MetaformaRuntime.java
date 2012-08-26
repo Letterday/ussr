@@ -1,7 +1,6 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
 
-import ussr.samples.atron.simulations.metaforma.gen.Module;
 
 public abstract class MetaformaRuntime extends MetaformaController {
 
@@ -59,26 +58,29 @@ public abstract class MetaformaRuntime extends MetaformaController {
 
 	public void connect(IModuleHolder g1, IModuleHolder g2) {
 		discoverNeighbors();
+		visual.print("##connect " + g1 + "," + g2);
 		connection(g1, g2, true);
 		connection(g2, g1, true);
 	}
 	
 	public void disconnect(IModuleHolder g1, IModuleHolder g2) {
+		discoverNeighbors();
+		visual.print("##disconnect " + g1 + "," + g2);
 		connection(g1, g2, false);
 		connection(g2, g1, false);
 		
 	}
-	
+	 
 	private void connection(IModuleHolder g1, IModuleHolder g2, boolean connect) {
 		if (g1.contains(getId())) {
-			for (Module m: nbs(MALE).in(g2).isConnected(!connect).modules()) {
+			for (IModule m: nbs(MALE).nbsInMetaGoup().nbsIn(g2).nbsIsConnected(!connect).modules()) {
 				connection (getId(),m,connect);
 			}
 		}
 		
 	}
 	
-	private void connection(Module dest, boolean makeConnection) {
+	private void connection(IModule dest, boolean makeConnection) {
 		if (!consensusMyself()) {
 			byte conToNb = nbs().getConnectorNrTo(dest);
 			byte conFromNb = nbs().getConnectorNrFrom(dest);
@@ -95,11 +97,11 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	}
 	
 
-	private void connection(Module m1, Module m2, boolean c) {
+	private void connection(IModule m1, IModule m2, boolean c) {
 		String action = c ? "connect" : "disconnect";
-		if (getId() == m1) {
+		if (getId().equals(m1)) {
 			if (nbs(MALE).contains(m2)) {
-				while (!nbs(MALE).isConnected(c).contains(m2)) {
+				while (!nbs(MALE).nbsIsConnected(c).contains(m2)) {
 					connection(m2,c);
 				}
 				visual.print("# "  + action + " from " + m1 + " to " + m2);
@@ -120,7 +122,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 							//stateTrans.commit();
 						}
 					}
-					for (Module m: nbs(MALE).in(g).isConnected(!connect).usingConnector(i).modules()) {
+					for (IModule m: nbs(MALE).nbsIn(g).nbsIsConnected(!connect).nbsUsingConnector(i).modules()) {
 						visual.print("# " + getId() + " has connector " + i + " matches");
 						connection(m,connect);
 						//stateTrans.commit();
@@ -129,7 +131,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 
 				}
 			}
-			while (g.contains(getId()) && !nbs(part).isConnected(!connect).isEmpty()) {
+			while (g.contains(getId()) && !nbs(part).nbsIsConnected(!connect).isEmpty()) {
 				yield(); 
 			}
 		
@@ -162,7 +164,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	protected void symmetryFix(boolean isReq, byte conSource, byte conDest, byte[] data) {
 
 		if (isFEMALE(conDest)) {
-			if (!stateGetBoolean("fixedYet")) {
+			if (!consensusMyself()) {
 				if (isWEST(conSource) == isNORTH(conDest)) {
 					context.switchNorthSouth();
 				}
@@ -176,7 +178,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 			unicast(FEMALE&WEST,Type.SYMMETRY, ACK);
 		}
 		else if (isMALE(conDest)) {
-			if (!stateGetBoolean("fixedYet")) {
+			if (!consensusMyself()) {
 				context.switchEastWestHemisphere(isSOUTH(conSource) == isWEST(conDest), isSOUTH(conDest));
 
 				if (isWEST(conSource) == isSOUTH(conDest)) {
@@ -189,7 +191,6 @@ public abstract class MetaformaRuntime extends MetaformaController {
 			} 
 			unicast( MALE&SOUTH, Type.SYMMETRY, ACK);
 		}
-		stateSetVar("fixedYet", true);
 		commit();
 	}
 

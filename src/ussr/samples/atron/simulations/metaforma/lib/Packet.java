@@ -1,23 +1,18 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
 import ussr.samples.atron.simulations.metaforma.gen.*;
-
-import java.io.Serializable;
 import java.math.BigInteger;
 
 // There is chosen to use manual serialization instead of Java's built in serialization
 // Reason: Much fewer bytes needed to transport on infrared!
 
-public class Packet implements Serializable {
-	private static final long serialVersionUID = 1L;
+public class Packet extends PacketBase {
 
 	private static final int HEADER_LENGTH = 6;
 
 	private static MetaformaController ctrl;
 
-	private Module source;				// 8bits
-	
-	private Module dest;				// 8bits
+	protected IModule source;				// 8bits
 	
 	private Type type = Type.DISCOVER;	// 3bits
 	private byte sourceConnector = -1;	// 3bits
@@ -25,26 +20,18 @@ public class Packet implements Serializable {
 	private boolean connectorConnected;	// 1bit
 	
 	private byte stateInstruction = -1;	// 5bits
-	private IRole moduleRole;			// 3bits
+	private IRole IModuleRole;			// 3bits
 	
 	private byte metaBossId = 0; 	// 0 is for everyone
 	
 	private byte metaSourceId = 0;
-	public byte[] data = new byte[]{};
-	
-	
-	
-	
 
-
-	public Packet (Module s, Module d) {
-		source = s;
-		dest = d;
-	}
+	private IStateOperation stateOperation;
+	private byte stateOperationCounter;
 	
-	public Packet (Module s) {
+	
+	public Packet (IModule s) {
 		source = s;
-		dest = Module.ALL;
 	}
 	
 	
@@ -53,12 +40,12 @@ public class Packet implements Serializable {
 		if (sourceConnector == -1) {
 			throw new Error("sourceConnector = -1");
 		}
-		ret[0] = source.ord();
-		ret[1] = dest.ord();
-		ret[2] = (byte) (type.ord() | (sourceConnector<<3) | (dir.ord()<<6) |((connectorConnected?1:0)<<7));
-		ret[3] = (byte) (stateInstruction | moduleRole.index()<<5);
-		ret[4] = metaBossId;
-		ret[5] = metaSourceId;
+		ret[0] = (byte) (source.ord() % 128);
+		ret[1] = (byte) (type.ord()%8 | ((sourceConnector%8)<<3) | ((dir.ord()%2)<<6) |((connectorConnected?1:0)<<7));
+		ret[2] = (byte) (stateInstruction%32 | (IModuleRole.index()%8)<<5);
+		ret[3] = metaBossId;
+		ret[4] = metaSourceId;
+		ret[5] = (byte) ((stateOperation.ord()%8) | (stateOperationCounter<<3));
 
 		for (int i=0; i<data.length; i++) {
 			ret[i+HEADER_LENGTH] = data[i];
@@ -67,20 +54,24 @@ public class Packet implements Serializable {
 	}
 	
 	public Packet (byte[] msg) {
-		source = Module.values()[msg[0]];
-		dest = Module.values()[msg[1]];
+		if (!isPacket(msg)) {
+			System.err.println("NOT a packet!");
+		}
+		source = Module.value(msg[0]&255>>0%128);
 		
-		type = Type.values()     	[(msg[2]&255>>0)%8];  
-		sourceConnector = (byte) 	((msg[2]&255>>3)%8);
-		dir = Dir.values()			[(msg[2]&255>>6)%1];
-		connectorConnected =		((msg[2]&255>>7)==1);
+		type = Type.values()     	[((msg[1]&255)>>0)%8];  
+		sourceConnector = (byte) 	(((msg[1]&255)>>3)%8);
+		dir = Dir.values()			[((msg[1]&255)>>6)%2];
+		connectorConnected =		(((msg[1]&255)>>7)==1);
 		
-		stateInstruction = (byte) ((msg[3]&255)%32);
-		moduleRole =  ctrl.moduleRoleGet().fromByte((byte) ((msg[3]&255)>>5));
+		stateInstruction = (byte) ((msg[2]&255)%32);
 		
-		metaBossId = msg[4];
-		metaSourceId = msg[5];
+		IModuleRole =  ctrl.moduleRoleGet().fromByte((byte) ((msg[2]&255)>>5));
 		
+		metaBossId = msg[3];
+		metaSourceId = msg[4];
+		stateOperation = ctrl.getStateOperation().fromByte((byte) ((msg[5]&255)%8));
+		stateOperationCounter = (byte) (((msg[5]&255)>>3)%32);
 		
 		data = new byte[ msg.length-HEADER_LENGTH ];		
 		
@@ -90,11 +81,12 @@ public class Packet implements Serializable {
 	}
 	
 	public IRole getModRole () {
-		return moduleRole;
+		return IModuleRole;
 	}
 	
-	public void setModRole (IRole p) {
-		moduleRole = p;
+	public Packet setModRole (IRole p) {
+		IModuleRole = p;
+		return this;
 	}
 	
 	
@@ -102,11 +94,23 @@ public class Packet implements Serializable {
 		return stateInstruction;
 	}
 	
+	public IStateOperation getStateOperation() {
+		return stateOperation;
+	}
+	
+	public byte getStateOperationCounter() {
+		return stateOperationCounter;
+	}
+	
+	
 	public Packet addState(MetaformaController c) {
 
 		if (stateInstruction == -1) {
 			stateInstruction = (byte)c.getStateInstruction();
 		}
+		
+		stateOperation = c.getStateOperation();
+		stateOperationCounter = c.getStateOperationCounter();
 		
 		return this;
 	}
@@ -122,13 +126,18 @@ public class Packet implements Serializable {
 
 		
 	public String toString () {
-		String header = getDir().toString() + " " + getType().toString() + " from: " + getSource().toString() + "(" + metaSourceId + " using "+metaBossId+")" + "(over " + sourceConnector + ") to: " + getDest().toString() + " - "  + " [" + "#" + getStateInstruction() + "] " + metaBossId + " ";
+		String header = getDir().toString() + " " + getType().toString() + " from: " + getSource().toString() + "(" + metaSourceId + " using "+metaBossId+")" + "(over " + sourceConnector + ")" + " [" + stateOperation  + "(" + stateOperationCounter + ") # " + getStateInstruction() + "] " + metaBossId + " ";
 		String payload = "  ";
 		if (getType() == Type.CONSENSUS) {
 			payload = new BigInteger(data).bitCount() + " ";
 		}
 		else if (getType() == Type.GRADIENT) {
 			payload = ctrl.varFromByteLocal(data[0]) + "," + data[1]  + " ";
+		}
+		else if (getType() == Type.META_VAR_SYNC) {
+			for (int i=0; i<data.length;i=i+3) {
+				payload += ctrl.varInitFromBytes(data[i]) + "=" + data[i+1]  + " (" + data[i+2] + ") , ";
+			}
 		}
 		else {
 			for (int i=0; i<data.length; i++) {
@@ -171,19 +180,8 @@ public class Packet implements Serializable {
 		return dir;
 	}
 	
-	
-	
-	
 
-	public Packet getAck() {
-		return new Packet(dest,source).setDir(Dir.ACK);
-	}
-
-	public Module getDest() {
-		return dest;
-	}
-
-	public Module getSource() {
+	public IModule getSource() {
 		return source;
 	}
 	
@@ -200,7 +198,7 @@ public class Packet implements Serializable {
 	}
 
 
-	public Packet setSource(Module id) {
+	public Packet setSource(IModule id) {
 		source = id;
 		return this;
 	}
@@ -220,6 +218,16 @@ public class Packet implements Serializable {
 		return this;
 	}
 	
+//	public Packet setData(Byte[] list) {
+//		data = new byte[list.length];
+//		byte i = 0;
+//		for (Byte b:list) {
+//			data[i] = b;
+//			i++;
+//		}
+//		return this;
+//	}
+	
 	public Packet setData(BigInteger bi) {
 		data = bi.toByteArray();
 		return this;
@@ -230,10 +238,6 @@ public class Packet implements Serializable {
 		return sourceConnector;
 	}
 
-	public Packet setDest(Module m) {
-		dest = m;
-		return this;
-	}
 
 	public boolean isReq() {
 		return getDir() == Dir.REQ;
@@ -255,5 +259,7 @@ public class Packet implements Serializable {
 		return metaSourceId;
 	}
 	
-	
+	public static boolean isPacket(byte[] msg) {
+		return (msg[0]&255>>7)%1 == 0;
+	}
 }
