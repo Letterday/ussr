@@ -10,7 +10,7 @@ import ussr.samples.atron.simulations.metaforma.gen.Grouping;
 import ussr.samples.atron.simulations.metaforma.gen.Module;
 
 
-public class NeighborSet implements IModuleHolder {
+public class NeighborSet  {
 	private ConcurrentHashMap<IModule, Byte[]> connectors;// = new HashMap<Module, Byte[]>();
 	private ConcurrentHashMap<Byte, IModule> modules;// = new HashMap<Byte, Module>();
 	
@@ -49,7 +49,7 @@ public class NeighborSet implements IModuleHolder {
 	
 	public void add (IModule nb, int conToNb, int conFromNb, IRole moduleRole, int metaId, int metaBossId) { 
 		if (getConnectorNrTo(nb) != conToNb || getConnectorNrFrom(nb) != conFromNb || getModuleRole(nb) != moduleRole.index() || getMetaId(nb) != metaId || getMetaBossId(nb) != metaBossId) {
-			ctrl.getVisual().print(".addNeighbor " + nb + " [" + conToNb + "," + conFromNb + "," + moduleRole + "," + metaId + "," + metaBossId + "] (" + nb + "=" + conToNb + "!= " +getConnectorNrTo(nb)+")");
+//			ctrl.getVisual().print(".addNeighbor " + nb + " [" + conToNb + "," + conFromNb + "," + moduleRole + "," + metaId + "," + metaBossId + "] (" + nb + "=" + conToNb + "!= " +getConnectorNrTo(nb)+")");
 			assoc (nb,conToNb,conFromNb, moduleRole.index(),metaId,metaBossId);
 		}
 	}
@@ -283,6 +283,18 @@ public class NeighborSet implements IModuleHolder {
 		for (Map.Entry<IModule, Byte []> e : entrySet()) {
 			for (int i=0; i<8; i++) {
 				if ((part&ctrl.pow2(i))==ctrl.pow2(i) && e.getValue()[0] == i) {
+					ret.assoc(e);
+				}
+			}
+		}
+		return ret;
+	}
+	
+	public NeighborSet nbsFilterConnDest(int part) {
+		NeighborSet ret = new NeighborSet(this.ctrl);
+		for (Map.Entry<IModule, Byte []> e : entrySet()) {
+			for (int i=0; i<8; i++) {
+				if ((part&ctrl.pow2(i))==ctrl.pow2(i) && e.getValue()[1] == i) {
 					ret.assoc(e);
 				}
 			}

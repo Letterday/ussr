@@ -10,11 +10,11 @@ public class Packet extends PacketBase {
 
 	private static final int HEADER_LENGTH = 6;
 
-	private static MetaformaController ctrl;
+	
 
 	protected IModule source;				// 8bits
 	
-	private Type type = Type.DISCOVER;	// 3bits
+	private IPacketType type = PacketCoreType.DISCOVER;	// 3bits
 	private byte sourceConnector = -1;	// 3bits
 	private Dir dir = Dir.REQ;			// 1bit
 	private boolean connectorConnected;	// 1bit
@@ -59,7 +59,7 @@ public class Packet extends PacketBase {
 		}
 		source = Module.value(msg[0]&255>>0%128);
 		
-		type = Type.values()     	[((msg[1]&255)>>0)%8];  
+		type = PacketCoreType.values()     	[((msg[1]&255)>>0)%8];  
 		sourceConnector = (byte) 	(((msg[1]&255)>>3)%8);
 		dir = Dir.values()			[((msg[1]&255)>>6)%2];
 		connectorConnected =		(((msg[1]&255)>>7)==1);
@@ -128,13 +128,13 @@ public class Packet extends PacketBase {
 	public String toString () {
 		String header = getDir().toString() + " " + getType().toString() + " from: " + getSource().toString() + "(" + metaSourceId + " using "+metaBossId+")" + "(over " + sourceConnector + ")" + " [" + stateOperation  + "(" + stateOperationCounter + ") # " + getStateInstruction() + "] " + metaBossId + " ";
 		String payload = "  ";
-		if (getType() == Type.CONSENSUS) {
+		if (getType() == PacketCoreType.CONSENSUS) {
 			payload = new BigInteger(data).bitCount() + " ";
 		}
-		else if (getType() == Type.GRADIENT) {
+		else if (getType() == PacketCoreType.GRADIENT) {
 			payload = ctrl.varFromByteLocal(data[0]) + "," + data[1]  + " ";
 		}
-		else if (getType() == Type.META_VAR_SYNC) {
+		else if (getType() == PacketCoreType.META_VAR_SYNC) {
 			for (int i=0; i<data.length;i=i+3) {
 				payload += ctrl.varInitFromBytes(data[i]) + "=" + data[i+1]  + " (" + data[i+2] + ") , ";
 			}
@@ -158,7 +158,7 @@ public class Packet extends PacketBase {
 	}
 	
 	
-	public Packet setType(Type t) {
+	public Packet setType(PacketCoreType t) {
 		type = t;
 		return this;
 	}
@@ -168,11 +168,11 @@ public class Packet extends PacketBase {
 		return this;
 	}
 	
-	public Type getType () {
+	public IPacketType getType () {
 		return type;
 	}
 	
-	public boolean isType (Type t) {
+	public boolean isType (PacketCoreType t) {
 		return t.equals(type);
 	}
 	
@@ -243,9 +243,6 @@ public class Packet extends PacketBase {
 		return getDir() == Dir.REQ;
 	}
 
-	public static void setController (MetaformaController c) {
-		ctrl = c;
-	}
 
 	public boolean getConnectorConnected() {
 		return connectorConnected;

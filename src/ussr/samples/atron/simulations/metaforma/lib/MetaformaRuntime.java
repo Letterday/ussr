@@ -1,5 +1,10 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
+import java.util.HashSet;
+import java.util.Set;
+
+
+
 
 
 public abstract class MetaformaRuntime extends MetaformaController {
@@ -13,9 +18,37 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	
 	protected final static boolean REQ = false;
 	protected final static boolean ACK = true;
+	protected boolean commitAutoAfterState = true;
 	
 	public MetaformaRuntime() {
 		super();
+	}
+	
+	public void commitMyselfIfNotUsed () {
+		if (commitAutoAfterState) {
+			commit("AUTO commit at the end!");
+		}
+	}
+	
+	public void commitNotAutomatic (IModuleHolder g) {
+		if (g.contains(getId()) && commitAutoAfterState) {
+			visual.print("Disable auto commit");
+			commitAutoAfterState = false;
+		}
+	}
+	
+	public void commitNotAutomatic (IModuleHolder g,IModuleHolder g2) {
+		if (g.contains(getId()) && !nbs().nbsIn(g2).isEmpty() || g2.contains(getId()) && !nbs().nbsIn(g).isEmpty()) {
+			visual.print("Disable auto commit");
+			commitAutoAfterState = false;
+		}
+	}
+	
+	@Override
+	public void stateInstrInitNew () {
+		visual.print("Clean autocommit");
+		commitAutoAfterState = true;
+		super.stateInstrInitNew();
 	}
 	
 	public void rotate(int degrees) {
@@ -23,25 +56,20 @@ public abstract class MetaformaRuntime extends MetaformaController {
 		// TODO: There is still a strange issue: when rotating 180 degrees, it is undefined whether it goes CW or CCW (randomly).
 		if (Math.abs(degrees) < 180) {
 			angle = (360 + angle + degrees) % 360;
-			doRotate(angle);
+			rotateAbs(angle);
 		}
 		else {
 			// Therefore we rotate in 2 steps, such that the direction is no longer undefined, but can be chosen by a pos/neg degree
 			angle = (360 + angle + (degrees /2)) %360;
-			doRotate(angle);
+			rotateAbs(angle);
 			angle = (360 + angle + (degrees /2)) %360;
-			doRotate(angle);
+			rotateAbs(angle);
 		}
-		
+		commit("Rotating done to " + degrees);
 	}
+
 	
-	public void rotateTo(int degrees) {
-		visual.print("## rotateTo " + degrees + ", current = " + angle);
-		angle = degrees;
-		doRotate(angle);
-	}
-	
-	private void doRotate (int degrees) {
+	private void rotateAbs (int degrees) {
 		rotateToDegreeInDegrees(degrees);
 		while (isRotating()) {
 			yield();
@@ -50,6 +78,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	
 	
 	public void rotate(IModuleHolder g, int degrees) {
+		commitNotAutomatic(g);
 		if (g.contains(getId()) ) {
 			rotate(degrees);
 		}
@@ -65,76 +94,91 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	
 	public void disconnect(IModuleHolder g1, IModuleHolder g2) {
 		discoverNeighbors();
-		visual.print("##disconnect " + g1 + "," + g2);
+		visual.print("## disconnect " + g1 + "," + g2);
 		connection(g1, g2, false);
 		connection(g2, g1, false);
 		
 	}
 	 
 	private void connection(IModuleHolder g1, IModuleHolder g2, boolean connect) {
+		commitNotAutomatic(g1,g2);
+	
 		if (g1.contains(getId())) {
-			for (IModule m: nbs(MALE).nbsInMetaGoup().nbsIn(g2).nbsIsConnected(!connect).modules()) {
-				connection (getId(),m,connect);
+			for (IModule nb: nbs(MALE).nbsInMetaGoup().nbsIn(g2).nbsIsConnected(!connect).modules()) {
+				visual.print("##connection " + g1 + "," + g2 + "  " + connect);
+				connection(nb,connect);
+			}
+			
+			if (nbs(MALE).nbsInMetaGoup().nbsIn(g2).nbsIsConnected(!connect).isEmpty()) {
+				// Commit 
+				commit("Member of " + g2 + " and did my action to " + g1);
+			}
+			if (nbs().nbsInMetaGoup().nbsIn(g2).isEmpty()) {
+				// We need to to this because the whole grouping is excluded from automatic commit, also non-nb's!
+				commit("Member of " + g2 + " but not connected to " + g1);
 			}
 		}
 		
 	}
 	
 	private void connection(IModule dest, boolean makeConnection) {
-		if (!consensusMyself()) {
+		if (!committed()) {
 			byte conToNb = nbs().getConnectorNrTo(dest);
 			byte conFromNb = nbs().getConnectorNrFrom(dest);
 			String action = makeConnection ? " connect to " : " disconnect from ";
 			visual.print("# " + getId() + action + dest);
 			if (conToNb % 2 == 0 && conFromNb % 2 == 1) {
-				if (makeConnection)
-					connect(conToNb);
-				else
-					disconnect(conToNb);
+				connection(conToNb,makeConnection);
+			}
+			else {
+				throw new Error("Wrong invocation, " + dest + " is connected with female connector so cant do anything: " + conToNb);
 			}
 			
 		}
 	}
 	
-
-	private void connection(IModule m1, IModule m2, boolean c) {
-		String action = c ? "connect" : "disconnect";
-		if (getId().equals(m1)) {
-			if (nbs(MALE).contains(m2)) {
-				while (!nbs(MALE).nbsIsConnected(c).contains(m2)) {
-					connection(m2,c);
-				}
-				visual.print("# "  + action + " from " + m1 + " to " + m2);
-			}
-		}
-		
-	}
 	
 	protected void connectionPart (IModuleHolder g, int part, boolean connect) {
 		visual.print("# " + g + " disconnectPart " + part);
-			for (int i=0; i<8; i++) {
-				if ((part&pow2(i))==pow2(i)) {
-					if (g.contains(getId())) {
-						visual.print(i + " matches");
-						if (context.isConnConnected(i) == !connect && isMale(i)) {
-							//notification(i + " is male and connected");
-							connection(i,connect);
-							//stateTrans.commit();
-						}
-					}
-					for (IModule m: nbs(MALE).nbsIn(g).nbsIsConnected(!connect).nbsUsingConnector(i).modules()) {
-						visual.print("# " + getId() + " has connector " + i + " matches");
-						connection(m,connect);
-						//stateTrans.commit();
-						// this should be done by the module in question
-					}
-
-				}
+		commitNotAutomatic(g);
+			
+//		for (int i=0; i<8; i++) {
+//			if ((part&pow2(i))==pow2(i)) {
+//				if (g.contains(getId())) {
+//					if (context.isConnConnected(i) == !connect && isMale(i)) {
+//						connection(i,connect);
+//					}
+//				}
+//				for (IModule m: nbs(MALE).nbsIn(g).nbsIsConnected(!connect).nbsUsingConnector(i).modules()) {
+//					visual.print("# " + getId() + " has connector " + i + " matches");
+//					connection(m,connect);
+//				}
+////				visual.print(nbs(FEMALE).toString());
+////				visual.print(nbs(FEMALE).nbsIn(g).toString());
+////				visual.print(nbs(FEMALE).nbsIn(g).nbsIsConnected(connect).toString());
+////				visual.print(nbs(FEMALE).nbsIn(g).nbsIsConnected(connect).nbsUsingConnector(i).toString());
+////				if (!nbs(FEMALE).nbsIn(g).nbsIsConnected(connect).nbsUsingConnector(i).isEmpty()) {
+////					commit();
+////				}
+//
+//			}
+//		}
+		if (g.contains(getId())) {
+			for (IModule m:nbs(MALE).nbsIsConnected(!connect).nbsFilterConn(part).modules()){
+				connection(m,connect);
 			}
-			while (g.contains(getId()) && !nbs(part).nbsIsConnected(!connect).isEmpty()) {
-				yield(); 
+			if (nbs().nbsIsConnected(!connect).nbsFilterConn(part).isEmpty()){
+				commit("My part " + part + " is processed");
 			}
+		}
+		else {
+			for (IModule m:nbs(MALE).nbsIsConnected(!connect).nbsIn(g).nbsFilterConnDest(part).modules()){
+				connection(m,connect);
+			}
+				
+		}
 		
+	
 	}
 	
 
@@ -147,6 +191,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	}
 	
 	
+	
 	//////////////////////////////////////////////////////////////
 	// Generated shared functions
 	
@@ -156,15 +201,15 @@ public abstract class MetaformaRuntime extends MetaformaController {
 			visual.print("I am source for " + v);
 		}
 		
-		broadcast(Type.GRADIENT,REQ,new byte[]{v.index(),min(varGet(v)+1,MAX_BYTE)});
+		broadcast(PacketCoreType.GRADIENT,REQ,new byte[]{v.index(),min(varGet(v)+1,MAX_BYTE)});
 		
 	}
 
 
-	protected void symmetryFix(boolean isReq, byte conSource, byte conDest, byte[] data) {
+	protected void symmetryFix(boolean isReq, byte conSource, byte conDest) {
 
 		if (isFEMALE(conDest)) {
-			if (!consensusMyself()) {
+			if (!committed()) {
 				if (isWEST(conSource) == isNORTH(conDest)) {
 					context.switchNorthSouth();
 				}
@@ -173,12 +218,12 @@ public abstract class MetaformaRuntime extends MetaformaController {
 			}				
 			
 			if (isReq) {  
-				unicast(FEMALE&EAST, Type.SYMMETRY, REQ);
+				unicast(FEMALE&EAST, PacketCoreType.SYMMETRY, REQ);
 			}
-			unicast(FEMALE&WEST,Type.SYMMETRY, ACK);
+			unicast(FEMALE&WEST,PacketCoreType.SYMMETRY, ACK);
 		}
 		else if (isMALE(conDest)) {
-			if (!consensusMyself()) {
+			if (!committed()) {
 				context.switchEastWestHemisphere(isSOUTH(conSource) == isWEST(conDest), isSOUTH(conDest));
 
 				if (isWEST(conSource) == isSOUTH(conDest)) {
@@ -187,11 +232,11 @@ public abstract class MetaformaRuntime extends MetaformaController {
 			}
 			
 			if (isReq) {  
-				unicast(MALE&NORTH,Type.SYMMETRY, REQ);
+				unicast(MALE&NORTH,PacketCoreType.SYMMETRY, REQ);
 			} 
-			unicast( MALE&SOUTH, Type.SYMMETRY, ACK);
+			unicast( MALE&SOUTH, PacketCoreType.SYMMETRY, ACK);
 		}
-		commit();
+		commit("Symmetry fix done");
 	}
 
 
