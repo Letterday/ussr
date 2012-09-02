@@ -3,7 +3,6 @@ package ussr.samples.atron.simulations.metaforma.lib;
 import java.util.ArrayList;
 
 import ussr.description.Robot;
-import ussr.description.geometry.VectorDescription;
 import ussr.description.setup.ModulePosition;
 import ussr.description.setup.WorldDescription;
 import ussr.model.debugging.SimpleWindowedInformationProvider;
@@ -12,7 +11,6 @@ import ussr.physics.PhysicsParameters;
 import ussr.physics.PhysicsSimulation;
 import ussr.physics.jme.DebugInformationPicker;
 import ussr.samples.ObstacleGenerator;
-import ussr.samples.atron.ATRON;
 import ussr.samples.atron.ATRONBuilder;
 import ussr.samples.atron.GenericATRONSimulation;
 
@@ -45,7 +43,7 @@ public abstract class MetaformaSimulation extends GenericATRONSimulation {
 
 	@Override
 	protected ArrayList<ModulePosition> buildRobot() {
-		return new ATRONBuilder().buildRectangle(9,5,new VectorDescription(0,-5*ATRON.UNIT,0),"Floor_",false);
+		return new ATRONBuilder().buildRectangle(9,5,"Floor_");
 	}
 	
 	protected void changeWorldHook(WorldDescription world) {

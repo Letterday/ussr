@@ -13,6 +13,7 @@ import ussr.description.geometry.VectorDescription;
 import ussr.description.setup.ModulePosition;
 import ussr.description.setup.WorldDescription;
 import ussr.model.Controller;
+import ussr.physics.PhysicsFactory;
 import ussr.physics.PhysicsParameters;
 import ussr.physics.PhysicsSimulation;
 import ussr.physics.jme.JMESimulation;
@@ -35,6 +36,7 @@ public class ATRONCarSimulation extends GenericATRONSimulation {
     public static void main( String[] args ) {
 		PhysicsParameters.get().setWorldDampingLinearVelocity(0.5f);
 		PhysicsParameters.get().setRealisticCollision(true);
+		PhysicsFactory.getOptions().setStartPaused(false);
 		new ATRONCarSimulation().main();
     }
 	
@@ -47,19 +49,20 @@ public class ATRONCarSimulation extends GenericATRONSimulation {
                 return new ATRONCarController1();
             }
         };
-        robot.setGentle();
+//        robot.setGentle();
+//        robot.setRubberRing();
         return robot;
     }
 	
 	protected ArrayList<ModulePosition> buildRobot() {
-		return new ATRONBuilder().buildCar(4, new VectorDescription(0,-0.25f,0));
+		return new ATRONBuilder().buildCar(2, new VectorDescription(2f,-0.25f,0));
 	}
     
 	@Override
     protected void changeWorldHook(WorldDescription world) {
         ObstacleGenerator generator = new ObstacleGenerator();
         generator.obstacalize(obstacleType, world);
-        world.setPlaneTexture(WorldDescription.WHITE_GRID_TEXTURE);
+        world.setPlaneTexture(WorldDescription.GRASS_TEXTURE);
     }
 	
 	@Override

@@ -2,9 +2,6 @@ package ussr.samples.atron.simulations.metaforma.lib;
 
 
 import java.util.HashSet;
-import ussr.samples.atron.simulations.metaforma.gen.Grouping;
-import ussr.samples.atron.simulations.metaforma.gen.Module;
-
 
 
 public class ModuleSet implements IModuleHolder {
@@ -31,7 +28,7 @@ public class ModuleSet implements IModuleHolder {
 	}
 	
 
-	public ModuleSet onGroup (Grouping g) {
+	public ModuleSet onGroup (IGroupEnum g) {
 		ModuleSet ret = new ModuleSet();
 		for (IModule m: modules) {
 			if (m.getGrouping().equals(g)) {

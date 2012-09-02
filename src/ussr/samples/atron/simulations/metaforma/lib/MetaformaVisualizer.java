@@ -8,7 +8,6 @@ import java.util.Map;
 import com.sun.org.apache.bcel.internal.generic.GETSTATIC;
 
 
-import ussr.samples.atron.simulations.metaforma.gen.Module;
 
 public class MetaformaVisualizer {
 	
@@ -181,8 +180,20 @@ public class MetaformaVisualizer {
 		ctrl.info.addNotification("[" + new DecimalFormat("0.00").format(ctrl.time()) + "] - " + msg);
 	}
 	
-	public void printInstrState() {
-		print("\n\n===========  "+ ctrl.getId() + "  ==============\nLeft instruction state, time spent: " + ctrl.timeSpentInState() + "\nNew instruction state: " + ctrl.getStateOperation() + "("+ctrl.getStateOperationCounter()+"): " + ctrl.getStateInstruction() + "\n=================================\n" + context.nbs()+"\n");
+	public void error (String msg) {
+		print("ERROR: " + msg);
+		System.err.println(ctrl.getId() + " ERROR:\n" + msg);
+		ctrl.pause();
+	}
+	
+	
+	public void printInstrStatePost() {
+		print("\n\n===========  "+ ctrl.getId() + "  ==============\nLeft instruction state, time spent: " + ctrl.timeSpentInState() + "");
+	}
+	
+	
+	public void printInstrStatePre() {
+		print("New instruction state: " + ctrl.getStateOperation() + "("+ctrl.getStateOperationCounter()+"): #" + ctrl.getStateInstruction() + "\n=================================\n" + context.nbs()+"\n");
 	}
 	
 	public void printOperationState() {

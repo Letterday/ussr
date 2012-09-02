@@ -1,6 +1,5 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
-import ussr.samples.atron.simulations.metaforma.gen.Module;
 
 
 
@@ -100,7 +99,6 @@ public class MetaformaContext  {
 		 switchNorthSouth =! switchNorthSouth;
 		 ctrl.getVisual().print("$$$ Switch North South");
 		 neighbors.updateSymmetryNS();
-		 ctrl.refresh();
 	}
 
 	public void addNeighbor(IModule source, byte connector, byte sourceConnector,IRole r, byte metaId, byte metaBossId) {

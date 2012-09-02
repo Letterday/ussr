@@ -7,7 +7,7 @@ public interface IVar {
 
 	public boolean isLocal();
 	public boolean isMeta();
-	public boolean isMetaGroup();
+	public boolean isMetaRegion();
 	public boolean isLocalState();
 
 }

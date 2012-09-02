@@ -33,35 +33,27 @@ public class ATRONCarController1 extends ATRONController {
      */
     public void activate() {
     	setup(); 
-    	this.delay(1000); /* rotateContinuous seem to fail sometimes if we do not wait at first */
-        byte dir = 1;
-        float lastProx = Float.NEGATIVE_INFINITY; /* for printing out proximity data */
+    	this.delay(1000); 
+        float lastProx = Float.NEGATIVE_INFINITY; 
         boolean firstTime = true;
         while(true) {
-        	
-            // Basic control: first time we enter the loop start rotating and turn the axle
+        	 // Basic control: first time we enter the loop start rotating
             String name = module.getProperty("name");
             if(firstTime) {
                 firstTime = false;
-                if(name.startsWith("wheel1")) rotateContinuous(dir);
-                if(name.startsWith("wheel2")) rotateContinuous(-dir);
-                if(name.startsWith("wheel3")) rotateContinuous(dir);
-                if(name.startsWith("wheel4")) rotateContinuous(-dir);
-                if(name.equals("axleOne5")) {
-                    this.rotateDegrees(10);
-                }
+                if(name.contains("Wheel1")) rotateContinuous(-1);
+                if(name.contains("Wheel2")) rotateContinuous(1);
             }
 
             // Print out proximity information
             float max_prox = Float.NEGATIVE_INFINITY;
             for(Sensor s: module.getSensors()) {
                 if(s.getName().startsWith("Proximity")) {
-                    float v = s.readValue();
-                    max_prox = Math.max(max_prox, v);
+                    max_prox = Math.max(max_prox, s.readValue());
                 }
             }
-            if(name.startsWith("wheel")&&Math.abs(lastProx-max_prox)>0.01) {
-                System.out.println("Proximity "+name+" max = "+max_prox);
+            if(name.contains("driver")&&Math.abs(lastProx-max_prox)>0.1) {
+                System.out.println(max_prox);
                 lastProx = max_prox; 
             }
 

@@ -85,35 +85,44 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	}
 
 
-	public void connect(IModuleHolder g1, IModuleHolder g2) {
+	public void connect(IModuleHolder g1, IModuleHolder g2, boolean outsideRegion) {
 		discoverNeighbors();
 		visual.print("##connect " + g1 + "," + g2);
-		connection(g1, g2, true);
-		connection(g2, g1, true);
+		connection(g1, g2, true, outsideRegion);
+		connection(g2, g1, true, outsideRegion);
 	}
 	
 	public void disconnect(IModuleHolder g1, IModuleHolder g2) {
+		disconnect(g1, g2, false);
+	}
+	
+	public void connect(IModuleHolder g1, IModuleHolder g2) {
+		connect(g1, g2, false);
+	}
+	
+	public void disconnect(IModuleHolder g1, IModuleHolder g2, boolean outsideRegion) {
 		discoverNeighbors();
 		visual.print("## disconnect " + g1 + "," + g2);
-		connection(g1, g2, false);
-		connection(g2, g1, false);
+		connection(g1, g2, false, outsideRegion);
+		connection(g2, g1, false, outsideRegion);
 		
 	}
-	 
-	private void connection(IModuleHolder g1, IModuleHolder g2, boolean connect) {
+	
+	
+	private void connection(IModuleHolder g1, IModuleHolder g2, boolean connect, boolean outsideRegion) {
 		commitNotAutomatic(g1,g2);
 	
 		if (g1.contains(getId())) {
-			for (IModule nb: nbs(MALE).nbsInMetaGoup().nbsIn(g2).nbsIsConnected(!connect).modules()) {
+			for (IModule nb: nbs(MALE).nbsInRegion(outsideRegion).nbsIn(g2).nbsIsConnected(!connect).modules()) {
 				visual.print("##connection " + g1 + "," + g2 + "  " + connect);
 				connection(nb,connect);
 			}
 			
-			if (nbs(MALE).nbsInMetaGoup().nbsIn(g2).nbsIsConnected(!connect).isEmpty()) {
+			if (nbs(MALE).nbsInRegion(outsideRegion).nbsIn(g2).nbsIsConnected(!connect).isEmpty()) {
 				// Commit 
 				commit("Member of " + g2 + " and did my action to " + g1);
 			}
-			if (nbs().nbsInMetaGoup().nbsIn(g2).isEmpty()) {
+			if (nbs().nbsInRegion(outsideRegion).nbsIn(g2).isEmpty()) {
 				// We need to to this because the whole grouping is excluded from automatic commit, also non-nb's!
 				commit("Member of " + g2 + " but not connected to " + g1);
 			}
@@ -139,7 +148,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	
 	
 	protected void connectionPart (IModuleHolder g, int part, boolean connect) {
-		visual.print("# " + g + " disconnectPart " + part);
+		visual.print("# " + g + " disconnectPart " + connectorsToString(part));
 		commitNotAutomatic(g);
 			
 //		for (int i=0; i<8; i++) {
@@ -181,6 +190,29 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	
 	}
 	
+
+	private String connectorsToString(int part) {
+		String ret = " ";
+		if ((MALE&part)!=0) {
+			ret+="male,";
+		}
+		if ((FEMALE&part)!=0) {
+			ret+="female,";
+		}
+		if ((NORTH&part)!=0) {
+			ret+="north,";
+		}
+		if ((SOUTH&part)!=0) {
+			ret+="south,";
+		}
+		if ((WEST&part)!=0) {
+			ret+="west,";
+		}
+		if ((EAST&part)!=0) {
+			ret+="east,";
+		}
+		return ret.substring(0, ret.length()-1);
+	}
 
 	protected void connectPart (IModuleHolder g, int part) {
 		connectionPart(g, part, true);
