@@ -26,8 +26,8 @@ public class Packet extends PacketBase {
 	
 	private byte metaSourceId = 0;
 
-	private IStateOperation stateOperation;
-	private byte stateOperationCounter;
+	private IStateOperation stateOperation; // 3 bits
+	private byte stateOperationCounter;	// 5bits
 	
 	
 	public Packet (IModule s) {
@@ -70,7 +70,7 @@ public class Packet extends PacketBase {
 		
 		metaBossId = msg[3];
 		metaSourceId = msg[4];
-		stateOperation = ctrl.getStateOperation().fromByte((byte) ((msg[5]&255)%8));
+		stateOperation = ctrl.getStateMngr().getState().getOperation().fromByte((byte) ((msg[5]&255)%8));
 		stateOperationCounter = (byte) (((msg[5]&255)>>3)%32);
 		
 		data = new byte[ msg.length-HEADER_LENGTH ];		
@@ -103,14 +103,13 @@ public class Packet extends PacketBase {
 	}
 	
 	
-	public Packet addState(MetaformaController c) {
-
+	public Packet addState(State s) {
 		if (stateInstruction == -1) {
-			stateInstruction = (byte)c.getStateInstruction();
+			stateInstruction = s.getInstruction();
 		}
 		
-		stateOperation = c.getStateOperation();
-		stateOperationCounter = c.getStateOperationCounter();
+		stateOperation = s.getOperation();
+		stateOperationCounter = s.getOperationCounter();
 		
 		return this;
 	}
@@ -129,7 +128,7 @@ public class Packet extends PacketBase {
 		String header = getDir().toString() + " " + getType().toString() + " from: " + getSource().toString() + "(" + metaSourceId + " using "+metaBossId+")" + "(over " + sourceConnector + ")" + " [" + stateOperation  + "(" + stateOperationCounter + ") # " + getStateInstruction() + "] " + metaBossId + " ";
 		String payload = "  ";
 		if (getType() == PacketCoreType.CONSENSUS) {
-			payload = new BigInteger(data).bitCount() + " ";
+			payload = new BigInteger(data).bitCount() + " - " + Module.fromBits(new BigInteger(data)) + " ";
 		}
 		else if (getType() == PacketCoreType.GRADIENT) {
 			payload = ctrl.varFromByteLocal(data[0]) + "," + data[1]  + " ";
@@ -218,15 +217,7 @@ public class Packet extends PacketBase {
 		return this;
 	}
 	
-//	public Packet setData(Byte[] list) {
-//		data = new byte[list.length];
-//		byte i = 0;
-//		for (Byte b:list) {
-//			data[i] = b;
-//			i++;
-//		}
-//		return this;
-//	}
+
 	
 	public Packet setData(BigInteger bi) {
 		data = bi.toByteArray();
@@ -258,5 +249,10 @@ public class Packet extends PacketBase {
 	
 	public static boolean isPacket(byte[] msg) {
 		return (msg[0]&255>>7)%1 == 0;
+	}
+
+
+	public State getState() {
+		return new State(stateOperation,stateOperationCounter,stateInstruction);
 	}
 }

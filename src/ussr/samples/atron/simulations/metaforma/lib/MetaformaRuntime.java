@@ -1,10 +1,5 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
-import java.util.HashSet;
-import java.util.Set;
-
-
-
 
 
 public abstract class MetaformaRuntime extends MetaformaController {
@@ -18,38 +13,13 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	
 	protected final static boolean REQ = false;
 	protected final static boolean ACK = true;
-	protected boolean commitAutoAfterState = true;
+	
+	
 	
 	public MetaformaRuntime() {
 		super();
 	}
 	
-	public void commitMyselfIfNotUsed () {
-		if (commitAutoAfterState) {
-			commit("AUTO commit at the end!");
-		}
-	}
-	
-	public void commitNotAutomatic (IModuleHolder g) {
-		if (g.contains(getId()) && commitAutoAfterState) {
-			visual.print("Disable auto commit");
-			commitAutoAfterState = false;
-		}
-	}
-	
-	public void commitNotAutomatic (IModuleHolder g,IModuleHolder g2) {
-		if (g.contains(getId()) && !nbs().nbsIn(g2).isEmpty() || g2.contains(getId()) && !nbs().nbsIn(g).isEmpty()) {
-			visual.print("Disable auto commit");
-			commitAutoAfterState = false;
-		}
-	}
-	
-	@Override
-	public void stateInstrInitNew () {
-		visual.print("Clean autocommit");
-		commitAutoAfterState = true;
-		super.stateInstrInitNew();
-	}
 	
 	public void rotate(int degrees) {
 		visual.print("## rotate " + degrees + ", current = " + angle + "; new = " + (degrees + angle) + "");
@@ -65,7 +35,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 			angle = (360 + angle + (degrees /2)) %360;
 			rotateAbs(angle);
 		}
-		commit("Rotating done to " + degrees);
+		stateMngr.commit("Rotating done to " + degrees);
 	}
 
 	
@@ -78,7 +48,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	
 	
 	public void rotate(IModuleHolder g, int degrees) {
-		commitNotAutomatic(g);
+		stateMngr.commitNotAutomatic(g);
 		if (g.contains(getId()) ) {
 			rotate(degrees);
 		}
@@ -110,7 +80,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	
 	
 	private void connection(IModuleHolder g1, IModuleHolder g2, boolean connect, boolean outsideRegion) {
-		commitNotAutomatic(g1,g2);
+		stateMngr.commitNotAutomatic(g1,g2);
 	
 		if (g1.contains(getId())) {
 			for (IModule nb: nbs(MALE).nbsInRegion(outsideRegion).nbsIn(g2).nbsIsConnected(!connect).modules()) {
@@ -120,18 +90,18 @@ public abstract class MetaformaRuntime extends MetaformaController {
 			
 			if (nbs(MALE).nbsInRegion(outsideRegion).nbsIn(g2).nbsIsConnected(!connect).isEmpty()) {
 				// Commit 
-				commit("Member of " + g2 + " and did my action to " + g1);
+				stateMngr.commit("Member of " + g2 + " and did my action to " + g1);
 			}
 			if (nbs().nbsInRegion(outsideRegion).nbsIn(g2).isEmpty()) {
 				// We need to to this because the whole grouping is excluded from automatic commit, also non-nb's!
-				commit("Member of " + g2 + " but not connected to " + g1);
+				stateMngr.commit("Member of " + g2 + " but not connected to " + g1);
 			}
 		}
 		
 	}
 	
 	private void connection(IModule dest, boolean makeConnection) {
-		if (!committed()) {
+		if (!stateMngr.committed()) {
 			byte conToNb = nbs().getConnectorNrTo(dest);
 			byte conFromNb = nbs().getConnectorNrFrom(dest);
 			String action = makeConnection ? " connect to " : " disconnect from ";
@@ -149,7 +119,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	
 	protected void connectionPart (IModuleHolder g, int part, boolean connect) {
 		visual.print("# " + g + " disconnectPart " + connectorsToString(part));
-		commitNotAutomatic(g);
+		stateMngr.commitNotAutomatic(g);
 			
 //		for (int i=0; i<8; i++) {
 //			if ((part&pow2(i))==pow2(i)) {
@@ -177,7 +147,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 				connection(m,connect);
 			}
 			if (nbs().nbsIsConnected(!connect).nbsFilterConn(part).isEmpty()){
-				commit("My part " + part + " is processed");
+				stateMngr.commit("My part " + part + " is processed");
 			}
 		}
 		else {
@@ -241,7 +211,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	protected void symmetryFix(boolean isReq, byte conSource, byte conDest) {
 
 		if (isFEMALE(conDest)) {
-			if (!committed()) {
+			if (!stateMngr.committed()) {
 				if (isWEST(conSource) == isNORTH(conDest)) {
 					context.switchNorthSouth();
 				}
@@ -255,7 +225,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 			unicast(FEMALE&WEST,PacketCoreType.SYMMETRY, ACK);
 		}
 		else if (isMALE(conDest)) {
-			if (!committed()) {
+			if (!stateMngr.committed()) {
 				context.switchEastWestHemisphere(isSOUTH(conSource) == isWEST(conDest), isSOUTH(conDest));
 
 				if (isWEST(conSource) == isSOUTH(conDest)) {
@@ -268,7 +238,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 			} 
 			unicast( MALE&SOUTH, PacketCoreType.SYMMETRY, ACK);
 		}
-		commit("Symmetry fix done");
+		stateMngr.commit("Symmetry fix done");
 	}
 
 

@@ -5,9 +5,6 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.sun.org.apache.bcel.internal.generic.GETSTATIC;
-
-
 
 public class MetaformaVisualizer {
 	
@@ -57,17 +54,8 @@ public class MetaformaVisualizer {
 //		notification("NORTH_MALE_EAST " + NORTH_MALE_EAST + " - " + context.abs2rel(NORTH_MALE_EAST) + " - " + module.getConnectors().get(context.abs2rel(NORTH_MALE_EAST)).hashCode());
 	}
 	
-
-	public String getState() {
-		return "[" + ctrl.getStateOperation() + "(" + ctrl.getStateOperationCounter() + ") #" + ctrl.getStateInstruction() + "]";
-	}
-	
-	public String getStateReceived() {
-		return "[" + ctrl.getStateOperationRec() + "(" + ctrl.getStateOperationCntrRec() + ") #" + ctrl.getStateInstructionReceived() + "]";
-	}
-	
 	private String getIdString () {
-		return ctrl.getId() + " "+ctrl.moduleRoleGet()+" (" + ctrl.metaIdGet() + " // " + ctrl.metaBossIdGet() + ")" + "   " + getState();
+		return ctrl.getId() + " "+ctrl.moduleRoleGet()+" (" + ctrl.metaIdGet() + " // " + ctrl.metaBossIdGet() + ")" + "   " + ctrl.getStateMngr().getState();
 	}
 
 	public String getModuleInformation() {
@@ -82,7 +70,7 @@ public class MetaformaVisualizer {
 			flipStr = "<none>";
 		}
 		
-		out.append("ID: " + getIdString() + (ctrl.committed()? " // finished" : "") + " received: " + getStateReceived());
+		out.append("ID: " + getIdString() + (ctrl.getStateMngr().committed()? " // finished" : "") + " received: " + ctrl.getStateReceived());
 		out.append("\n");
 
 		out.append("angle: " + context.getAngle() + " ("+ctrl.getAngle()+")"  + "  flips: " + flipStr);
@@ -93,7 +81,7 @@ public class MetaformaVisualizer {
 		out.append("prevs: " + ctrl.getScheduler().previousAction);
 		out.append("\n");
 		
-		out.append("time in state:" + ctrl.timeSpentInState() + "\n");
+		out.append("time in state:" + ctrl.getStateMngr().timeSpentInState() + "\n");
 		
 		out.append("female conns: " + context.getFemaleConnsAsString());
 		out.append("\n");
@@ -105,7 +93,7 @@ public class MetaformaVisualizer {
 		out.append("do repeat: " + ctrl.getDoRepeat());
 		out.append("\n"); 
 		
-		out.append("consensus " + (ctrl.committed()?"!!":"") + "(" + ctrl.getConsensus().bitCount() + "): " + Module.fromBits(ctrl.getConsensus()));
+		out.append("consensus " + (ctrl.getStateMngr().committed()?"!!":"") + "(" + ctrl.getStateMngr().getConsensus().bitCount() + "): " + Module.fromBits(ctrl.getStateMngr().getConsensus()));
 		out.append("\n");
 		
 
@@ -135,8 +123,8 @@ public class MetaformaVisualizer {
 		
 		Color[] ret = new Color[2];
 		
-		if (colorsOperation.containsKey(ctrl.getStateOperation())) {
-			ret[0] = colorsOperation.get(ctrl.getStateOperation());
+		if (colorsOperation.containsKey(ctrl.getStateMngr().getState().getOperation())) {
+			ret[0] = colorsOperation.get(ctrl.getStateMngr().getState().getOperation());
 		}
 		else {
 			ret[0] = Color.BLUE;
@@ -187,19 +175,15 @@ public class MetaformaVisualizer {
 	}
 	
 	
-	public void printInstrStatePost() {
-		print("\n\n===========  "+ ctrl.getId() + "  ==============\nLeft instruction state, time spent: " + ctrl.timeSpentInState() + "");
+	public void printStatePost() {
+		print("\n\n===========  "+ ctrl.getId() + "  ==============\nLeft instruction state, time spent: " + ctrl.getStateMngr().timeSpentInState() + "");
 	}
 	
 	
-	public void printInstrStatePre() {
-		print("New instruction state: " + ctrl.getStateOperation() + "("+ctrl.getStateOperationCounter()+"): #" + ctrl.getStateInstruction() + "\n=================================\n" + context.nbs()+"\n");
+	public void printStatePre() {
+		print("New instruction state: " + ctrl.getStateMngr().getState() + "\n=================================\n" + context.nbs()+"\n");
 	}
 	
-	public void printOperationState() {
-		print("\n\n#######  "+ ctrl.getId() + "  ##########\nnew operation state: " + ctrl.getStateOperation() + "("+ctrl.getStateOperationCounter()+")"  + "\n#############################\n");
-	}
-
 
 	public String getTitle() {
 		return getIdString();
