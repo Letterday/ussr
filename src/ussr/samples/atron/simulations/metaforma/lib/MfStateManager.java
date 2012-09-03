@@ -1,17 +1,17 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
 import java.math.BigInteger;
-import ussr.samples.atron.simulations.metaforma.lib.MetaformaController.VarMetaGroupCore;
+import ussr.samples.atron.simulations.metaforma.lib.MfController.VarMetaGroupCore;
 
 
-public class StateManager {
+public class MfStateManager {
 	protected State stateCurrent;
 	
 	
 	private float stateStartTime;
 	private BigInteger consensus = BigInteger.ZERO; 
 	
-	private MetaformaController ctrl;
+	private MfController ctrl;
 	
 	private boolean stateNeighborsDiscovered;
 
@@ -21,7 +21,7 @@ public class StateManager {
 	protected boolean commitAutoAfterState = true;
 	private int commitCount;
 	
-	public StateManager (MetaformaController c) {
+	public MfStateManager (MfController c) {
 		ctrl = c;
 		State.setController(c);
 	}
@@ -50,7 +50,7 @@ public class StateManager {
 	}
 	
 	public void commitNotAutomatic (IModuleHolder g,IModuleHolder g2) {
-		if (g.contains(ctrl.getId()) && !ctrl.nbs().nbsIn(g2).isEmpty() || g2.contains(ctrl.getId()) && !ctrl.nbs().nbsIn(g).isEmpty()) {
+		if (commitAutoAfterState && (g.contains(ctrl.getId()) && !ctrl.nbs().nbsIn(g2).isEmpty() || g2.contains(ctrl.getId()) && !ctrl.nbs().nbsIn(g).isEmpty())) {
 			ctrl.visual.print("Disable auto commit");
 			commitAutoAfterState = false;
 		}
@@ -60,7 +60,7 @@ public class StateManager {
 
 	
 	public float timeSpentInState() {
-		return MetaformaController.round((ctrl.time() - stateStartTime),3);
+		return MfController.round((ctrl.time() - stateStartTime),3);
 	}
 	
 	public void spend (float timeToSpend) {
@@ -110,7 +110,7 @@ public class StateManager {
 //		stateStartNext = 0;
 		stateNeighborsDiscovered = false;
 		stateStartTime = ctrl.time();
-
+		stateOperationNext = null;
 		commitAutoAfterState = true;
 
 		consensus = BigInteger.ZERO;
@@ -198,6 +198,11 @@ public class StateManager {
 	}
 	
 	public void nextOperation (IStateOperation op) {
+		
+		if (stateCurrent.equals(op)){
+			System.err.println("OPERATION " + op + " equals " + stateCurrent.getOperation());
+			ctrl.pause();
+		}
 		next(new State(stateCurrent).nextOperation(op));
 		
 	}
@@ -224,7 +229,7 @@ public class StateManager {
 		return false;
 	}
 	
-	public boolean doOnce(int state) {
+	public boolean doWait(int state) {
 		if (getStateInstruction() == state && !committed()) {
 			ctrl.discoverNeighbors();
 			return true;
@@ -241,7 +246,7 @@ public class StateManager {
 		return stateCurrent.getOperation().equals(op);
 	}	
 
-	public void afterConsensus(IStateOperation op) {
+	public void setAfterConsensus(IStateOperation op) {
 		stateOperationNext = op;		
 	}
 	

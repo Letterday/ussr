@@ -4,9 +4,9 @@ public class State {
 	private byte instruction;
 	private IStateOperation operation;
 	private byte operationCounter;
-	private static MetaformaController ctrl;
+	private static MfController ctrl;
 	
-	public static void setController (MetaformaController c) {
+	public static void setController (MfController c) {
 		ctrl = c;
 	}
 	
@@ -38,17 +38,20 @@ public class State {
 	
 	private boolean merge (State s,boolean modify) {
 		if (getOperationCounter() == s.getOperationCounter() && getInstruction() < s.getInstruction()) {
-			if (getInstruction() + 1 < s.getInstruction()) {
-				ctrl.visual.print("!!! I might have missed a state, from " + instruction  + " to " + s.getInstruction());
+			if (modify) {
+				if (getInstruction() + 1 < s.getInstruction()) {
+					ctrl.visual.print("!!! I might have missed a state, from " + instruction  + " to " + s.getInstruction());
+				}	
+				instruction = s.getInstruction();
 			}
-			
-			instruction = s.getInstruction();
 			return true;
 		}
 		else if (getOperationCounter() < s.getOperationCounter()) {
-			operationCounter = s.getOperationCounter();
-			operation = s.getOperation();
-			instruction = s.getInstruction();
+			if (modify) {
+				operationCounter = s.getOperationCounter();
+				operation = s.getOperation();
+				instruction = s.getInstruction();
+			}
 			return true;
 		}
 		else {
@@ -89,7 +92,7 @@ public class State {
 	}
 	
 	public boolean equals (State s) {
-		return operation != null && operationCounter == s.getOperationCounter() && operation.equals(s.getOperation()) && instruction == s.getInstruction();
+		return operation != null && operationCounter == s.getOperationCounter()  && instruction == s.getInstruction(); // TODO: && operation.equals(s.getOperation()) ??
 		
 	}
 }

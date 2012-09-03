@@ -3,21 +3,21 @@ package ussr.samples.atron.simulations.metaforma.lib;
 
 
 
-public class MetaformaContext  {
+public class MfContext  {
 	
 	
 	private boolean switchNorthSouth;
 	private boolean switchEastWestN;
 	private boolean switchEastWestS;
 	
-	private MetaformaController ctrl;
+	private MfController ctrl;
 	private NeighborSet neighbors;
 	
 	protected boolean[] femaleConnectorCache = new boolean[8];
 	
-	public MetaformaContext(MetaformaController c) {
+	public MfContext(MfController c) {
 		ctrl = c;
-		neighbors = new NeighborSet((MetaformaRuntime) ctrl);
+		neighbors = new NeighborSet((MfRuntime) ctrl);
 	}
 	
 	public NeighborSet nbs() {
@@ -129,7 +129,7 @@ public class MetaformaContext  {
 	public boolean isConnConnected (int c) {
 		if (c == -1) return false;
 		 
-		if (MetaformaController.isFEMALE(c)){
+		if (MfController.isFEMALE(c)){
 			return femaleConnectorCache[c];
 		}
 		else {

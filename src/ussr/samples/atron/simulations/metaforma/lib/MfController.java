@@ -14,7 +14,7 @@ import ussr.samples.atron.simulations.metaforma.lib.NeighborSet;
 
 
 
-public abstract class MetaformaController extends MetaformaApi implements ControllerInformationProvider{
+public abstract class MfController extends MfApi implements ControllerInformationProvider{
 
 	/*
 	 25..49 VarMeta
@@ -59,7 +59,7 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	}
 	
 	public enum VarMetaGroupCore implements IVar {
-		NONE, GroupSize,nextOperation;
+		NONE, GroupSize;
 
 		public byte index() {
 			return (byte) (ordinal()+100);
@@ -76,10 +76,10 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	}
 	
 	protected DebugInformationProvider info;
-	protected MetaformaContext context = new MetaformaContext(this);
-	protected MetaformaVisualizer visual = new MetaformaVisualizer(this);
-	protected MetaformaScheduler scheduler = new MetaformaScheduler(this);	
-	protected StateManager stateMngr = new StateManager(this);
+	protected MfContext context = new MfContext(this);
+	protected MfVisualizer visual = new MfVisualizer(this);
+	protected MfScheduler scheduler = new MfScheduler(this);	
+	protected MfStateManager stateMngr = new MfStateManager(this);
 	private State stateRec = new State();
 	private BigInteger consensusRec = BigInteger.ZERO;
 	
@@ -155,23 +155,8 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 		 else if (!connect && context.isConnConnected(c)) {
 			 super.disconnect(context.abs2rel(c));
 		 }
-		 
 	}
 
-	public static float round (float f, int decimals) {
-		return (float) (Math.round(f * Math.pow(10,decimals)) / Math.pow(10,decimals));
-	}
-	
-	public static int pow (int base, int exp) {
-		return (int)Math.pow(base,exp);
-	}
-	
-	public static byte pow2(int i) {
-		return (byte) pow(2,i);
-	}
-	
-	
-	
 	
 	public void waitAndDiscover () {
 		scheduler.invokeIfScheduled ("broadcastDiscover");
@@ -352,9 +337,6 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 	}
 	
 	
-
-	
-
 	public float time() {
 		return getModule().getSimulation().getTime();
 	}
@@ -597,11 +579,6 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 			send(MetaPacketCoreType.SET_BOSS,metaId, new byte[]{varGet(VarMetaGroupCore.GroupSize)});
 		}
 	}
-
-	
-	
-	
-
 	
 	
 	public IVar varInitFromBytes (byte index) {
@@ -732,15 +709,15 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 		return varGet(VarMetaCore.Completed) == 1;
 	}
 
-	public MetaformaContext getContext() {
+	public MfContext getContext() {
 		return context;
 	}
 
-	public MetaformaVisualizer getVisual() {
+	public MfVisualizer getVisual() {
 		return visual;
 	}
 	
-	public StateManager getStateMngr () {
+	public MfStateManager getStateMngr () {
 		return stateMngr;
 	}
 	
@@ -748,11 +725,11 @@ public abstract class MetaformaController extends MetaformaApi implements Contro
 		return stateRec;
 	}
 
-	public MetaformaScheduler getScheduler() {
+	public MfScheduler getScheduler() {
 		return scheduler;
 	}
 
-	public MetaformaVisualizer getVisualizer() {
+	public MfVisualizer getVisualizer() {
 		return visual;
 	}
 

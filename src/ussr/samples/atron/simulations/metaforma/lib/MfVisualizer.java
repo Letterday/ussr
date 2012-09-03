@@ -6,10 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class MetaformaVisualizer {
+public class MfVisualizer {
 	
-	private MetaformaController ctrl;
-	private MetaformaContext context;
+	private MfController ctrl;
+	private MfContext context;
 	
 	protected byte msgFilter;
 	
@@ -18,7 +18,7 @@ public class MetaformaVisualizer {
 	private Map<IStateOperation,Color> colorsOperation = new HashMap<IStateOperation, Color>();
 
 
-	public MetaformaVisualizer (MetaformaController c) {
+	public MfVisualizer (MfController c) {
 		ctrl = c;
 		context = ctrl.getContext();
 	}
@@ -70,7 +70,7 @@ public class MetaformaVisualizer {
 			flipStr = "<none>";
 		}
 		
-		out.append("ID: " + getIdString() + (ctrl.getStateMngr().committed()? " // finished" : "") + " received: " + ctrl.getStateReceived());
+		out.append("ID: " + getIdString() + (ctrl.getStateMngr().committed()? " // fnshd" : "") + " rcvd: " + ctrl.getStateReceived());
 		out.append("\n");
 
 		out.append("angle: " + context.getAngle() + " ("+ctrl.getAngle()+")"  + "  flips: " + flipStr);
@@ -81,10 +81,10 @@ public class MetaformaVisualizer {
 		out.append("prevs: " + ctrl.getScheduler().previousAction);
 		out.append("\n");
 		
-		out.append("time in state:" + ctrl.getStateMngr().timeSpentInState() + "\n");
+		out.append("time: in state:" + ctrl.getStateMngr().timeSpentInState() + "  total:" + ctrl.time() + "\n");
 		
-		out.append("female conns: " + context.getFemaleConnsAsString());
-		out.append("\n");
+//		out.append("female conns: " + context.getFemaleConnsAsString());
+//		out.append("\n");
 		
 		
 		out.append("vars: " + ctrl.getVars() + "\n        " + ctrl.getVarSequenceNrs());
@@ -181,7 +181,7 @@ public class MetaformaVisualizer {
 	
 	
 	public void printStatePre() {
-		print("New instruction state: " + ctrl.getStateMngr().getState() + "\n=================================\n" + context.nbs()+"\n");
+		print("New state: " + ctrl.getStateMngr().getState() + "\n=================================\n" + context.nbs()+"\n");
 	}
 	
 

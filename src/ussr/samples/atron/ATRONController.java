@@ -25,7 +25,7 @@ import ussr.physics.PhysicsLogger;
 import ussr.physics.PhysicsObserver;
 import ussr.physics.PhysicsParameters;
 import ussr.physics.PhysicsSimulation;
-import ussr.samples.atron.simulations.metaforma.lib.MetaformaController;
+import ussr.samples.atron.simulations.metaforma.lib.MfController;
 
 /**
  * Controller class that provides the ATRON API

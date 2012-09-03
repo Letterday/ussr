@@ -2,7 +2,7 @@ package ussr.samples.atron.simulations.metaforma.lib;
 
 
 
-public abstract class MetaformaRuntime extends MetaformaController {
+public abstract class MfRuntime extends MfController {
 
 	public final static byte NORTH = (byte) (pow2(0) + pow2(1) + pow2(2) + pow2(3));
 	public final static byte SOUTH = (byte) (pow2(4) + pow2(5) + pow2(6) + pow2(7));
@@ -16,7 +16,7 @@ public abstract class MetaformaRuntime extends MetaformaController {
 	
 	
 	
-	public MetaformaRuntime() {
+	public MfRuntime() {
 		super();
 	}
 	
@@ -156,30 +156,15 @@ public abstract class MetaformaRuntime extends MetaformaController {
 			}
 				
 		}
-		
-	
 	}
 	
 
 	private String connectorsToString(int part) {
 		String ret = " ";
-		if ((MALE&part)!=0) {
-			ret+="male,";
-		}
-		if ((FEMALE&part)!=0) {
-			ret+="female,";
-		}
-		if ((NORTH&part)!=0) {
-			ret+="north,";
-		}
-		if ((SOUTH&part)!=0) {
-			ret+="south,";
-		}
-		if ((WEST&part)!=0) {
-			ret+="west,";
-		}
-		if ((EAST&part)!=0) {
-			ret+="east,";
+		for (int i=0; i<8; i++) {
+			if ((pow2(i)&part) != 0) {
+				ret+= i + ",";	
+			}
 		}
 		return ret.substring(0, ret.length()-1);
 	}

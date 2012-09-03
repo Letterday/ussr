@@ -14,13 +14,13 @@ import ussr.samples.atron.ATRON;
 import ussr.samples.atron.ATRONBuilder;
 import ussr.samples.atron.simulations.metaforma.lib.*;
 
-class ChristensenSimulation extends MetaformaSimulation {
+class ChristensenSimulation extends MfSimulation {
 
 	
 	public static void main(String[] args) {
 	
 		
-		MetaformaSimulation.initSimulator();		
+		MfSimulation.initSimulator();		
 		new ChristensenSimulation().main();
 	
 	}
@@ -37,12 +37,12 @@ class ChristensenSimulation extends MetaformaSimulation {
 	protected ArrayList<ModulePosition> buildRobot() {
 		BitSet b = new BitSet();
 		b.set(0, 3);
-		return new ATRONBuilder().buildRectangle(12,7, "Floor_");
+		return new MfBuilder().buildRectangle(12,7, ChristensenController.Mod.Floor);
 	}
 
 }
 
-public class ChristensenController extends MetaformaRuntime implements ControllerInformationProvider {
+public class ChristensenController extends MfRuntime implements ControllerInformationProvider {
 		
 	enum StateOperation implements IStateOperation {
 		INIT, CHOOSE, GET_UP;
@@ -214,9 +214,6 @@ public class ChristensenController extends MetaformaRuntime implements Controlle
 	
 		moduleRoleSet(ModuleRole.NONE);
 		
-		
-		
-		
 //		visual.setColor(Mod.Clover_North, Color.PINK);
 //		visual.setColor(Mod.Clover_South, Color.PINK.darker());
 //		visual.setColor(Mod.Clover_West, Color.PINK.darker().darker());
@@ -238,12 +235,9 @@ public class ChristensenController extends MetaformaRuntime implements Controlle
 		
 		if (stateMngr.at(StateOperation.INIT)) {
 			// Make groupings of 4
-//			visual.print("init");
 			if (stateMngr.doUntil(0)) {
-//				visual.print("init0");
 				if (!metaIdExists() && nbs(EAST&MALE&NORTH, ModuleRole.NONE).exists() && !nbs(WEST&MALE&NORTH).nbsWithoutMetaId().exists()) {
 					moduleRoleSet(ModuleRole.Left);
-//					disconnectPart(getId(), MALE&NORTH&WEST);
 					metaIdSet(getId().ord());
 				}
 				if (metaIdExists() && moduleRoleGet() == ModuleRole.Left) {
@@ -251,9 +245,8 @@ public class ChristensenController extends MetaformaRuntime implements Controlle
 				}
 			}
 			
-			if (stateMngr.doOnce(1)) {
+			if (stateMngr.doWait(1)) {
 				metaSetCompleted();
-				scheduler.setInterval("broadcastMetaVars", 5000);
 //				scheduler.setInterval("broadcastMetaNeighbors", 5000);
 				stateMngr.commit();
 			}
@@ -263,20 +256,29 @@ public class ChristensenController extends MetaformaRuntime implements Controlle
 				scheduler.invokeNow("broadcastMetaVars");
 				broadcastDiscover();
 				stateMngr.spend(5);
-				stateMngr.afterConsensus(StateOperation.CHOOSE);
+				stateMngr.setAfterConsensus(StateOperation.CHOOSE);
 			}
-				
-			
-			
-			
 		}
+		
 		if (stateMngr.at(StateOperation.CHOOSE)) {
 			if (stateMngr.doUntil(0)) {
-				
 				if (varGet(VarMeta.Top) == 0 && varGet(VarMeta.Left) != 0 && varGet(VarMeta.Right) == 0 && varGet(VarMeta.Bottom) != 0) {
 					metaBossIdSetTo(new byte[]{varGet(VarMeta.Bottom),varGet(VarMeta.BottomLeft),varGet(VarMeta.Left)});
+					visual.print("GOING TO GET UP");
+					stateMngr.setAfterConsensus(StateOperation.GET_UP);
+					stateMngr.commit();
 					
 					
+				}
+			}
+			
+		}
+		
+		if (stateMngr.at(StateOperation.GET_UP)) {
+			if (stateMngr.doWait(0)) {
+				varSet(VarLocal.gradH, MAX_BYTE);
+				varSet(VarLocal.gradV, MAX_BYTE);
+				if (metaBossMyself()) {
 					if (moduleRoleGet() == ModuleRole.Left) {
 						renameTo(Mod.Walker_Left);
 					}
@@ -289,19 +291,8 @@ public class ChristensenController extends MetaformaRuntime implements Controlle
 					if (moduleRoleGet() == ModuleRole.Dummy) {
 						renameTo(Mod.Walker_Dummy);
 					}
-					
-					stateMngr.commit();
-					stateMngr.afterConsensus(StateOperation.GET_UP);
 				}
 				
-				
-			}
-		}
-		
-		if (stateMngr.at(StateOperation.GET_UP)) {
-			if (stateMngr.doOnce(0)) {
-				varSet(VarLocal.gradH, MAX_BYTE);
-				varSet(VarLocal.gradV, MAX_BYTE);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
@@ -311,7 +302,7 @@ public class ChristensenController extends MetaformaRuntime implements Controlle
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(2)) {
+			if (stateMngr.doWait(2)) {
 				assign (4,2,Mod.Uplifter_Left);
 				assign (2,2,Mod.Uplifter_Right);
 				assign (0,2,Mod.Uplifter_DR);
@@ -320,61 +311,60 @@ public class ChristensenController extends MetaformaRuntime implements Controlle
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(3)) {
+			if (stateMngr.doWait(3)) {
 				disconnectPart(Group.Uplifter, (NORTH&EAST&FEMALE)|(SOUTH&WEST)&FEMALE);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(4)) {
+			if (stateMngr.doWait(4)) {
 				rotate(Mod.Uplifter_Left,-90);
 				rotate(Mod.Uplifter_Right,-90);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(5)) {
+			if (stateMngr.doWait(5)) {
 				disconnect(Mod.Walker_Left,Group.Uplifter);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(6)) {
+			if (stateMngr.doWait(6)) {
 				rotate(Mod.Walker_Top,-45);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(7)) {
+			if (stateMngr.doWait(7)) {
 				rotate(Mod.Walker_Right,-90);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(8)) {
+			if (stateMngr.doWait(8)) {
 				rotate(Mod.Walker_Top,45);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(9)) {
+			if (stateMngr.doWait(9)) {
 				connect(Mod.Walker_Left,Group.Floor,true);
-				stateMngr.commitSetCount(2);
+				stateMngr.commitMyselfIfNotUsed();
 			}
+					
 			
-			
-			
-			if (stateMngr.doOnce(10)) {
+			if (stateMngr.doWait(10)) {
 				disconnect(Mod.Walker_Right,Group.Uplifter,true);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(11)) {
+			if (stateMngr.doWait(11)) {
 				rotate(Mod.Uplifter_Left,90);
 				rotate(Mod.Uplifter_Right,90);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(12)) {
+			if (stateMngr.doWait(12)) {
 				connect(Mod.Uplifter_Left,Group.Floor);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(13)) {
+			if (stateMngr.doWait(13)) {
 				if (Group.Uplifter.contains(getId())) {
 					renameRestore();
 				}
@@ -382,7 +372,7 @@ public class ChristensenController extends MetaformaRuntime implements Controlle
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(14)) {
+			if (stateMngr.doWait(14)) {
 				
 				metaRegionRelease(false);
 				
@@ -392,17 +382,17 @@ public class ChristensenController extends MetaformaRuntime implements Controlle
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(15)) {
+			if (stateMngr.doWait(15)) {
 				rotate(Mod.Walker_Top,-45);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(16)) {
+			if (stateMngr.doWait(16)) {
 				rotate(Mod.Walker_Left,180);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(17)) {
+			if (stateMngr.doWait(17)) {
 				rotate(Mod.Walker_Top,45);
 				stateMngr.commitMyselfIfNotUsed();
 			}
@@ -415,16 +405,16 @@ public class ChristensenController extends MetaformaRuntime implements Controlle
 				disconnect(Mod.Walker_Left,Group.Floor,true);
 			}
 			
-			if (stateMngr.doOnce(20)) {
+			if (stateMngr.doWait(20)) {
 				rotate(Mod.Walker_Top,-45);
 				stateMngr.commitMyselfIfNotUsed();
 			}
-			if (stateMngr.doOnce(21)) {
+			if (stateMngr.doWait(21)) {
 				rotate(Mod.Walker_Left,90);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doOnce(22)) {
+			if (stateMngr.doWait(22)) {
 				rotate(Mod.Walker_Top,45);
 				stateMngr.commitMyselfIfNotUsed();
 			}
@@ -604,7 +594,8 @@ public class ChristensenController extends MetaformaRuntime implements Controlle
 
 	@Override
 	protected boolean metaNeighborHookAllow() {
-		return !stateMngr.at(StateOperation.INIT);
+		return stateMngr.at(StateOperation.CHOOSE);
+		//TODO: Disable nb sharing mechanism when not used?
 	}
 
 }

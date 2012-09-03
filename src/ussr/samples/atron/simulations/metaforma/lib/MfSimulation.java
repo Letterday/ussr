@@ -1,9 +1,7 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
-import java.util.ArrayList;
 
 import ussr.description.Robot;
-import ussr.description.setup.ModulePosition;
 import ussr.description.setup.WorldDescription;
 import ussr.model.debugging.SimpleWindowedInformationProvider;
 import ussr.physics.PhysicsFactory;
@@ -11,10 +9,9 @@ import ussr.physics.PhysicsParameters;
 import ussr.physics.PhysicsSimulation;
 import ussr.physics.jme.DebugInformationPicker;
 import ussr.samples.ObstacleGenerator;
-import ussr.samples.atron.ATRONBuilder;
 import ussr.samples.atron.GenericATRONSimulation;
 
-public abstract class MetaformaSimulation extends GenericATRONSimulation {
+public abstract class MfSimulation extends GenericATRONSimulation {
 
 
 	public static void initSimulator () {
@@ -35,16 +32,9 @@ public abstract class MetaformaSimulation extends GenericATRONSimulation {
         DebugInformationPicker.install(simulation);
     }
 		
-	
-	
-	
-	
+		
 	protected abstract Robot getRobot();
 
-	@Override
-	protected ArrayList<ModulePosition> buildRobot() {
-		return new ATRONBuilder().buildRectangle(9,5,"Floor_");
-	}
 	
 	protected void changeWorldHook(WorldDescription world) {
         ObstacleGenerator generator = new ObstacleGenerator();

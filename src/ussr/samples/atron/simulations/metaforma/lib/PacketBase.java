@@ -3,11 +3,11 @@ package ussr.samples.atron.simulations.metaforma.lib;
 public abstract class PacketBase {
 	
 	protected byte[] data = new byte[]{};
-	protected static MetaformaController ctrl;
+	protected static MfController ctrl;
 	
 	public abstract byte[] getBytes ();
 	
-	public static void setController (MetaformaController c) {
+	public static void setController (MfController c) {
 		ctrl = c;
 	}
 	

@@ -4,12 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.lang.reflect.Method;
 
-public class MetaformaScheduler {
-	private MetaformaController ctrl;
+public class MfScheduler {
+	private MfController ctrl;
 	public Map <String,Integer> intervalMs = new HashMap<String,Integer>();
 	public Map <String,Float> previousAction = new HashMap<String,Float>();
 	
-	public MetaformaScheduler (MetaformaController c) {
+	public MfScheduler (MfController c) {
 		ctrl = c;
 	}
 	

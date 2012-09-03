@@ -7,7 +7,7 @@ import javax.swing.JTextArea;
 
 import ussr.model.Module;
 import ussr.physics.PhysicsFactory.DebugProviderFactory;
-import ussr.samples.atron.simulations.metaforma.lib.MetaformaController;
+import ussr.samples.atron.simulations.metaforma.lib.MfController;
 
 /**
  * A debug information provider that provides a continuously updating per-module information window

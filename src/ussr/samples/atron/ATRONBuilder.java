@@ -15,6 +15,7 @@ import ussr.description.geometry.RotationDescription;
 import ussr.description.geometry.VectorDescription;
 import ussr.description.setup.ModuleConnection;
 import ussr.description.setup.ModulePosition;
+import ussr.samples.atron.simulations.metaforma.lib.IModEnum;
 
 /**
  * Helper class for assembling various standard ATRON configurations
@@ -165,17 +166,7 @@ public class ATRONBuilder {
         return mPos;
     }
     
-    public ArrayList<ModulePosition> buildEight2(VectorDescription position) {
-        mPos.add(new ModulePosition("Struct_0", aPos(0,0,0,position), ATRON.ROTATION_NS_BROKEN));
-        mPos.add(new ModulePosition("Struct_1", aPos(1,0,1,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("Struct_2", aPos(1,0,-1,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("Struct_3", aPos(2,0,0,position), ATRON.ROTATION_NS_BROKEN));
-        mPos.add(new ModulePosition("Struct_4", aPos(3,0,1,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("Struct_5", aPos(3,0,-1,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("Struct_6", aPos(4,0,0,position), ATRON.ROTATION_NS_BROKEN));
-        return mPos;
-    }
-    
+   
     public ArrayList<ModulePosition> buildCrawler() {
     	float Yoffset = 0.25f;
     	ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
@@ -190,72 +181,7 @@ public class ATRONBuilder {
         return mPos;
 	}
     
-    
-    public ArrayList<ModulePosition> buildRectangle (int width, int height, String prefix) {
-    	ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
-    	
-    	// Build floor
-    	int i = 0;
-    	for (int w = 0; w < width; w++) {
-    		for (int h = 0; h < height; h++) {
-    			
-    			
-    			RotationDescription rot = null; 
-				if (w%2==0 && h%2==1) {
-					rot = ATRON.ROTATION_NS;
-				}
-				else if (w%2==1 && h%2==0) {
-					rot = ATRON.ROTATION_EW;
-				}
-				if (rot != null) {
-					mPos.add(new ModulePosition(prefix + i, aPos ((float)w,0,(float)h,aPos(0,-5,0)), rot));
-					
-					i++;
-				}
-    		}
-    	}
-    	return mPos;
-    }
-    	
-    private void buildClover(String prefix, boolean useASE, ArrayList<ModulePosition> mPos, VectorDescription pos,int startId) {
-    	
-		mPos.add(new ModulePosition(prefix + (startId + 0), aPos (0,0,0, pos), ATRON.ROTATION_NS));;
-		mPos.add(new ModulePosition(prefix + (startId + 1), aPos (2,0,0, pos), ATRON.ROTATION_NS));
-		mPos.add(new ModulePosition(prefix + (startId + 2), aPos (1,0,-1, pos), ATRON.ROTATION_EW));
-		mPos.add(new ModulePosition(prefix + (startId + 3), aPos (1,0,1, pos), ATRON.ROTATION_EW));
-		
-    }
-    
-	public ArrayList<ModulePosition> buildGrid(BitSet build, String prefix, boolean useASE) {
-		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
-		int height = -5;
-		buildClover(prefix, useASE, mPos, aPos(-2,height,2),0);
-		buildClover(prefix, useASE, mPos, aPos(0,height,4),4);
-		buildClover(prefix, useASE, mPos, aPos(2,height,2),8);
-		
-		buildClover(prefix, useASE, mPos, aPos(4,height,0),12);
-		buildClover(prefix, useASE, mPos, aPos(2,height,-2),16);
-
-		buildClover(prefix, useASE, mPos, aPos(6,height,-2),20);
-		buildClover(prefix, useASE, mPos, aPos(-2,height,6),24);
-		buildClover(prefix, useASE, mPos, aPos(-4,height,8),28);
-		
-		
-		//if (build.get(3)) buildClover(prefix, useASE, mPos, aPos(4,-5,0),12);
-		
-		
-        return mPos;
-	}
-    
-	public ArrayList<ModulePosition> buildFlipover (String prefix, boolean useASE) {
-		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
-		
-		buildClover(prefix, useASE, mPos, aPos(2,-5,2),0);
-		buildClover(prefix, useASE, mPos, aPos(4,-5,0),4);
-		buildClover(prefix, useASE, mPos, aPos(0,-5,0),8);
-		
-        return mPos;
-	}
+ 
     
     public ArrayList<ModulePosition> build() {
     	float Yoffset = 0.25f;
@@ -278,9 +204,6 @@ public class ATRONBuilder {
         return new VectorDescription(x*ATRON.UNIT+Xoffset, y*ATRON.UNIT+Yoffset, z*ATRON.UNIT+Zoffset);
     }
     
-    private static VectorDescription aPos(float x, float y, float z) {
-        return new VectorDescription(x*ATRON.UNIT, y*ATRON.UNIT, z*ATRON.UNIT);
-    }
     
     public ArrayList<ModulePosition> buildAsLattice(int nModules, int xMax, int yMax, int zMax) {
         return this.buildAsNamedLattice(nModules, xMax, yMax, zMax, new Namer() {

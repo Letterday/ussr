@@ -10,20 +10,20 @@ public class NeighborSet  {
 	private ConcurrentHashMap<IModule, Byte[]> connectors;// = new HashMap<Module, Byte[]>();
 	private ConcurrentHashMap<Byte, IModule> modules;// = new HashMap<Byte, Module>();
 	
-	private MetaformaRuntime ctrl;
+	private MfRuntime ctrl;
 	private final byte CON_SRC = 0;
 	private final byte CON_DEST = 1;
 	private final byte NR_ROLE = 2;
 	private final byte ID_META = 3;
 	private final byte ID_REGION = 4;
 	
-	public NeighborSet (MetaformaRuntime c) {
+	public NeighborSet (MfRuntime c) {
 		ctrl = c;
 		connectors = new ConcurrentHashMap<IModule, Byte[]>();
 		modules = new ConcurrentHashMap<Byte, IModule>();
 	}
 	
-	public NeighborSet (NeighborSet nbs,MetaformaRuntime c) {
+	public NeighborSet (NeighborSet nbs,MfRuntime c) {
 		connectors = new ConcurrentHashMap<IModule, Byte[]>(nbs.getConnectors());
 		modules = new ConcurrentHashMap<Byte, IModule>(nbs.getModules());
 //		connectors = nbs.getConnectors();
@@ -286,7 +286,7 @@ public class NeighborSet  {
 		NeighborSet ret = new NeighborSet(this.ctrl);
 		for (Map.Entry<IModule, Byte []> e : entrySet()) {
 			for (int i=0; i<8; i++) {
-				if ((part&MetaformaController.pow2(i))==MetaformaController.pow2(i) && e.getValue()[CON_SRC] == i) {
+				if ((part&MfController.pow2(i))==MfController.pow2(i) && e.getValue()[CON_SRC] == i) {
 					ret.assoc(e);
 				}
 			}
@@ -298,7 +298,7 @@ public class NeighborSet  {
 		NeighborSet ret = new NeighborSet(this.ctrl);
 		for (Map.Entry<IModule, Byte []> e : entrySet()) {
 			for (int i=0; i<8; i++) {
-				if ((part&MetaformaController.pow2(i))==MetaformaController.pow2(i) && e.getValue()[CON_DEST] == i) {
+				if ((part&MfController.pow2(i))==MfController.pow2(i) && e.getValue()[CON_DEST] == i) {
 					ret.assoc(e);
 				}
 			}
