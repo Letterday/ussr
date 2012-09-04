@@ -21,6 +21,11 @@ public abstract class MfRuntime extends MfController {
 	}
 	
 	
+	public MfRuntime(SettingsBase set) {
+		super(set);
+	}
+
+
 	public void rotate(int degrees) {
 		visual.print("## rotate " + degrees + ", current = " + angle + "; new = " + (degrees + angle) + "");
 		// TODO: There is still a strange issue: when rotating 180 degrees, it is undefined whether it goes CW or CCW (randomly).
@@ -89,13 +94,13 @@ public abstract class MfRuntime extends MfController {
 				connection(nb,connect);
 			}
 			
-			if (nbs(MALE).nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(!connect).isEmpty()) {
+			if (nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(!connect).isEmpty()) {
 				// Commit 
-				stateMngr.commit("Member of " + g2 + " and did my action to " + g1);
+				stateMngr.commit("Member of " + g1 + " and did my action to " + g2);
 			}
 			if (nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).isEmpty()) {
 				// We need to to this because the whole grouping is excluded from automatic commit, also non-nb's!
-				stateMngr.commit("Member of " + g2 + " but not connected to " + g1);
+				stateMngr.commit("Member of " + g1 + " but not connected to " + g2);
 			}
 		}
 		

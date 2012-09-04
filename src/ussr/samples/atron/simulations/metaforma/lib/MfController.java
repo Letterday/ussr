@@ -95,8 +95,15 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	private IRole moduleRole = null;
 	
 	
+	protected SettingsBase set;
 	
+	public MfController(SettingsBase s) {
+		set = s;
+	}
 	
+	public MfController() {
+	}
+
 	public byte varGet(IVar name) {	
 		if (vars.containsKey(name)) {
 			return vars.get(name);

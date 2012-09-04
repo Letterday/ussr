@@ -16,6 +16,12 @@ import ussr.samples.atron.simulations.metaforma.lib.*;
 
 class BrandtSimulation extends MfSimulation {
 	
+	class Settings extends SettingsBase {
+		
+	}
+	public SettingsBase set = new Settings();
+	
+	
 	public static void main(String[] args) {
 		MfSimulation.initSimulator();		
 		new BrandtSimulation().main();
@@ -25,16 +31,14 @@ class BrandtSimulation extends MfSimulation {
 	protected Robot getRobot() {
 		ATRON a = new ATRON() {
 			public Controller createController() {
-				return new BrandtController();
+				return new BrandtController(set);
 			}
 		};
 		return a;
 	}
 
 	protected ArrayList<ModulePosition> buildRobot() {
-		BitSet b = new BitSet();
-		b.set(0, 3);
-		return new MfBuilder().buildGrid(b, Mod.F);
+		return new MfBuilder().buildGrid(set, Mod.F);
 	}
 }
 
@@ -184,7 +188,13 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 			return valueOf(string);
 		}
 	}
+
 	
+
+	public BrandtController(SettingsBase set) {
+		super(set);
+	}
+
 	public void addNeighborhood (StringBuffer out) {
 		out.append(String.format("% 3d  % 3d  % 3d",varGet(VarMeta.TopLeft),varGet(VarMeta.Top),varGet(VarMeta.TopRight)) + "\n");
 		out.append(String.format("% 3d        % 3d",varGet(VarMeta.Left),varGet(VarMeta.Right)) + "\n");
@@ -249,13 +259,13 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 				// Share meta neighborhood hor + ver
 				scheduler.invokeNow("broadcastMetaVars");
 				broadcastDiscover();
-				stateMngr.spend(5);
+				stateMngr.spend(set.getDiscoverTime());
 			}
 			
 			if (stateMngr.doUntil(3,600)) {
 				// Share meta neighborhood diag
 				broadcastMetaNeighbors();
-				stateMngr.spend(7);
+				stateMngr.spend(set.getMetaVarSyncTime());
 			}
 				
 			if (stateMngr.doWait(4)) {
@@ -267,17 +277,17 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 		if (stateMngr.at(StateOperation.CHOOSE)) {
 			if (stateMngr.doUntil(0)) {
 				
-//				if (varGet(VarMeta.Top) != 0 && varGet(VarMeta.Left) == 0 && varGet(VarMeta.Right) == 0 && varGet(VarMeta.TopLeft) == 0 && varGet(VarMeta.Bottom) == 0) {
-//					metaBossIdSetTo(new byte[]{varGet(VarMeta.Top)});
-//					stateMngr.setAfterConsensus(StateOperation.FLIP_BOTTOM);
-//					stateMngr.commit();
-//				}
+				if (varGet(VarMeta.Top) != 0 && varGet(VarMeta.Left) == 0 && varGet(VarMeta.Right) == 0 && varGet(VarMeta.TopLeft) == 0 && varGet(VarMeta.Bottom) == 0) {
+					metaBossIdSetTo(new byte[]{varGet(VarMeta.Top)});
+					stateMngr.setAfterConsensus(StateOperation.FLIP_BOTTOM);
+					stateMngr.commit();
+				}
 				
 				if (varGet(VarMeta.Top) == 0 && varGet(VarMeta.Right) != 0) {
 					if (varGet(VarMeta.TopRight) == 0) {
-//						metaBossIdSetTo(new byte[]{varGet(VarMeta.Right)});
-//						stateMngr.setAfterConsensus(StateOperation.FLIP_TOP);
-//						stateMngr.commit();
+						metaBossIdSetTo(new byte[]{varGet(VarMeta.Right)});
+						stateMngr.setAfterConsensus(StateOperation.FLIP_TOP);
+						stateMngr.commit();
 					}
 					else {
 						metaBossIdSetTo(new byte[]{varGet(VarMeta.TopRight),varGet(VarMeta.Right)});
@@ -422,9 +432,9 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doUntil(2,200))  {
+			if (stateMngr.doUntil(2,set.getGradientInterval()))  {
 				gradientCreate();
-				stateMngr.spend(5);
+				stateMngr.spend(set.getGradientTime());
 				stateMngr.commitMyselfIfNotUsed();
 			}
 	
@@ -487,9 +497,9 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 			
 			if (stateMngr.doUntil(12)) {
 //				discoverNeighbors();
-				if (nbs(EAST&FEMALE).sizeEquals(2,true)) {
+				if (varGet(VarLocal.isRef) == 1) {
 					unicast(EAST&FEMALE,PacketCoreType.SYMMETRY,false);
-					stateMngr.commit();
+					stateMngr.commit("symmetry initiated");
 				}
 			}
 			
@@ -506,7 +516,7 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 			if (stateMngr.doWait(0)) {
 				if (!metaBossMyself()) {
 					if (moduleRoleGet() == ModuleRole.Right) {
-						varSet(VarLocal.isRef,1);
+						varSet(VarLocal.isRef,10);
 					}
 				}
 				stateMngr.commitMyselfIfNotUsed();
@@ -582,15 +592,15 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 			}
 			
 			if (stateMngr.doUntil(12)) {
-				if (varGet(VarLocal.isRef) == 1) {
+				if (varGet(VarLocal.isRef) == 10) {
 					unicast(WEST&MALE,PacketCoreType.SYMMETRY,false);
-					stateMngr.commitMyselfIfNotUsed();
+					stateMngr.commit("symmetry initiated");
 				}
 			}
 			
 			if (stateMngr.doWait (13)) {
-				if (varGet(VarLocal.isRef) == 1) {
-					varSet(VarLocal.isRef, 0);
+				if (varGet(VarLocal.isRef) == 10) {
+					varSet(VarLocal.isRef, 2);
 				}
 				finish();
 			}
