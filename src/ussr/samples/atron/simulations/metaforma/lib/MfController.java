@@ -8,7 +8,6 @@ import java.util.Set;
 
 import ussr.model.debugging.ControllerInformationProvider;
 import ussr.model.debugging.DebugInformationProvider;
-import ussr.samples.atron.simulations.metaforma.gen.*;
 import ussr.samples.atron.simulations.metaforma.lib.Packet;
 import ussr.samples.atron.simulations.metaforma.lib.NeighborSet;
 
@@ -224,13 +223,18 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 					visual.print(p,".RECEIVE " + p);
 				}
 				
-
+				if (p.getSource() == 0 || p.getDest() == 0) {
+					visual.error("Meta packet with source=0 or dest=0!");
+				}
+				
 				if (!p.isDying() ) {
 					broadcast(p);
 				}
 				
+				
+				
 				if (p.getDest() == metaIdGet()) {
-					if (p.getType() == MetaPacketCoreType.SET_BOSS && !stateMngr.committed() && (!metaBossIdExists() || metaBossIdGet() == p.getSource())) {
+					if (p.getType() == MetaPacketCoreType.SET_BOSS&& (!metaBossIdExists() || metaBossIdGet() == p.getSource())) {// && !stateMngr.committed() 
 						// the origin will become the boss
 						varSet(VarMetaCore.BossId, p.getSource());
 						varSet(VarMetaGroupCore.GroupSize, p.getData()[0]);
@@ -253,11 +257,14 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 				}
 				context.addNeighbor(p.getSource(), connector, p.getSourceConnector(),p.getModRole(),p.getMetaSourceId(),p.getMetaBossId());
 				
-				if (p.getMetaSourceId() != metaIdGet() && metaIdExists()) {
+				if (p.getMetaSourceId() != metaIdGet() && metaIdExists() && p.getMetaSourceId() != 0) {
 					// During a sequence we should not add meta neighbors as the connector numbers can be swapped! So only do this at DEFAULT operation state
 					if (metaNeighborHookAllow()) {
-						visual.print(".metaNeighborHook " + connector + "," + p.getMetaSourceId() );
-						metaNeighborHook (connector,p.getMetaSourceId());
+						byte metaSourceId = p.getMetaSourceId() == 0 ? -1 : p.getMetaSourceId();
+						
+						if (metaNeighborHook (connector,metaSourceId)) {
+							visual.print(".metaNeighborHook " + connector + "," + p.getMetaSourceId() );
+						}
 					}
 				}
 				
@@ -265,7 +272,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 				if (!(metaIdExists() && (metaIdGet() == p.getMetaSourceId() || (metaBossIdExists() && metaBossIdGet() == p.getMetaBossId()))) && p.getType() != PacketCoreType.META_ID_SET) {
 					
 					if (p.getType() != PacketCoreType.DISCOVER) {
-						visual.print("Packet dropped from outside broadcast field (" + metaIdGet() + "," + metaBossIdGet() + ")  : " +p);
+						visual.print("!!! Packet dropped from outside region (" + metaIdGet() + "," + metaBossIdGet() + ")  : " +p);
 					}
 					return;
 				}
@@ -276,8 +283,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 				}
 				
 				if (!(stateMngr.at(p.getState())) && p.getType() != PacketCoreType.META_VAR_SYNC && p.getType() != PacketCoreType.GRADIENT && p.getType() != PacketCoreType.DISCOVER) {
-					visual.print("!!! Packet dropped due to state mismatch:");
-					visual.print(p.toString());
+					visual.print("!!! Packet dropped due to state mismatch: " + p.toString());
 					return;
 				}
 				
@@ -296,7 +302,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 				
 				if (p.getType() == PacketCoreType.META_VAR_SYNC) {
 					if (p.getData().length % 3 != 0 || p.getData().length < 3) {
-						System.err.println("Groups of 3 bytes required and at least 1 group! " + p.getData().length);
+						visual.error("Groups of 3 bytes required and at least 1 group! " + p.getData().length);
 					}
 					
 					for (int i=0; i<p.getData().length; i=i+3) {
@@ -304,7 +310,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 						 if (v.isMeta() && p.getMetaSourceId() == metaIdGet() || v.isMetaRegion() ) {
 							if (varGetSequenceNr(v) < p.getData()[i+2] || varGetSequenceNr(v) == p.getData()[i+2] && varGet(v) == 0 && p.getData()[1] != 0) {
 								varSet(v,p.getData()[i+1]);
-								if (v.equals(VarMetaCore.BossId) || p.getData()[i+0] == 0) {
+								if (v.equals(VarMetaCore.BossId)){ //TODO: Why??? || p.getData()[i+0] == 0) {
 									stateMngr.commit("BOSS ID received through meta sync");
 								}
 							}
@@ -573,9 +579,9 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		
 		for (byte metaId : metaIds) {
 			if (metaId == 0) {
-				System.err.println("Creating region with meta ID 0!!");
+				visual.error("Creating region with meta ID 0!!");
 			}
-			// We need to include the groupsize in the message
+			// We need to include the group size in the message
 			send(MetaPacketCoreType.SET_BOSS,metaId, new byte[]{varGet(VarMetaGroupCore.GroupSize)});
 		}
 	}
@@ -602,7 +608,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		
 	}
 	
-	public abstract void metaNeighborHook(int connectorNr, byte metaId);
+	public abstract boolean metaNeighborHook(int connectorNr, byte metaId);
 	public abstract void addNeighborhood(StringBuffer o);
 	public abstract IPacketType getMetaPacketType (int index);	
 
@@ -653,12 +659,23 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		unicast (new Packet(getId()).setType(t).setDir(d).setData(data),connectors);
 	}
 	
-	private void broadcast(Packet p,int exceptConnector) {
+	private void addToPacket (Packet p) {
 		p.addState(stateMngr.getState());
 		p.setMetaBossId(metaBossIdGet());
 		if (varGet(VarMetaCore.Completed) == 1) {
 			p.setMetaSourceId(metaIdGet());
 		}
+//		else {
+//			// -1 means that a meta module is present but not fully initialised with a meta id yet
+//			p.setMetaSourceId(-1);
+//		}
+		p.setSource(getId());
+		p.setModRole(moduleRoleGet());
+	}
+	
+	private void broadcast(Packet p,int exceptConnector) {
+		addToPacket(p);
+		
 		visual.print(p,".broadcast (" + p.toString() + ") ");
 
 		for (byte c = 0; c < 8; c++) {
@@ -669,6 +686,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	}
 	
 	private void unicast (Packet p, int connectors) {
+		addToPacket(p);
 		visual.print(p,".unicast packet " + "(" + p.toString() + ") ");
 		for (byte i=0; i<8; i++) {
 			if ((connectors&pow2(i))==pow2(i)) {
@@ -681,15 +699,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	
 	private void send(Packet p, int connector) {
 		p.setSourceConnector((byte) connector);
-		p.setSource(getId());
-		p.setMetaBossId(metaBossIdGet());
-		p.setModRole(moduleRoleGet());
-		if (varGet(VarMetaCore.Completed) == 1) {
-			p.setMetaSourceId(metaIdGet());
-		}
-		p.addState(stateMngr.getState());
-
-		//if ((msgFilter & p.getType().bit()) != 0) notification(".send = " + p.toString() + " over " + connector);
+		addToPacket(p);
 		
 		if (connector < 0 || connector > 7) {
 			System.err.println("Connector has invalid nr " + connector);

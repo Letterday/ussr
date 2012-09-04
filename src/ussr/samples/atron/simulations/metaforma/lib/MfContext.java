@@ -81,13 +81,13 @@ public class MfContext  {
 	private void switchEWN () {
 		neighbors.updateSymmetryEW(false);
 		switchEastWestN = !switchEastWestN;
-		ctrl.getVisual().print("switch EW N");
+		ctrl.getVisual().print("# switch EW N");
 	}
 	
 	private void switchEWS () {
 		neighbors.updateSymmetryEW(true);
 		switchEastWestS = !switchEastWestS;
-		ctrl.getVisual().print("switch EW S");
+		ctrl.getVisual().print("# switch EW S");
 	}
 	
 	public void switchEastWest () {
@@ -97,7 +97,7 @@ public class MfContext  {
 	
 	public void switchNorthSouth () {
 		 switchNorthSouth =! switchNorthSouth;
-		 ctrl.getVisual().print("$$$ Switch North South");
+		 ctrl.getVisual().print("# Switch North South");
 		 neighbors.updateSymmetryNS();
 	}
 

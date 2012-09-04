@@ -377,7 +377,7 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-//    		getModule().getSimulation().setPause(true);
+
     	}
     	return module.getConnectors().get(i).isConnected();
     }

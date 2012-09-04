@@ -9,6 +9,7 @@ import ussr.physics.PhysicsParameters;
 import ussr.physics.PhysicsSimulation;
 import ussr.physics.jme.DebugInformationPicker;
 import ussr.samples.ObstacleGenerator;
+import ussr.samples.atron.ATRONController;
 import ussr.samples.atron.GenericATRONSimulation;
 
 public abstract class MfSimulation extends GenericATRONSimulation {
@@ -25,6 +26,8 @@ public abstract class MfSimulation extends GenericATRONSimulation {
 
 		//PhysicsFactory.getOptions().setLowLevelCommunicationDebugOutput(true);
 		PhysicsFactory.setDebugProviderFactory(SimpleWindowedInformationProvider.getFactory(true));
+		
+		ATRONController.activatePacketCounting();
 	}
 
 	@Override

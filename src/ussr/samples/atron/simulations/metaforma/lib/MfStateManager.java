@@ -1,11 +1,14 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
 import java.math.BigInteger;
+
+import com.sun.swing.internal.plaf.metal.resources.metal;
+
 import ussr.samples.atron.simulations.metaforma.lib.MfController.VarMetaGroupCore;
 
 
 public class MfStateManager {
-	protected State stateCurrent;
+	private State stateCurrent;
 	
 	
 	private float stateStartTime;
@@ -18,7 +21,7 @@ public class MfStateManager {
 
 	private IStateOperation stateOperationNext;
 	
-	protected boolean commitAutoAfterState = true;
+	private boolean commitAutoAfterState = true;
 	private int commitCount;
 	
 	public MfStateManager (MfController c) {
@@ -92,11 +95,13 @@ public class MfStateManager {
 			ctrl.scheduler.invokeNow("broadcastConsensus");
 		}
 		
-		if (consensusReached()) {
+		if ((ctrl.metaBossMyself() || !ctrl.metaBossIdExists() )&& consensusReached()) {
 			if (stateOperationNext == null) {
+				ctrl.visual.print("CONSENSUS REACHED - go to next instr");
 				nextInstruction();
 			}
 			else {
+				ctrl.visual.print("CONSENSUS REACHED - " + stateOperationNext);
 				nextOperation(stateOperationNext);
 			}
 		} 
@@ -107,7 +112,6 @@ public class MfStateManager {
 	protected void cleanForNew() {
 		ctrl.prepareNextState();
 				
-//		stateStartNext = 0;
 		stateNeighborsDiscovered = false;
 		stateStartTime = ctrl.time();
 		stateOperationNext = null;
@@ -128,7 +132,7 @@ public class MfStateManager {
 				return ctrl.varGet(VarMetaGroupCore.GroupSize) >= ctrl.moduleRoleGet().size() && consensusReached(ctrl.varGet(VarMetaGroupCore.GroupSize));
 			} 
 			else {
-				return consensusReached(ctrl.moduleRoleGet().size());
+				return stateCurrent.getOperation().ord() == 0 && consensusReached(ctrl.moduleRoleGet().size());
 			}
 		}
 		else {
@@ -200,8 +204,7 @@ public class MfStateManager {
 	public void nextOperation (IStateOperation op) {
 		
 		if (stateCurrent.equals(op)){
-			System.err.println("OPERATION " + op + " equals " + stateCurrent.getOperation());
-			ctrl.pause();
+			ctrl.visual.error("OPERATION " + op + " equals " + stateCurrent.getOperation());
 		}
 		next(new State(stateCurrent).nextOperation(op));
 		
@@ -217,7 +220,7 @@ public class MfStateManager {
 		int groupSize = ctrl.varGet(VarMetaGroupCore.GroupSize);
 		if (groupSize == 0) {
 			groupSize = ctrl.moduleRoleGet().size();
-//			System.err.println("Groupsize equals 0!");
+//			System.err.println("Group size equals 0!");
 		}
 		if (stateCurrent.getInstruction() == stateInstr && ctrl.freqLimit("doRepeat" + stateInstr,interval)) {
 			if (!stateNeighborsDiscovered) {
@@ -247,7 +250,10 @@ public class MfStateManager {
 	}	
 
 	public void setAfterConsensus(IStateOperation op) {
-		stateOperationNext = op;		
+		if (!op.equals(stateOperationNext)) {
+			ctrl.visual.print(".setAfterConsensus " + op);
+			stateOperationNext = op;
+		}
 	}
 	
 	public State getState () {

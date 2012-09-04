@@ -192,8 +192,8 @@ public class Packet extends PacketBase {
 		metaBossId = id;
 	}
 	
-	public void setMetaSourceId(byte id) {
-		metaSourceId = id;
+	public void setMetaSourceId(int id) {
+		metaSourceId = (byte) id;
 	}
 
 

@@ -176,12 +176,14 @@ public class MfVisualizer {
 	
 	
 	public void printStatePost() {
-		print("\n\n===========  "+ ctrl.getId() + "  ==============\nLeft instruction state, time spent: " + ctrl.getStateMngr().timeSpentInState() + "");
+		print("\n\n===========  "+ ctrl.getId() + "  ==============\nLeft state, time spent: " + ctrl.getStateMngr().timeSpentInState() + "");
 	}
 	
 	
 	public void printStatePre() {
-		print("New state: " + ctrl.getStateMngr().getState() + "\n=================================\n" + context.nbs()+"\n");
+		StringBuffer metaNbs = new StringBuffer();
+		ctrl.addNeighborhood(metaNbs);
+		print("New state: " + ctrl.getStateMngr().getState() + "\n=================================\n" + context.nbs()+"\n" + metaNbs +"\n");
 	}
 	
 

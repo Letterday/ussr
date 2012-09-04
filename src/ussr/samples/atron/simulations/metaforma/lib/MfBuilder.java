@@ -51,11 +51,12 @@ public class MfBuilder {
 		buildClover(mod, mPos, aPos(2,height,2),8);
 		
 		buildClover(mod, mPos, aPos(4,height,0),12);
-		buildClover(mod, mPos, aPos(2,height,-2),16);
-
+//		buildClover(mod, mPos, aPos(2,height,-2),16);
+//
 		buildClover(mod, mPos, aPos(6,height,-2),20);
-		buildClover(mod, mPos, aPos(-2,height,6),24);
-		buildClover(mod, mPos, aPos(-4,height,8),28);
+		buildClover(mod, mPos, aPos(8,height,-4),32);
+//		buildClover(mod, mPos, aPos(-2,height,6),24);
+//		buildClover(mod, mPos, aPos(-4,height,8),28);
 		
 		
 		//if (build.get(3)) buildClover(prefix, useASE, mPos, aPos(4,-5,0),12);

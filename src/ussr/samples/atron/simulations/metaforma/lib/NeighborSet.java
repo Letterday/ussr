@@ -49,7 +49,7 @@ public class NeighborSet  {
 	
 	public void add (IModule nb, int conToNb, int conFromNb, IRole moduleRole, int metaId, int metaBossId) { 
 		if (getConnectorNrTo(nb) != conToNb || getConnectorNrFrom(nb) != conFromNb || getModuleRole(nb) != moduleRole.index() || getMetaId(nb) != metaId || getMetaBossId(nb) != metaBossId) {
-//			ctrl.getVisual().print(".addNeighbor " + nb + " [" + conToNb + "," + conFromNb + "," + moduleRole + "," + metaId + "," + metaBossId + "] (" + nb + "=" + conToNb + "!= " +getConnectorNrTo(nb)+")");
+			ctrl.getVisual().print(".addNeighbor " + nb + " [" + conToNb + "," + conFromNb + "," + moduleRole + "," + metaId + "," + metaBossId + "] (" + nb + "=" + conToNb + "!= " +getConnectorNrTo(nb)+")");
 			assoc (nb,conToNb,conFromNb, moduleRole.index(),metaId,metaBossId);
 		}
 	}

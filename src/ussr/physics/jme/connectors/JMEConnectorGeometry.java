@@ -82,7 +82,9 @@ public class JMEConnectorGeometry {
     }
     
     public void setConnectorColor(Color color) {
-        if(initialColor==null) initialColor = color;
+//    	Uncommented to allow new connector color to be set!
+//        if(initialColor==null) 
+        initialColor = color;
 		world.getHelper().setColor(mesh, color);
     }
     

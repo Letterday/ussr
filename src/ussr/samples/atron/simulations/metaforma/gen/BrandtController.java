@@ -11,7 +11,6 @@ import ussr.description.setup.ModulePosition;
 import ussr.model.Controller;
 import ussr.model.debugging.ControllerInformationProvider;
 import ussr.samples.atron.ATRON;
-import ussr.samples.atron.ATRONBuilder;
 import ussr.samples.atron.simulations.metaforma.gen.BrandtController.Mod;
 import ussr.samples.atron.simulations.metaforma.lib.*;
 
@@ -35,7 +34,7 @@ class BrandtSimulation extends MfSimulation {
 	protected ArrayList<ModulePosition> buildRobot() {
 		BitSet b = new BitSet();
 		b.set(0, 3);
-		return new MfBuilder().buildGrid(b, Mod.Floor);
+		return new MfBuilder().buildGrid(b, Mod.F);
 	}
 }
 
@@ -47,7 +46,7 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 		public IStateOperation fromByte(byte b) {return values()[b];}
 	}
 	enum VarLocal implements IVar {
-		NONE, gradH, gradV;
+		NONE, gradH, gradV, isRef;
 		public byte index() {return (byte) ordinal();}
 		public VarLocal fromByte(byte b) {	return values()[b];	}
 		public boolean isLocal() {return true;	}
@@ -79,7 +78,7 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 	enum Mod  implements IModule,IModEnum{
 		ALL,
 		NONE,
-		Floor(100),
+		F(100),
 		Clover_North, Clover_South, Clover_West, Clover_East, 
 		Left(5),
 		Right(5), 
@@ -165,7 +164,7 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 		}
 
 	}
-	enum Group implements IGroupEnum,IModuleHolder{ALL, NONE, Floor, Clover, Left, Right, Uplifter;
+	enum Group implements IGroupEnum,IModuleHolder{ALL, NONE, F, Clover, Left, Right, Uplifter;
 		public boolean contains(IModule m) {
 			return equals(m.getGrouping());
 		}
@@ -210,8 +209,8 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 		visual.setColor(StateOperation.FLIP_UP,Color.GREEN);
 		visual.setColor(StateOperation.INIT,Color.WHITE);
 		
-		visual.setMessageFilter(PacketCoreType.CONSENSUS.bit());
-		visual.setMessageFilterMeta(0);
+		visual.setMessageFilter(255);
+		visual.setMessageFilterMeta(255);
 		
 				
 		scheduler.setInterval("broadcastMetaNeighbors", 10000);
@@ -268,17 +267,17 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 		if (stateMngr.at(StateOperation.CHOOSE)) {
 			if (stateMngr.doUntil(0)) {
 				
-				if (varGet(VarMeta.Top) != 0 && varGet(VarMeta.Left) == 0 && varGet(VarMeta.Right) == 0 && varGet(VarMeta.TopLeft) == 0 && varGet(VarMeta.Bottom) == 0) {
-					metaBossIdSetTo(new byte[]{varGet(VarMeta.Top)});
-					stateMngr.setAfterConsensus(StateOperation.FLIP_BOTTOM);
-					stateMngr.commit();
-				}
+//				if (varGet(VarMeta.Top) != 0 && varGet(VarMeta.Left) == 0 && varGet(VarMeta.Right) == 0 && varGet(VarMeta.TopLeft) == 0 && varGet(VarMeta.Bottom) == 0) {
+//					metaBossIdSetTo(new byte[]{varGet(VarMeta.Top)});
+//					stateMngr.setAfterConsensus(StateOperation.FLIP_BOTTOM);
+//					stateMngr.commit();
+//				}
 				
 				if (varGet(VarMeta.Top) == 0 && varGet(VarMeta.Right) != 0) {
 					if (varGet(VarMeta.TopRight) == 0) {
-						metaBossIdSetTo(new byte[]{varGet(VarMeta.Right)});
-						stateMngr.setAfterConsensus(StateOperation.FLIP_TOP);
-						stateMngr.commit();
+//						metaBossIdSetTo(new byte[]{varGet(VarMeta.Right)});
+//						stateMngr.setAfterConsensus(StateOperation.FLIP_TOP);
+//						stateMngr.commit();
 					}
 					else {
 						metaBossIdSetTo(new byte[]{varGet(VarMeta.TopRight),varGet(VarMeta.Right)});
@@ -316,6 +315,11 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 						renameTo(Mod.Clover_East);
 					}
 				}
+				else {
+					if (moduleRoleGet() == ModuleRole.Bottom) {
+						varSet(VarLocal.isRef,1);
+					}
+				}
 				
 				stateMngr.commitMyselfIfNotUsed();
 				
@@ -342,17 +346,17 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 			}
 			
 			if (stateMngr.doWait(6)) {
-				connect (Mod.Clover_North,Group.Floor);
+				connect (Mod.Clover_North,Group.F);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
 			if (stateMngr.doWait(7)) {
-				connect (Mod.Clover_West,Group.Floor);
+				connect (Mod.Clover_West,Group.F);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
 			if (stateMngr.doWait(8)) {
-				disconnect (new ModuleSet().add(Mod.Clover_South).add(Mod.Clover_East),Group.Floor);
+				disconnect (new ModuleSet().add(Mod.Clover_South).add(Mod.Clover_East),Group.F);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 	
@@ -378,6 +382,10 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 					context.switchEastWest();
 					context.switchNorthSouth();
 				}
+//				if (nbs(EAST&FEMALE).sizeEquals(2,true)) {
+//					unicast(EAST&FEMALE,PacketCoreType.SYMMETRY,false);
+//					stateMngr.commit();
+//				}
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
@@ -400,6 +408,11 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 		
 		if (stateMngr.at(StateOperation.FLIP_TOP)) {
 			if (stateMngr.doWait(0)) {
+				if (!metaBossMyself()) {
+					if (moduleRoleGet() == ModuleRole.Bottom) {
+						varSet(VarLocal.isRef,1);
+					}
+				}
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
@@ -461,7 +474,7 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 			
 			
 			if (stateMngr.doWait(10)) {
-				connect (Group.Floor,Group.Uplifter);
+				connect (Group.F,Group.Uplifter);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
@@ -481,6 +494,9 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 			}
 			
 			if (stateMngr.doWait (13)) {
+				if (varGet(VarLocal.isRef) == 1) {
+					varSet(VarLocal.isRef, 0);
+				}
 				finish();
 			}
 		}
@@ -488,6 +504,11 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 		
 		if (stateMngr.at(StateOperation.FLIP_BOTTOM)) {
 			if (stateMngr.doWait(0)) {
+				if (!metaBossMyself()) {
+					if (moduleRoleGet() == ModuleRole.Right) {
+						varSet(VarLocal.isRef,1);
+					}
+				}
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
@@ -549,7 +570,7 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 			
 			
 			if (stateMngr.doWait(10)) {
-				connect (Group.Floor,Group.Uplifter);
+				connect (Group.F,Group.Uplifter);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
@@ -561,13 +582,16 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 			}
 			
 			if (stateMngr.doUntil(12)) {
-				if (nbs(EAST&MALE).sizeEquals(2,true)) {
-					unicast(EAST&MALE,PacketCoreType.SYMMETRY,false);
+				if (varGet(VarLocal.isRef) == 1) {
+					unicast(WEST&MALE,PacketCoreType.SYMMETRY,false);
 					stateMngr.commitMyselfIfNotUsed();
 				}
 			}
 			
 			if (stateMngr.doWait (13)) {
+				if (varGet(VarLocal.isRef) == 1) {
+					varSet(VarLocal.isRef, 0);
+				}
 				finish();
 			}
 		}
@@ -675,7 +699,10 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 		byte val2 = varGet(v2);
 		if (metaIdExists()) { 
 			for (byte dest:dests) {
-				if (dest != 0) {
+//				Dest could be: 
+//				-1 = uninitialized metamodule
+//				0 = no metamodule
+				if (dest > 0) {
 					send(MetaPacketCoreType.ADD_NEIGHBOR,dest, new byte[]{val1,val2});
 				}
 			}
@@ -683,21 +710,23 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 	}
 	
 
-	public void metaNeighborHook(int connectorNr,byte metaId) {
-//		visual.print(".metaNeighborHook (" + metaId + ")");
+	public boolean metaNeighborHook(int connectorNr,byte metaId) {
+		boolean changed = false;
+		
 		if ( connectorNr == 5 || connectorNr == 6) {
-			varSet(VarMeta.Right, metaId);
+			changed = changed || varSet(VarMeta.Right, metaId);
 		}
 		if (connectorNr == 2 || connectorNr == 7) {
-			varSet(VarMeta.Top, metaId);
+			changed = changed || varSet(VarMeta.Top, metaId);
 		}
 		if (connectorNr == 0 || connectorNr == 3) {
-			varSet(VarMeta.Left, metaId);
+			changed = changed || varSet(VarMeta.Left, metaId);
 		}
 		if (connectorNr == 1 || connectorNr == 4) {
-			varSet(VarMeta.Bottom, metaId);
+			changed = changed || varSet(VarMeta.Bottom, metaId);
 		}
 		
+		return changed;
 	}
 
 	protected void receiveMetaMessage(IPacketType type, byte source, byte dest, byte[] data) {

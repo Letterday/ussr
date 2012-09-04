@@ -53,46 +53,47 @@ public abstract class MfRuntime extends MfController {
 			rotate(degrees);
 		}
 	}
-
-
-	public void connect(IModuleHolder g1, IModuleHolder g2, boolean outsideRegion) {
-		discoverNeighbors();
-		visual.print("##connect " + g1 + "," + g2);
-		connection(g1, g2, true, outsideRegion);
-		connection(g2, g1, true, outsideRegion);
-	}
 	
 	public void disconnect(IModuleHolder g1, IModuleHolder g2) {
-		disconnect(g1, g2, false);
+		disconnect(g1, g2, true);
 	}
 	
 	public void connect(IModuleHolder g1, IModuleHolder g2) {
-		connect(g1, g2, false);
+		connect(g1, g2, true);
+	}
+
+
+	public void connect(IModuleHolder g1, IModuleHolder g2, boolean insideRegionOnly) {
+		discoverNeighbors();
+		visual.print("##connect " + g1 + "," + g2);
+		connection(g1, g2, true, insideRegionOnly);
+		connection(g2, g1, true, insideRegionOnly);
 	}
 	
-	public void disconnect(IModuleHolder g1, IModuleHolder g2, boolean outsideRegion) {
+	
+	public void disconnect(IModuleHolder g1, IModuleHolder g2, boolean insideRegionOnly) {
 		discoverNeighbors();
 		visual.print("## disconnect " + g1 + "," + g2);
-		connection(g1, g2, false, outsideRegion);
-		connection(g2, g1, false, outsideRegion);
+		connection(g1, g2, false, insideRegionOnly);
+		connection(g2, g1, false, insideRegionOnly);
 		
 	}
 	
 	
-	private void connection(IModuleHolder g1, IModuleHolder g2, boolean connect, boolean outsideRegion) {
+	private void connection(IModuleHolder g1, IModuleHolder g2, boolean connect, boolean insideRegionOnly) {
 		stateMngr.commitNotAutomatic(g1,g2);
 	
 		if (g1.contains(getId())) {
-			for (IModule nb: nbs(MALE).nbsInRegion(outsideRegion).nbsIn(g2).nbsIsConnected(!connect).modules()) {
-				visual.print("##connection " + g1 + "," + g2 + "  " + connect);
+			for (IModule nb: nbs(MALE).nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(!connect).modules()) {
+				visual.print("##connection " + g1 + "," + g2 + "  " + connect + " " + insideRegionOnly);
 				connection(nb,connect);
 			}
 			
-			if (nbs(MALE).nbsInRegion(outsideRegion).nbsIn(g2).nbsIsConnected(!connect).isEmpty()) {
+			if (nbs(MALE).nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(!connect).isEmpty()) {
 				// Commit 
 				stateMngr.commit("Member of " + g2 + " and did my action to " + g1);
 			}
-			if (nbs().nbsInRegion(outsideRegion).nbsIn(g2).isEmpty()) {
+			if (nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).isEmpty()) {
 				// We need to to this because the whole grouping is excluded from automatic commit, also non-nb's!
 				stateMngr.commit("Member of " + g2 + " but not connected to " + g1);
 			}
