@@ -718,6 +718,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		sendMessage(p.getBytes(), (byte) p.getBytes().length, context.abs2rel(connector));
 	}
 	
+	
 	public void metaSetCompleted () {
 		varSet(VarMetaCore.Completed, 1);
 	}

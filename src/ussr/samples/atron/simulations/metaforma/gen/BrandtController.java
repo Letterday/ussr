@@ -242,8 +242,6 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 				if (!metaIdExists() && nbs(EAST&MALE, ModuleRole.NONE).size() == 2 && !nbs(WEST, ModuleRole.NONE).exists()) {
 					moduleRoleSet(ModuleRole.Left);
 					metaIdSet(getId().ord());
-				}
-				if (metaIdExists() && moduleRoleGet() == ModuleRole.Left) {
 					unicast(EAST&MALE&NORTH,PacketCoreType.META_ID_SET,false, new byte[]{getId().ord()});
 				}
 			}
@@ -642,9 +640,7 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 				metaIdSet(data[0]);
 				
 				if (isMALE(destCon)) {
-					if (!moduleRoleExists()){
-						moduleRoleSet(ModuleRole.Right);
-					}
+					moduleRoleSet(ModuleRole.Right);
 				}
 				else {
 					if (isWEST(destCon)) {
@@ -665,8 +661,6 @@ public class BrandtController extends MfRuntime implements ControllerInformation
 					unicast(pow2((destCon + 4) % 8),PacketCoreType.META_ID_SET,false,data);
 				}
 			}
-			
-			
 		}
 		
 		if (type == PacketCoreType.SYMMETRY) {
