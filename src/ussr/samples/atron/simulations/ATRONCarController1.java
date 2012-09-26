@@ -35,15 +35,15 @@ public class ATRONCarController1 extends ATRONController {
     	setup(); 
     	this.delay(1000); 
         float lastProx = Float.NEGATIVE_INFINITY; 
-        boolean firstTime = true;
+        
+     // Basic control: first time we enter the loop start rotating
+        String name = module.getProperty("name");
+        if(name.contains("Wheel1")) rotateContinuous(-1);
+        if(name.contains("Wheel2")) rotateContinuous(1);
+        
         while(true) {
-        	 // Basic control: first time we enter the loop start rotating
-            String name = module.getProperty("name");
-            if(firstTime) {
-                firstTime = false;
-                if(name.contains("Wheel1")) rotateContinuous(-1);
-                if(name.contains("Wheel2")) rotateContinuous(1);
-            }
+        	 
+        
 
             // Print out proximity information
             float max_prox = Float.NEGATIVE_INFINITY;

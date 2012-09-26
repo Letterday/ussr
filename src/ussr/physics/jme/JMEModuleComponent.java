@@ -162,7 +162,7 @@ public class JMEModuleComponent implements PhysicsModuleComponent {
      * @param selfDesc
      * @param connectorDescription 
      * @param maxDistance
-     * @param type 
+     * @param _type 
      * @return
      */
     private JMEConnector createConnector(JMESimulation world, String name, Vector3f position, ConnectorDescription description) {

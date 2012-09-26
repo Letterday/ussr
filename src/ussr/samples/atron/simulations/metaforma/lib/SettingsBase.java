@@ -1,14 +1,17 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
 public class SettingsBase {
-	private int ladderLength = 5;
+	private int ladderLength = 1;
 	private int ladderWidth = 1;
 	private boolean ladderBegin = true;
 	
 	private float metaVarSyncTime = 7;
 	private float discoverTime = 5;
-	private int gradientInterval = 200;
+	private float gradientInterval = 0.2f;
 	private float gradientTime = 6;
+	private byte metaTTL = 2;
+	private float metaIndirectDiscoverInterval = 0.5f;
+	private float metaDirectDiscoverInterval = 0.5f;
 
 	public int getLadderLength() {
 		return ladderLength;
@@ -23,20 +26,32 @@ public class SettingsBase {
 	}
 	
 
-	public float getMetaVarSyncTime() {
+	public float getMetaIndirectDiscoverTime() {
 		return metaVarSyncTime ;
 	}
 	
-	public float getDiscoverTime() {
+	public float getMetaDirectDiscoverTime() {
 		return discoverTime ;
 	}
 
-	public int getGradientInterval() {
+	public float getGradientInterval() {
 		return gradientInterval;
 	}
 
 	public float getGradientTime() {
 		return gradientTime;
+	}
+
+	public byte getMetaTTL() {
+		return metaTTL ;
+	}
+
+	public float getMetaIndirectDiscoverInterval() {
+		return metaIndirectDiscoverInterval;
+	}
+	
+	public float getMetaDirectDiscoverInterval() {
+		return metaDirectDiscoverInterval;
 	}
 
 }

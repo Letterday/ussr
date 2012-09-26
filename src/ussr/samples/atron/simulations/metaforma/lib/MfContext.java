@@ -17,7 +17,7 @@ public class MfContext  {
 	
 	public MfContext(MfController c) {
 		ctrl = c;
-		neighbors = new NeighborSet((MfRuntime) ctrl);
+		neighbors = new NeighborSet(ctrl);
 	}
 	
 	public NeighborSet nbs() {
@@ -101,8 +101,8 @@ public class MfContext  {
 		 neighbors.updateSymmetryNS();
 	}
 
-	public void addNeighbor(IModule source, byte connector, byte sourceConnector,IRole r, byte metaId, byte metaBossId) {
-		neighbors.add(source,connector,sourceConnector,r,metaId,metaBossId);
+	public void addNeighbor(IModule source, byte connDest, byte connSource,IRole r, byte metaId, byte regionId) {
+		neighbors.add(source,connDest,connSource,r,metaId,regionId);
 		
 	}
 	

@@ -451,7 +451,9 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	 */
     public byte sendMessage(byte[] message, byte messageSize, byte connector) 
 	{
-    	
+    	if (message.length < 4) {
+    		throw new Error("message too small " + message.length);
+    	}
     	if(connector<8 /*&& (isOtherConnectorNearby(connector) ) */) {
     		//System.out.println("-- send from " + sourceModule + " to " + destModule + " over " + connector );
 			module.getTransmitters().get(connector).send(new Packet(message));

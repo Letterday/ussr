@@ -5,22 +5,25 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.sun.org.apache.bcel.internal.generic.GETSTATIC;
+
+import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
+
 
 public class MfVisualizer {
 	
 	private MfController ctrl;
-	private MfContext context;
 	
 	protected byte msgFilter;
+	private byte msgFilterMeta;
 	
 	private Map<IModuleHolder, Color> colorsModuleHolder = new HashMap<IModuleHolder, Color>();
-	private byte msgFilterMeta;
+	
 	private Map<IStateOperation,Color> colorsOperation = new HashMap<IStateOperation, Color>();
 
 
 	public MfVisualizer (MfController c) {
 		ctrl = c;
-		context = ctrl.getContext();
 	}
 	
 	
@@ -29,51 +32,53 @@ public class MfVisualizer {
 		Color north = getColors()[0];
 		Color south = getColors()[1];
 		
-		if (ctrl.moduleRoleGet() != null) {
-			for (int i=0; i< ctrl.moduleRoleGet().index()-1;i++) {
+		if (ctrl.module().role != null) {
+			for (int i=0; i< ctrl.module().role.index()-1;i++) {
 				north = north.darker().darker();
 			}
 		}
 		
-		ctrl.getModule().getComponent(0).setModuleComponentColor(context.isSwitchedNorthSouth() ? south : north);
-		ctrl.getModule().getComponent(1).setModuleComponentColor(context.isSwitchedNorthSouth() ? north : south);
+		ctrl.getModule().getComponent(0).setModuleComponentColor(ctrl.getContext().isSwitchedNorthSouth() ? south : north);
+		ctrl.getModule().getComponent(1).setModuleComponentColor(ctrl.getContext().isSwitchedNorthSouth() ? north : south);
 
-//		notification("NORTH_MALE_WEST " + NORTH_MALE_WEST + " - " + context.abs2rel(NORTH_MALE_WEST) + " - " + module.getConnectors().get(context.abs2rel(NORTH_MALE_WEST)).hashCode());
-//		notification("NORTH_MALE_EAST " + NORTH_MALE_EAST + " - " + context.abs2rel(NORTH_MALE_EAST) + " - " + module.getConnectors().get(context.abs2rel(NORTH_MALE_EAST)).hashCode());
-		ctrl.getModule().getConnectors().get(context.abs2rel(0)).setColor(Color.BLUE);
-		ctrl.getModule().getConnectors().get(context.abs2rel(1)).setColor(Color.BLACK);
-		ctrl.getModule().getConnectors().get(context.abs2rel(2)).setColor(Color.RED);
-		ctrl.getModule().getConnectors().get(context.abs2rel(3)).setColor(Color.WHITE);
+		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(0)).setColor(Color.BLUE);
+		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(1)).setColor(Color.BLACK);
+		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(2)).setColor(Color.RED);
+		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(3)).setColor(Color.WHITE);
 		
-//		notification(context.abs2rel(NORTH_MALE_EAST) + "(" + module.getConnectors().get(context.abs2rel(NORTH_MALE_EAST)) +") will be red " + NORTH_MALE_EAST + "(" + module.getConnectors().get((NORTH_MALE_EAST)) +")");
-		ctrl.getModule().getConnectors().get(context.abs2rel(4)).setColor(Color.BLUE);
-		ctrl.getModule().getConnectors().get(context.abs2rel(5)).setColor(Color.BLACK);
-		ctrl.getModule().getConnectors().get(context.abs2rel(6)).setColor(Color.RED);
-		ctrl.getModule().getConnectors().get(context.abs2rel(7)).setColor(Color.WHITE);
-//		notification("NORTH_MALE_WEST " + NORTH_MALE_WEST + " - " + context.abs2rel(NORTH_MALE_WEST) + " - " + module.getConnectors().get(context.abs2rel(NORTH_MALE_WEST)).hashCode());
-//		notification("NORTH_MALE_EAST " + NORTH_MALE_EAST + " - " + context.abs2rel(NORTH_MALE_EAST) + " - " + module.getConnectors().get(context.abs2rel(NORTH_MALE_EAST)).hashCode());
+		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(4)).setColor(Color.BLUE);
+		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(5)).setColor(Color.BLACK);
+		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(6)).setColor(Color.RED);
+		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(7)).setColor(Color.WHITE);
 	}
 	
 	private String getIdString () {
-		return ctrl.getId() + " "+ctrl.moduleRoleGet()+" (" + ctrl.metaIdGet() + " // " + ctrl.metaBossIdGet() + ")" + "   " + ctrl.getStateMngr().getState();
+		String ret = "";
+		ret += ctrl.getId() + " ";
+		ret += ctrl.module().role + " (";
+		ret += ctrl.module().metaID + " // ";
+		ret += ctrl.meta().regionID() + ") ";
+		ret += ctrl.getStateMngr().getState() + " ";
+		ret += Module.fromBits(ctrl.getStateMngr().getConsensus()) + ": " + ctrl.getStateMngr().getConsensus().bitCount();
+		return ret; 
 	}
 
 	public String getModuleInformation() {
 		StringBuffer out = new StringBuffer();
 		
 		String flipStr = "";
-		if (context.isSwitchedNorthSouth()) flipStr += "NORTH-SOUTH ";
-		if (context.isSwitchedEastWestN()) flipStr += "EAST-WEST-N ";
-		if (context.isSwitchedEastWestS()) flipStr += "EAST-WEST-S ";
+		if (ctrl.getContext().isSwitchedNorthSouth()) flipStr += "NORTH-SOUTH ";
+		if (ctrl.getContext().isSwitchedEastWestN()) flipStr += "EAST-WEST-N ";
+		if (ctrl.getContext().isSwitchedEastWestS()) flipStr += "EAST-WEST-S ";
 		
 		if (flipStr.equals("")) {
 			flipStr = "<none>";
 		}
 		
-		out.append("ID: " + getIdString() + (ctrl.getStateMngr().committed()? " // fnshd" : "") + " rcvd: " + ctrl.getStateReceived());
+		out.append("ID: " + getIdString() + (ctrl.getStateMngr().committed() ? " // fnshd" : "") + " rcvd: " + ctrl.getStateMngr().getStateRcvd() + " " + ctrl.getStateMngr().getConsensusRcvd().bitCount() );
 		out.append("\n");
 
-		out.append("angle: " + context.getAngle() + " ("+ctrl.getAngle()+")"  + "  flips: " + flipStr);
+		out.append("angle: " + ctrl.getContext().getAngle() + " ("+ctrl.getAngle()+")"  + "  flips: " + flipStr);
 		out.append("\n");
 		
 		out.append("intervals: " + ctrl.getScheduler().intervalMs);
@@ -83,26 +88,24 @@ public class MfVisualizer {
 		
 		out.append("time: in state:" + ctrl.getStateMngr().timeSpentInState() + "  total:" + ctrl.time() + "\n");
 		
-//		out.append("female conns: " + context.getFemaleConnsAsString());
+//		out.append("female conns: " + ctrl.getContext().getFemaleConnsAsString());
 //		out.append("\n");
 		
 		
-		out.append("vars: " + ctrl.getVars() + "\n        " + ctrl.getVarSequenceNrs());
-		out.append("\n");
+		out.append("=== module ===\n" + ctrl.module() + "\n");
+		out.append("===  meta  ===\n" + ctrl.meta() + "\n");
 	
 		out.append("do repeat: " + ctrl.getDoRepeat());
 		out.append("\n"); 
 		
-		out.append("consensus " + (ctrl.getStateMngr().committed()?"!!":"") + "(" + ctrl.getStateMngr().getConsensus().bitCount() + "): " + Module.fromBits(ctrl.getStateMngr().getConsensus()));
-		out.append("\n");
 		
 
-		out.append(context.nbs());
+		out.append(ctrl.getContext().nbs());
 
 	
 		out.append("\n");
 		
-		ctrl.addNeighborhood(out);
+		ctrl.addMetaNeighborhood(out);
 		
 		return out.toString();
 	}
@@ -146,23 +149,19 @@ public class MfVisualizer {
 	
 	public void setMessageFilter (int msg) {
 		msgFilter = (byte) msg;
+		print("Message filter " + msg);
 	}
 	
 	public void setMessageFilterMeta (int msg) {
 		msgFilterMeta = (byte) msg;
 	}
 	
-	public void print (Packet p, String msg) {
-		if ((msgFilter & p.getType().bit()) != 0) {
+	public void print (PacketBase p, String msg) {
+		if ((MfController.pow2(p.getType()) & msgFilter) != 0) {
 			print(msg);
 		}
 	}
 	
-	public void print (MetaPacket p, String msg) {
-		if ((msgFilterMeta & p.getType().bit()) != 0) {
-			print(msg);
-		}
-	}
 	
 	public void print (String msg) {
 		ctrl.info.addNotification("[" + new DecimalFormat("0.00").format(ctrl.time()) + "] - " + msg);
@@ -182,8 +181,8 @@ public class MfVisualizer {
 	
 	public void printStatePre() {
 		StringBuffer metaNbs = new StringBuffer();
-		ctrl.addNeighborhood(metaNbs);
-		print("New state: " + ctrl.getStateMngr().getState() + "\n=================================\n" + context.nbs()+"\n" + metaNbs +"\n");
+		ctrl.addMetaNeighborhood(metaNbs);
+		print("New state: " + ctrl.getStateMngr().getState() + "\n=================================\n" + ctrl.getContext().nbs()+"\n" + metaNbs +"\n");
 	}
 	
 

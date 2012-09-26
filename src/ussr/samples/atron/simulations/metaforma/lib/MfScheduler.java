@@ -56,8 +56,6 @@ public class MfScheduler {
 		Method m;
 		Object params[] = {};
 		try {
-//			System.out.println("Invoking " + func);
-//			System.out.println(ctrl.getClass().getSuperclass().getSuperclass());
 			m = ctrl.getClass().getMethod(func);
 			m.invoke(ctrl,params);
 		}
@@ -79,4 +77,8 @@ public class MfScheduler {
 		}
 		
 	}
+
+//	private void metaSyncActive(boolean on) {
+//		setInterval("broadcastMetaVars", ctrl.set.getMetaIndirectDiscoverInterval());
+//	}
 }

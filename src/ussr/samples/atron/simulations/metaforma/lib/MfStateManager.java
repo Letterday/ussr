@@ -2,17 +2,13 @@ package ussr.samples.atron.simulations.metaforma.lib;
 
 import java.math.BigInteger;
 
-import com.sun.swing.internal.plaf.metal.resources.metal;
-
-import ussr.samples.atron.simulations.metaforma.lib.MfController.VarMetaGroupCore;
-
-
 public class MfStateManager {
-	private State stateCurrent;
-	
+	private State stateCurrent = new State();
+	private State stateReceived = new State();
 	
 	private float stateStartTime;
 	private BigInteger consensus = BigInteger.ZERO; 
+	private BigInteger consensusReceived = BigInteger.ZERO;
 	
 	private MfController ctrl;
 	
@@ -22,27 +18,26 @@ public class MfStateManager {
 	private IStateOperation stateOperationNext;
 	
 	private boolean commitAutoAfterState = true;
-	private int commitCount;
+	private int commitCountToReach;
+
+
 	
 	public MfStateManager (MfController c) {
 		ctrl = c;
-		State.setController(c);
 	}
 	
 	public void init (IStateOperation op) {
 		stateCurrent = new State (op,0,0);
 	}
-
-	
 	
 	public void commitMyselfIfNotUsed () {
-		if (commitAutoAfterState && commitCount == 0) {
+		if (commitAutoAfterState && commitCountToReach == 0) {
 			commit("AUTO commit at the end!");
 		}
 	}
 	
 	public void commitSetCount(int count) {
-		commitCount = count;
+		commitCountToReach = count;
 	}
 	
 	public void commitNotAutomatic (IModuleHolder g) {
@@ -78,24 +73,26 @@ public class MfStateManager {
 		return consensus;
 	}
 	
+	public BigInteger getConsensusRcvd() {
+		return consensusReceived;
+	}
 	
 	
-	
-	public void merge (State stateRec, BigInteger consensusRec) {
-		if (stateCurrent.isNewer (stateRec)) {
-			next(stateRec);
-		}
-		
-		if (stateCurrent.equals(stateRec) && !((consensus).or(consensusRec)).equals(consensus)) {
-			if (consensusRec.testBit(ctrl.getId().ord()) && !committed()) {
+	public void merge () {		
+		if (stateCurrent.equals(stateReceived) && !((consensus).or(consensusReceived)).equals(consensus)) {
+			if (consensusReceived.testBit(ctrl.getId().ord()) && !committed()) {
 				ctrl.visual.error("I have NOT committed but my consensus bit is SET!?");
 			}
-			consensus = consensus.or(consensusRec);
+			consensus = consensus.or(consensusReceived);
 			ctrl.visual.print("consensus update: " + consensus.bitCount() + ": " + Module.fromBits(consensus));
 			ctrl.scheduler.invokeNow("broadcastConsensus");
 		}
 		
-		if ((ctrl.metaBossMyself() || !ctrl.metaBossIdExists() )&& consensusReached()) {
+		
+//		 Consensus to next state, when:
+//			- meta = 4
+//			- region = 8 or 12
+		if (consensusReached()) {
 			if (stateOperationNext == null) {
 				ctrl.visual.print("CONSENSUS REACHED - go to next instr");
 				nextInstruction();
@@ -104,7 +101,14 @@ public class MfStateManager {
 				ctrl.visual.print("CONSENSUS REACHED - " + stateOperationNext);
 				nextOperation(stateOperationNext);
 			}
-		} 
+		}
+		
+		if (stateCurrent.isNewer (stateReceived)) {
+			if (!stateCurrent.isConsecutive (stateReceived)) {
+				ctrl.visual.print("!!! I might have missed a state, from " + stateCurrent  + " to " + stateReceived);
+			}	
+			nextState(stateReceived);
+		}
 	}
 	
 	
@@ -127,17 +131,19 @@ public class MfStateManager {
 	
 
 	public boolean consensusReached() {
-		if (commitCount == 0) {
-			if (ctrl.metaBossIdExists()) {
-				return ctrl.varGet(VarMetaGroupCore.GroupSize) >= ctrl.moduleRoleGet().size() && consensusReached(ctrl.varGet(VarMetaGroupCore.GroupSize));
-			} 
-			else {
-				return stateCurrent.getOperation().ord() == 0 && consensusReached(ctrl.moduleRoleGet().size());
+		// Consensus is always inside at least one meta-module
+		if (ctrl.module().metaID != 0) {
+			// If I am part of a region, I must be boss of that region!
+			if ((ctrl.meta().regionID() != 0 && ctrl.meta().regionID() == ctrl.module().metaID || ctrl.meta().regionID() == 0)) {
+				if (commitCountToReach == 0) {
+					return consensusReached(ctrl.meta().getCountInRegion() * ctrl.getInstRole().size());
+				}
+				else {
+					return consensusReached(commitCountToReach);
+				}
 			}
 		}
-		else {
-			return consensusReached(commitCount);
-		}
+		return false;
 	}
 	
 	
@@ -146,7 +152,7 @@ public class MfStateManager {
 	}
 	
 	private boolean consensusReached(int count, int degradePerc) {
-		if (!ctrl.metaGetCompleted()) {
+		if (ctrl.meta().completed() == 0) {
 			return false;
 		}
 		float consensusToReach = count - (timeSpentInState() / 100) * (100-degradePerc)/100 * count;
@@ -155,7 +161,7 @@ public class MfStateManager {
 			ctrl.visual.print("Consensus " + count + " reached!");
 		}
 		else {
-			if (ctrl.freqLimit("consensusPrint",5000)) {
+			if (ctrl.freqLimit("consensusPrint",5)) {
 				ctrl.visual.print("Consensus waiting for " + consensus.bitCount() + " >= " + consensusToReach);
 			}
 		}
@@ -176,8 +182,9 @@ public class MfStateManager {
 			consensus = consensus.setBit(ctrl.getId().ord());
 			ctrl.scheduler.invokeNow("broadcastConsensus");
 			modified = true;
+			ctrl.visual.print(".commit("+reason+") count:" + consensus.bitCount() + " modified:" + modified + " " + Module.fromBits(consensus));
 		}
-		ctrl.visual.print(".commit("+reason+") count:" + consensus.bitCount() + " modified:" + modified + " " + Module.fromBits(consensus));
+		
 		
 	}
 	
@@ -187,7 +194,7 @@ public class MfStateManager {
 	
 	
 	
-	private void next(State stateNew) {
+	private void nextState(State stateNew) {
 		ctrl.getVisual().printStatePost();
 		cleanForNew();
 		stateCurrent.merge(stateNew);
@@ -198,7 +205,8 @@ public class MfStateManager {
 	
 	
 	public void nextInstruction () {
-		next(new State(stateCurrent).setInstruction((byte) (stateCurrent.getInstruction() + 1)));
+		ctrl.getVisual().print("Next instruction state!");
+		nextState(new State(stateCurrent).setInstruction((byte) (stateCurrent.getInstruction() + 1)));
 	}
 	
 	public void nextOperation (IStateOperation op) {
@@ -206,22 +214,17 @@ public class MfStateManager {
 		if (stateCurrent.equals(op)){
 			ctrl.visual.error("OPERATION " + op + " equals " + stateCurrent.getOperation());
 		}
-		next(new State(stateCurrent).nextOperation(op));
+		nextState(new State(stateCurrent).nextOperation(op));
 		
 	}
 	
 	
 	public boolean doUntil(int state) {
-		return doUntil(state,500);
+		return doUntil(state,0.5f);
 	}
 	
 	
-	public boolean doUntil (int stateInstr, int interval) {
-		int groupSize = ctrl.varGet(VarMetaGroupCore.GroupSize);
-		if (groupSize == 0) {
-			groupSize = ctrl.moduleRoleGet().size();
-//			System.err.println("Group size equals 0!");
-		}
+	public boolean doUntil (int stateInstr, float interval) {
 		if (stateCurrent.getInstruction() == stateInstr && ctrl.freqLimit("doRepeat" + stateInstr,interval)) {
 			if (!stateNeighborsDiscovered) {
 				stateNeighborsDiscovered = true;
@@ -259,5 +262,29 @@ public class MfStateManager {
 	public State getState () {
 		return stateCurrent;
 	}
+	
+	public State getStateRcvd () {
+		return stateReceived;
+	}
+
+	public boolean update(BigInteger consensusUpd, State stateUpd) {
+//		ctrl.getVisual().print(".upd " + stateUpd + " " + stateRec);
+//		if (!(consensusRec.or(consensusUpd).equals(consensusRec))) {
+			if (stateReceived.isNewer(stateUpd)) {
+				consensusReceived = consensusUpd;
+				stateReceived = stateUpd;
+				return true;
+			}
+			else if (stateReceived.equals(stateUpd)) {
+				if (!consensusReceived.or(consensusUpd).equals(consensusReceived)) {
+					consensusReceived = consensusReceived.or(consensusUpd);
+					return true;
+				}
+			}
+			
+//		}
+			return false;
+	}
+	
 	
 }

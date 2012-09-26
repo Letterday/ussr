@@ -30,17 +30,12 @@ import ussr.samples.atron.GenericATRONSimulation;
  */
 public class ATRONCarSimulation extends GenericATRONSimulation {
 	
-    /**
-     * Setup: tune the physics a little bit
-     */
     public static void main( String[] args ) {
 		PhysicsParameters.get().setWorldDampingLinearVelocity(0.5f);
 		PhysicsParameters.get().setRealisticCollision(true);
 		PhysicsFactory.getOptions().setStartPaused(false);
 		new ATRONCarSimulation().main();
     }
-	
-	protected ObstacleGenerator.ObstacleType obstacleType = ObstacleGenerator.ObstacleType.LINE;
 	
 	protected Robot getRobot() {
 
@@ -49,8 +44,6 @@ public class ATRONCarSimulation extends GenericATRONSimulation {
                 return new ATRONCarController1();
             }
         };
-//        robot.setGentle();
-//        robot.setRubberRing();
         return robot;
     }
 	
@@ -61,13 +54,8 @@ public class ATRONCarSimulation extends GenericATRONSimulation {
 	@Override
     protected void changeWorldHook(WorldDescription world) {
         ObstacleGenerator generator = new ObstacleGenerator();
-        generator.obstacalize(obstacleType, world);
+        generator.obstacalize(ObstacleGenerator.ObstacleType.LINE, world);
         world.setPlaneTexture(WorldDescription.GRASS_TEXTURE);
     }
-	
-	@Override
-	protected void simulationHook(PhysicsSimulation simulation) {
-	    //((JMESimulation)simulation).setPicker(new DisplacementPicker());
-	}
     
 }
