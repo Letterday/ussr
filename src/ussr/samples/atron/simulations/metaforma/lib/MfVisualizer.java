@@ -62,10 +62,8 @@ public class MfVisualizer {
 		ret += Module.fromBits(ctrl.getStateMngr().getConsensus()) + ": " + ctrl.getStateMngr().getConsensus().bitCount();
 		return ret; 
 	}
-
-	public String getModuleInformation() {
-		StringBuffer out = new StringBuffer();
-		
+	
+	public String getFlipString() {
 		String flipStr = "";
 		if (ctrl.getContext().isSwitchedNorthSouth()) flipStr += "NORTH-SOUTH ";
 		if (ctrl.getContext().isSwitchedEastWestN()) flipStr += "EAST-WEST-N ";
@@ -74,13 +72,20 @@ public class MfVisualizer {
 		if (flipStr.equals("")) {
 			flipStr = "<none>";
 		}
+		return flipStr;
+	}
+
+	public String getModuleInformation() {
+		StringBuffer out = new StringBuffer();
+		
+		
 		
 //		out.append(MfStats.getInst() + "\n");
 		
 		out.append("ID: " + getIdString() + (ctrl.getStateMngr().committed() ? " // fnshd" : "") + " rcvd: " + ctrl.getStateMngr().getStateRcvd() + " " + ctrl.getStateMngr().getConsensusRcvd().bitCount() );
 		out.append("\n");
 
-		out.append("angle: " + ctrl.getContext().getAngle() + " ("+ctrl.getAngle()+")"  + "  flips: " + flipStr);
+		out.append("angle: " + ctrl.getContext().getAngle() + " ("+ctrl.getAngle()+")"  + "  flips: " + getFlipString());
 		out.append("\n");
 		
 		out.append("intervals: " + ctrl.getScheduler().intervalMs);
@@ -148,6 +153,8 @@ public class MfVisualizer {
 			ret[1] = Color.RED;;
 		}
 
+		ret[0] = Color.BLUE;
+		ret[1] = Color.RED;
 		return ret;
 	}
 	

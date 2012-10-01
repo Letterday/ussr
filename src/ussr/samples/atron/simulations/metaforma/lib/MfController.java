@@ -114,7 +114,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		
 		while (true) {
 			// To make sure it will remain at correct pos
-			rotateToDegreeInDegrees(angle);
+			rotateToDegreeInDegrees(angle % 360);
 			
 			scheduler.sync();
 			
@@ -460,7 +460,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 //		visual.print(".send " + p);
 		
 		
-		sendMessage(p.serialize(), (byte) p.serialize().length, context.abs2rel(connector));
+		sendMessage(p.serialize(), (byte) p.serialize().length, context.rel2abs(connector));
 	}
 	
 
@@ -541,31 +541,34 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 //				connDest = (byte) ((connDest + 4) % 8);
 //			}
 //		}
-		
+	
 		if (isFEMALE(p.connDest)) {
-//			if (!stateMngr.committed()) {
+			if (!stateMngr.committed()) {
 				if (isWEST(p.connSource) != isSOUTH(connDest)) {
 					context.switchNorthSouth();
 					connDest = (byte) ((connDest + 4) % 8);
 				}
-			
-			
+				visual.print(p.connSource + " " + isNORTH(p.connSource) + " == " + isWEST(connDest) + " " + connDest);
 				context.switchEastWestHemisphere(isNORTH(p.connSource) == isWEST(connDest), isSOUTH(connDest));
-//			}				
+					
+				
+			}				
 		}
 		else if (isMALE(p.connDest)) {
-//			if (!stateMngr.committed()) {
+			if (!stateMngr.committed()) {
 				if (isWEST(p.connSource) != isNORTH(connDest)) {
 					context.switchNorthSouth();
 					connDest = (byte) ((connDest + 4) % 8);
 				}
 			
-				
+			
 //				context.switchEastWestHemisphere(isSOUTH(p.connSource) == isEAST(p.connDest), isSOUTH(p.connDest));
 
-				// sure!!
+					// sure!!
 				context.switchEastWestHemisphere(isNORTH(p.connSource) == isEAST(connDest), isSOUTH(connDest));
-//			}
+				
+				
+			}
 		}
 		if (freqLimit("SYMM passthrough", 0.5f)) {
 			broadcast(new PacketSymmetry(this));

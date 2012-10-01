@@ -625,7 +625,7 @@ public class BrandtController extends MfController implements ControllerInformat
 			
 			
 			if (stateMngr.doWait(3)) {
-				actuation.disconnect(Mod.Clover_West, Mod.Clover_South);
+//				actuation.disconnect(Mod.Clover_West, Mod.Clover_South);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
@@ -687,70 +687,50 @@ public class BrandtController extends MfController implements ControllerInformat
 //			}
 		
 			
+			
 			if (stateMngr.doWait(4)) {
-				actuation.rotate(Mod.Clover_South,180);
+				actuation.disconnect(Mod.Clover_East,Group.F);
+				actuation.disconnect(Mod.Clover_South,Mod.Clover_East);
 				stateMngr.commitMyselfIfNotUsed();
 			}
-			
 			if (stateMngr.doWait(5)) {
-				actuation.connect(Mod.Clover_South,Mod.Clover_West);
+				actuation.rotate(Mod.Clover_West,-180);
+				actuation.rotate(Mod.Clover_South,-180);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(6)) {
-				actuation.disconnect(Mod.Clover_East,Mod.Clover_North);
-				stateMngr.commitMyselfIfNotUsed();
+			if (stateMngr.doUntil(6)) {
+				if (module().isRef) {
+					broadcast(new PacketSymmetry(this));
+					stateMngr.commit();
+				}
+//				stateMngr.commit();
 			}
-			
 			if (stateMngr.doWait(7)) {
-				actuation.rotate(Mod.Clover_North,180);
+				actuation.rotate(Mod.Clover_South,180);
+				delay(3000);
 				stateMngr.commitMyselfIfNotUsed();
 			}
-			
-			if (stateMngr.doWait(8)) {
-				actuation.connect(Mod.Clover_East,Mod.Clover_North);
-				stateMngr.commitMyselfIfNotUsed();
-			}
-			
-			if (stateMngr.doUntil(9)) {
-//				if (module().getGroup() == Group.Clover) {
-//					context.switchEastWest();
-//					context.switchNorthSouth();
-//				}
+			if (stateMngr.doUntil(8)) {
 				if (module().isRef) {
+					delay(1000);
 					broadcast(new PacketSymmetry(this));
 					stateMngr.commit();
 				}
-				
 			}
-			if (stateMngr.doWait(10)) {
-				actuation.disconnect(Mod.Clover_West,Mod.Clover_North);
+			if (stateMngr.doWait(9)) {
+				actuation.rotate(Mod.Clover_West,180);
+				delay(3000);
 				stateMngr.commitMyselfIfNotUsed();
 			}
-			
-			if (stateMngr.doWait(11)) {
-				actuation.rotate(Mod.Clover_North,180);
-				stateMngr.commitMyselfIfNotUsed();
-			}
-			
-			if (stateMngr.doWait(12)) {
-				actuation.connect(Mod.Clover_West,Mod.Clover_North);
-				stateMngr.commitMyselfIfNotUsed();
-			}
-			
-			if (stateMngr.doUntil(13)) {
-//				if (module().getGroup() == Group.Clover) {
-//					context.switchEastWest();
-//					context.switchNorthSouth();
-//				}
+			if (stateMngr.doUntil(10)) {
 				if (module().isRef) {
+					delay(1000);
 					broadcast(new PacketSymmetry(this));
 					stateMngr.commit();
 				}
-				
 			}
-			
-			if (stateMngr.doWait (14)) {
+			if (stateMngr.doWait (114)) {
 				if (module().getGroup() == Group.Clover) {
 					module().restoreID();
 				}
@@ -892,7 +872,7 @@ public class BrandtController extends MfController implements ControllerInformat
 		}
 		
 		
-		if (stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,9)) || stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,13))) {	
+		if (stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,6)) || stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,10)) || stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,8))) {	
 			symmetryFix(p);
 			handled = true;
 		}

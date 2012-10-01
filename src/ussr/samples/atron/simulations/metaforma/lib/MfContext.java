@@ -30,17 +30,52 @@ public class MfContext  {
 	
 	public byte abs2rel (int nr) {
 		byte ret = (byte) nr;
-		if (isSwitchedNorthSouth()) {
-			ret = (byte) ((ret + 4)%8);
-		}
+	
 		if (isSwitchedEastWestN() && ret <= 3) {
 			ret = (byte) ((ret + 2)%4);
 		}
 		if (isSwitchedEastWestS() && ret >= 4) {
 			ret = (byte) ((ret + 2)%4 + 4);
 		}
+		if (isSwitchedNorthSouth()) {
+			ret = (byte) ((ret + 4)%8);
+		}
+		
+		if (nr != ret) {
+			ctrl.visual.print("ABS2REL " + nr + " to " + ret + " " + getFlipString());
+		}
+		return ret;
+	}
+	
+	public byte rel2abs (int nr) {
+		byte ret = (byte) nr;
+		
+		if (isSwitchedEastWestN() && ret <= 3) {
+			ret = (byte) ((ret + 2)%4);
+		}
+		if (isSwitchedEastWestS() && ret >= 4) {
+			ret = (byte) ((ret + 2)%4 + 4);
+		}
+		if (isSwitchedNorthSouth()) {
+			ret = (byte) ((ret + 4)%8);
+		}
+		if (nr != ret) {
+			ctrl.visual.print("rel2abs " + nr + " to " + ret + " " + getFlipString());
+		}
 		
 		return ret;
+	}
+	
+	public String getFlipString() {
+		String flipStr = "";
+		if (ctrl.getContext().isSwitchedNorthSouth()) flipStr += "NORTH-SOUTH ";
+		if (ctrl.getContext().isSwitchedEastWestN()) flipStr += "EAST-WEST-N ";
+		if (ctrl.getContext().isSwitchedEastWestS()) flipStr += "EAST-WEST-S ";
+		
+		if (flipStr.equals("")) {
+			flipStr = "<none>";
+		}
+		return flipStr;
 	}
 	
 	public void switchEastWestHemisphere (boolean isCorrect, boolean southSide) {
@@ -71,7 +106,7 @@ public class MfContext  {
 				switchEWS();
 			}
 		}
-		
+		ctrl.module().discover();// TODO: OK?
 		
 		
 		ctrl.getVisual().colorize();
