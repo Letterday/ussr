@@ -9,4 +9,19 @@ public class PacketDiscover extends Packet {
 		super(c);
 		setType(getTypeNr());
 	}
+
+	@Override
+	public String toStringPayload() {
+		return "";
+	}
+
+	@Override
+	public Packet deserializePayload(byte[] payload) {
+		return this;
+	}
+
+	@Override
+	public byte[] serializePayload() {
+		return new byte[0];
+	}
 }

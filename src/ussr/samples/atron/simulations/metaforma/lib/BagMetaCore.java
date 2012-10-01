@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.sun.org.apache.bcel.internal.generic.GETSTATIC;
 
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 
@@ -12,6 +11,7 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	public byte completed;
 	public byte regionID;
 	private byte metaModulesInRegion = 1;
+	public byte orientation = 0;
 	
 	private HashMap<String,Byte> seqNrs = new HashMap<String, Byte>();
 	
@@ -69,16 +69,18 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 		
 	public void releaseRegion () {
 		ctrl.visual.print(".releaseRegion ");
-
-		regionID = 0;
+		MfStats.getInst().addEnd(ctrl.stateMngr.getState().getOperation(),regionID(),ctrl.stateMngr.timeSpentInSequence());
+		setRegionID((byte)0);
 		
 		for (Field field:this.getClass().getFields()) {
 			setVar(field.getName(),0);
 		}
-		metaModulesInRegion = 1;
+		
+		
+		setCountInRegion((byte) 1);
 	}
 
-	public void createRegion(byte[] metaIDs) {
+	public void createRegion(byte[] metaIDs,byte orient) {
 		ctrl.visual.print(".createRegion " + ctrl.module().metaID);
 		
 		regionID = ctrl.module().metaID;
@@ -92,7 +94,26 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 			// We need to include the group size in the message
 			
 		}
-		ctrl.unicast((PacketRegion)new PacketRegion(ctrl).setVar("metaIDs", metaIDs),metaIDs);
+		
+		
+		PacketRegion p = new PacketRegion(ctrl);
+		p.sizeMeta = metaModulesInRegion;
+		p.orientation = orient;
+		for (byte metaID : metaIDs) {
+			if (ctrl.nbs().nbsWithMetaId(metaID).isEmpty()) {
+				// One of the indirect neighbors can travel along with the packet
+				p.indirectNb = metaID;
+			}
+		}
+		for (byte metaID : metaIDs) {
+			// Send to direct neighbors
+			ctrl.unicast(p,ctrl.nbs().nbsWithMetaId(metaID).connectors());
+		}
+		
+		
+		
+		
+		
 		
 		ctrl.stateMngr.commit("createRegion");
 	}

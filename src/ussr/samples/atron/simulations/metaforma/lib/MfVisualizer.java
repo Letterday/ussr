@@ -54,7 +54,7 @@ public class MfVisualizer {
 	
 	private String getIdString () {
 		String ret = "";
-		ret += ctrl.getId() + " ";
+		ret += ctrl.getID() + " ";
 		ret += ctrl.module().role + " (";
 		ret += ctrl.module().metaID + " // ";
 		ret += ctrl.meta().regionID() + ") ";
@@ -74,6 +74,8 @@ public class MfVisualizer {
 		if (flipStr.equals("")) {
 			flipStr = "<none>";
 		}
+		
+//		out.append(MfStats.getInst() + "\n");
 		
 		out.append("ID: " + getIdString() + (ctrl.getStateMngr().committed() ? " // fnshd" : "") + " rcvd: " + ctrl.getStateMngr().getStateRcvd() + " " + ctrl.getStateMngr().getConsensusRcvd().bitCount() );
 		out.append("\n");
@@ -98,7 +100,9 @@ public class MfVisualizer {
 		out.append("do repeat: " + ctrl.getDoRepeat());
 		out.append("\n"); 
 		
-		
+		out.append("    " + ctrl.module().atT() + "\n");
+		out.append(ctrl.module().atL() + "   " + ctrl.module().atR() + "\n");
+		out.append("    " + ctrl.module().atB() + "\n");
 
 		out.append(ctrl.getContext().nbs());
 
@@ -134,11 +138,11 @@ public class MfVisualizer {
 		}
 		
 		
-		if (colorsModuleHolder.containsKey(ctrl.getId())) {
-			ret[1] = colorsModuleHolder.get(ctrl.getId());
+		if (colorsModuleHolder.containsKey(ctrl.getID())) {
+			ret[1] = colorsModuleHolder.get(ctrl.getID());
 		}
-		else if (colorsModuleHolder.containsKey(ctrl.getGrouping())) {
-			ret[1] =  colorsModuleHolder.get(ctrl.getGrouping());
+		else if (colorsModuleHolder.containsKey(ctrl.module().getGroup())) {
+			ret[1] =  colorsModuleHolder.get(ctrl.module().getGroup());
 		}
 		else {
 			ret[1] = Color.RED;;
@@ -169,13 +173,13 @@ public class MfVisualizer {
 	
 	public void error (String msg) {
 		print("ERROR: " + msg);
-		System.err.println(ctrl.getId() + " ERROR:\n" + msg);
+		System.err.println(ctrl.getID() + " ERROR:\n" + msg);
 		ctrl.pause();
 	}
 	
 	
 	public void printStatePost() {
-		print("\n\n===========  "+ ctrl.getId() + "  ==============\nLeft state, time spent: " + ctrl.getStateMngr().timeSpentInState() + "");
+		print("\n\n===========  "+ ctrl.getID() + "  ==============\nLeft state, time spent: " + ctrl.getStateMngr().timeSpentInState() + "");
 	}
 	
 	

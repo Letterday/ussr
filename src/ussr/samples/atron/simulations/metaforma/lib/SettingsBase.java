@@ -2,7 +2,7 @@ package ussr.samples.atron.simulations.metaforma.lib;
 
 public class SettingsBase {
 	private int ladderLength = 1;
-	private int ladderWidth = 1;
+	private int ladderWidth = 2;
 	private boolean ladderBegin = true;
 	
 	private float metaVarSyncTime = 7;
@@ -11,7 +11,7 @@ public class SettingsBase {
 	private float gradientTime = 6;
 	private byte metaTTL = 2;
 	private float metaIndirectDiscoverInterval = 0.5f;
-	private float metaDirectDiscoverInterval = 0.5f;
+	private float metaDirectDiscoverInterval = 0.2f;
 
 	public int getLadderLength() {
 		return ladderLength;

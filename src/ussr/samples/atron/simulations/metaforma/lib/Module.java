@@ -37,6 +37,11 @@ public class Module implements IModuleHolder,IModule {
 		mod = Mod.getNone();
 	}
 	
+	public Module (IModule m) {
+		mod = m.getMod();
+		number = m.getNr();
+	}
+	
 	public Module (IModEnum m) {
 		this(m,0);
 	}
@@ -110,7 +115,7 @@ public class Module implements IModuleHolder,IModule {
 		
 	}
 	
-	public IGroupEnum getGrouping () {
+	public IGroupEnum getGroup () {
 		return Group.valueFrom(mod.name().split("_")[0]);
 	}
 

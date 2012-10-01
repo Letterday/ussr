@@ -138,7 +138,7 @@ public class NeighborSet  {
 	public String toString() {
 		String r = "neighbors:  \n";
 		for (Map.Entry<IModule, Byte[]> e : connectors.entrySet()) {
-			String m = (ctrl.getContext().isConnConnected(e.getValue()[CON_SRC])?e.getKey().toString().toUpperCase(): e.getKey()) + " ("+ String.format("%7s",ctrl.getInstRole().fromByte(e.getValue()[NR_ROLE])) + ", "+ String.format("%2d",e.getValue()[ID_META]) + ","+ String.format("%2d",e.getValue()[ID_REGION]) + ") [" + e.getValue()[CON_SRC] + ", "+ e.getValue()[CON_DEST] + "], ";
+			String m = String.format("%7s (%5s,%2d,%2d) [%2d,%2d]", (ctrl.getContext().isConnConnected(e.getValue()[CON_SRC])?e.getKey().toString().toUpperCase(): e.getKey().toString().toLowerCase()), ctrl.getInstRole().fromByte(e.getValue()[NR_ROLE]), e.getValue()[ID_META], e.getValue()[ID_REGION], e.getValue()[CON_SRC] ,e.getValue()[CON_DEST]);
 			r += m + "\n";
 		}
 		r =  r.substring(0, r.length() - 2) + "\n";
@@ -223,7 +223,7 @@ public class NeighborSet  {
 	public NeighborSet nbsOnGroup (IGroupEnum g) {
 		NeighborSet ret = new NeighborSet(this.ctrl);
 		for (Map.Entry<IModule, Byte []> e : entrySet()) {
-			if (e.getKey().getGrouping().equals(g)) {
+			if (e.getKey().getGroup().equals(g)) {
 				ret.assoc(e);
 			}
 		}

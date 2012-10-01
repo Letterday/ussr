@@ -9,6 +9,6 @@ public interface IModule extends IModuleHolder {
 	public boolean equals(Object m);
 	public byte getNr();
 	public IModEnum getMod();
-	public IGroupEnum getGrouping();
+	public IGroupEnum getGroup();
 	public byte ord();
 }

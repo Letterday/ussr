@@ -2,11 +2,17 @@ package ussr.samples.atron.simulations.metaforma.lib;
 
 import java.math.BigInteger;
 
+import ussr.samples.atron.simulations.metaforma.gen.BrandtController.StateOperation;
+import ussr.samples.atron.simulations.metaforma.lib.Packet.Packet;
+import ussr.samples.atron.simulations.metaforma.lib.Packet.PacketSymmetry;
+
 public class MfStateManager {
 	private State stateCurrent = new State();
 	private State stateReceived = new State();
 	
 	private float stateStartTime;
+	private float seqStartTime;
+	
 	private BigInteger consensus = BigInteger.ZERO; 
 	private BigInteger consensusReceived = BigInteger.ZERO;
 	
@@ -19,6 +25,7 @@ public class MfStateManager {
 	
 	private boolean commitAutoAfterState = true;
 	private int commitCountToReach;
+	
 
 
 	
@@ -41,14 +48,14 @@ public class MfStateManager {
 	}
 	
 	public void commitNotAutomatic (IModuleHolder g) {
-		if (g.contains(ctrl.getId()) && commitAutoAfterState) {
+		if (g.contains(ctrl.getID()) && commitAutoAfterState) {
 			ctrl.visual.print("Disable auto commit");
 			commitAutoAfterState = false;
 		}
 	}
 	
 	public void commitNotAutomatic (IModuleHolder g,IModuleHolder g2) {
-		if (commitAutoAfterState && (g.contains(ctrl.getId()) && !ctrl.nbs().nbsIn(g2).isEmpty() || g2.contains(ctrl.getId()) && !ctrl.nbs().nbsIn(g).isEmpty())) {
+		if (commitAutoAfterState && (g.contains(ctrl.getID()) && !ctrl.nbs().nbsIn(g2).isEmpty() || g2.contains(ctrl.getID()) && !ctrl.nbs().nbsIn(g).isEmpty())) {
 			ctrl.visual.print("Disable auto commit");
 			commitAutoAfterState = false;
 		}
@@ -61,10 +68,16 @@ public class MfStateManager {
 		return MfController.round((ctrl.time() - stateStartTime),3);
 	}
 	
+	public float timeSpentInSequence() {
+		return MfController.round((ctrl.time() - seqStartTime),3);
+	}
+	
+	
 	public void spend (float timeToSpend) {
-		commitNotAutomatic(ctrl.getId());
+		commitNotAutomatic(ctrl.getID());
 		if (timeSpentInState() > timeToSpend) {
-			commit("Spent " + timeToSpend + " in state!");
+//			commit("Spent " + timeToSpend + " in state!");
+			nextInstruction();
 		}
 		
 	}
@@ -80,7 +93,7 @@ public class MfStateManager {
 	
 	public void merge () {		
 		if (stateCurrent.equals(stateReceived) && !((consensus).or(consensusReceived)).equals(consensus)) {
-			if (consensusReceived.testBit(ctrl.getId().ord()) && !committed()) {
+			if (consensusReceived.testBit(ctrl.getID().ord()) && !committed()) {
 				ctrl.visual.error("I have NOT committed but my consensus bit is SET!?");
 			}
 			consensus = consensus.or(consensusReceived);
@@ -112,6 +125,10 @@ public class MfStateManager {
 	}
 	
 	
+	public void cleanConsensus() {
+		consensus = BigInteger.ZERO;
+		consensusReceived = BigInteger.ZERO;
+	}
 
 	protected void cleanForNew() {
 		ctrl.prepareNextState();
@@ -121,7 +138,7 @@ public class MfStateManager {
 		stateOperationNext = null;
 		commitAutoAfterState = true;
 
-		consensus = BigInteger.ZERO;
+		cleanConsensus();
 		
 	}
 	
@@ -134,7 +151,8 @@ public class MfStateManager {
 		// Consensus is always inside at least one meta-module
 		if (ctrl.module().metaID != 0) {
 			// If I am part of a region, I must be boss of that region!
-			if ((ctrl.meta().regionID() != 0 && ctrl.meta().regionID() == ctrl.module().metaID || ctrl.meta().regionID() == 0)) {
+			// Consensus on meta-module level may only happen at INIT state, in other states Consensus must happen on region level!!
+			if (((ctrl.meta().regionID() != 0 && ctrl.meta().regionID() == ctrl.module().metaID) || at(StateOperation.INIT))) {
 				if (commitCountToReach == 0) {
 					return consensusReached(ctrl.meta().getCountInRegion() * ctrl.getInstRole().size());
 				}
@@ -178,8 +196,8 @@ public class MfStateManager {
 	public void commit (String reason) {
 		ctrl.debugForceMetaId();
 		boolean modified = false;
-		if (!consensus.setBit(ctrl.getId().ord()).equals(consensus)) {
-			consensus = consensus.setBit(ctrl.getId().ord());
+		if (!consensus.setBit(ctrl.getID().ord()).equals(consensus)) {
+			consensus = consensus.setBit(ctrl.getID().ord());
 			ctrl.scheduler.invokeNow("broadcastConsensus");
 			modified = true;
 			ctrl.visual.print(".commit("+reason+") count:" + consensus.bitCount() + " modified:" + modified + " " + Module.fromBits(consensus));
@@ -189,7 +207,8 @@ public class MfStateManager {
 	}
 	
 	public boolean committed () {
-		return consensus.testBit(ctrl.getId().ord());
+//		System.out.println(".committed test " + ctrl.getID().ord());
+		return consensus.testBit(ctrl.getID().ord());
 	}
 	
 	
@@ -198,6 +217,7 @@ public class MfStateManager {
 		ctrl.getVisual().printStatePost();
 		cleanForNew();
 		stateCurrent.merge(stateNew);
+		stateReceived.merge(stateNew); // So we will not see a state update message for this state from another module
 		ctrl.getVisual().printStatePre();
 		ctrl.scheduler.invokeNow("broadcastDiscover");
 	}
@@ -210,7 +230,6 @@ public class MfStateManager {
 	}
 	
 	public void nextOperation (IStateOperation op) {
-		
 		if (stateCurrent.equals(op)){
 			ctrl.visual.error("OPERATION " + op + " equals " + stateCurrent.getOperation());
 		}
@@ -256,6 +275,7 @@ public class MfStateManager {
 		if (!op.equals(stateOperationNext)) {
 			ctrl.visual.print(".setAfterConsensus " + op);
 			stateOperationNext = op;
+			MfStats.getInst().addStart(op,ctrl.module().metaID,ctrl.time());
 		}
 	}
 	
@@ -285,6 +305,17 @@ public class MfStateManager {
 //		}
 			return false;
 	}
+
+	public boolean check(Packet p, State state) {
+		return at(p.getState()) && p.getState().match(state);
+	}
+	
+	public boolean check(Packet p, IStateOperation state) {
+		return at(p.getState().getOperation()) && p.getState().match(state);
+	}
+
+	
+
 	
 	
 }

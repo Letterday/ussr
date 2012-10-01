@@ -9,10 +9,10 @@ public class Bag implements IBag {
 		try {
 			Field field = this.getClass().getField(name);
 			field.setAccessible(true);
-			if (!value.equals(getVar(name))) {
+//			if (!value.equals(getVar(name))) {
 				field.set(this, value);
 				ctrl.visual.print("setVar(" + name + "," + value + ")");
-			}
+//			}
 		}
 		catch (Exception e) {
 			e.printStackTrace();

@@ -47,28 +47,27 @@ public class MfContext  {
 		String side = southSide ? " southside " : " northside ";
 		String correct = isCorrect ? " correct " : " incorrect ";
 		ctrl.getVisual().print("$$$ Switch East West " + side + correct);
+		int angle = getAngle();
 		if (southSide) {
 			if (!isCorrect) {
 				switchEWS();
-				if (ctrl.getAngle() == 0) {
+				if (angle == 0) {
 					switchEWN();
 				} 
 			}
-			else { 
-				if (ctrl.getAngle() != 0) {
-					switchEWN();
-				}
+			else if (angle != 0) {
+				switchEWN();
 			}
 			
 		}
 		else {
 			if (!isCorrect) {
 				switchEWN();
-				if (ctrl.getAngle() == 0) {
+				if (angle == 0) {
 					switchEWS();
 				} 
 			}
-			else if (ctrl.getAngle() != 0) {
+			else if (angle != 0) {
 				switchEWS();
 			}
 		}

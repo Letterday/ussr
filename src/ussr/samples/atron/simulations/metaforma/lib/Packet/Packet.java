@@ -1,18 +1,15 @@
 package ussr.samples.atron.simulations.metaforma.lib.Packet;
 
-import java.math.BigInteger;
-
 import ussr.samples.atron.simulations.metaforma.lib.Dir;
 import ussr.samples.atron.simulations.metaforma.lib.IModule;
 import ussr.samples.atron.simulations.metaforma.lib.IRole;
-import ussr.samples.atron.simulations.metaforma.lib.MfApi;
 import ussr.samples.atron.simulations.metaforma.lib.MfController;
 import ussr.samples.atron.simulations.metaforma.lib.Module;
 import ussr.samples.atron.simulations.metaforma.lib.State;
 
 
 // Chosen to use manual serialization instead of Java's built in serialization
-// Reason: Much fewer bytes needed to transport on infrared!
+// Reason: Much fewer bytes needed to transport on infra-red!
 
 public abstract class Packet extends PacketBase {
 
@@ -50,24 +47,26 @@ public abstract class Packet extends PacketBase {
 		return serializeHeader(serializePayload());
 	}
 	
-	public byte[] serializePayload () {
-		return new byte[0];
-	}
+	public abstract byte[] serializePayload ();
+//	{
+//		return new byte[0];
+//	}
+//	
 	
-	
-	public Packet deserializePayload (byte payload[]) {
-		if (payload.length > 0) {
-			ctrl.getVisual().error("Payload length " + payload.length + " but not implemented!");
-		}
-		return null;
-	}
+	public abstract Packet deserializePayload (byte payload[]);
+//	{
+//		if (payload.length > 0) {
+//			ctrl.getVisual().error("Payload length " + payload.length + " but not implemented!");
+//		}
+//		return null;
+//	}
 	
 	
 	private byte[] serializeHeader (byte data[]) {
 		byte[] ret = new byte[data.length+HEADER_LENGTH];
-		if (connSource == -1) {
-			throw new Error("sourceConnector = -1");
-		}
+//		if (connSource == -1) {
+//			throw new Error("sourceConnector = -1");
+//		}
 		// 0 is used to determine difference between packet and metapacket
 		ret[0] = (byte) 0;
 		ret[1] = (byte) (source.ord());
@@ -111,10 +110,14 @@ public abstract class Packet extends PacketBase {
 	}
 	
 	public IRole getModRole () {
+		if (role == null) {
+			throw new Error("Packet " + this + " has null role!");
+		}
 		return role;
 	}
 	
 	public Packet setModRole (IRole r) {
+		
 		role = r;
 		return this;
 	}
@@ -128,14 +131,12 @@ public abstract class Packet extends PacketBase {
 	private String toStringHeader () {
 		String ret = "";
 		ret += getDir().toString() + " ";
-		ret += getClass().getSimpleName().replaceAll("Packet", "") + ":" + type + " ";
+		ret += getClass().getSimpleName().replaceAll("Packet", "") + " ";
 		ret += " from: " + getSource() + "(" + metaID + " using "+regionID+")" + "(over " + connSource + ") " + state + " " + " ";
 		return ret;
 	}
 	
-	public String toStringPayload () {
-		return "<>";
-	}
+	public abstract String toStringPayload ();
 		
 	public String toString () {
 		return toStringHeader() + toStringPayload();

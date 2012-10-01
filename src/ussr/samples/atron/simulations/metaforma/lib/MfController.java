@@ -23,6 +23,9 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	public final static byte MALE = (byte) (pow2(0) + pow2(2) + pow2(4) + pow2(6));
 	public final static byte FEMALE = (byte) (pow2(1) + pow2(3) + pow2(5) + pow2(7));
 	
+	public int QUART = 90;
+	public int HALF = 180;
+	
 	protected final static boolean REQ = false;
 	protected final static boolean ACK = true;
 
@@ -36,7 +39,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	protected MfActuation actuation;// = new MfActuation(this);
 
 		
-	private IModule previousName;
+	
 		
 	private HashMap<String,Float> doRepeat = new HashMap<String,Float>();
 	
@@ -72,8 +75,6 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	
 	 
 	
-
-	
 	public void waitAndDiscover () {
 		scheduler.invokeIfScheduled ("broadcastDiscover");
 		
@@ -89,9 +90,12 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		setCommFailureRisk(0.25f,0.25f,0.98f,0.125f);	
 		
 		init();
-		System.out.println(getName() + ": " + getId());
-		module().setId(getId());
-		System.out.println("my new id: " + module().getId());
+		
+		module().setID(getID());
+		
+		System.out.println(getName() + ": " + getID());
+		
+		System.out.println("my new id: " + module().getID());
 		delay(500);
 		
 		 // All threads and controllers need to be ready before proceeding!
@@ -121,7 +125,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 			stateMngr.merge();
 
 			
-			if (freqLimit("colorize",500)) {		
+			if (freqLimit("colorize",0.5f)) {		
 				visual.colorize();
 			}
 			
@@ -173,11 +177,11 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	public void makePacket(byte[] msg, byte connector) {
 		if (Packet.isPacket(msg)) {
 			byte typeNr = Packet.getType(msg);
-			visual.print("receive " + typeNr);
 			if (typeNr == PacketDiscover.getTypeNr()) {
 				PacketDiscover p = (PacketDiscover)new PacketDiscover(this).deserialize(msg,connector);
 				preprocessPacket(p);
 				receivePacket((Packet)p);
+				System.out.println(".receivediscover " + p);
 			}
 			else if (typeNr == PacketSymmetry.getTypeNr()) {
 				PacketSymmetry p = (PacketSymmetry)new PacketSymmetry(this).deserialize(msg,connector);
@@ -196,7 +200,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 			}
 			else if (typeNr == PacketConsensus.getTypeNr()) {
 				PacketConsensus p = (PacketConsensus)new PacketConsensus(this).deserialize(msg,connector);
-				if (preprocessPacket(p)) {
+				if (p.regionID == meta().regionID() && preprocessPacket(p)) {
 					getStateMngr().update((BigInteger)p.getVar("consensus"),p.getState());
 				}
 				receivePacket((Packet)p);
@@ -244,15 +248,21 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 				// TODO: Merge when seq nrs are the same.
 				meta().setVar(var, e.getValue().fst(),e.getValue().snd());
 			}
+			if (meta().getVarSeqNr(var) == e.getValue().snd() && e.getValue().fst() != meta().getVar(var)) {
+				meta().setVar(var, MfApi.max(e.getValue().fst(),meta().getVar(var)));
+				visual.print("Conflict in " + var + " between " + e.getValue().fst() + " and " + meta().getVar(var) + ", take highest");
+			}
 			
 			//TODO: BrandtController.StateOperation.CHOOSE needs to be converted to independent state
 			if (var.equals("regionID")) {
-				if (stateMngr.at(BrandtController.StateOperation.CHOOSE)) {
+				// The new region ID may not be zero!
+				if (stateMngr.at(BrandtController.StateOperation.CHOOSE) && e.getValue().fst() != 0) {
+					getStateMngr().cleanConsensus();
 					getStateMngr().commit("BOSS ID received through meta sync");
-					visual.print("COMMMMIIITT");
+//					visual.print("COMMMMIIITT");
 				}
 				else {
-					visual.print("no commit because in faulty state....");
+//					visual.print("no consensus commit because in faulty state....");
 				}
 			}
 			
@@ -263,7 +273,9 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	
 	
 	
-
+	public Module getID() {
+		return Module.value(getName());
+	}
 
 	
 	public float time() {
@@ -309,13 +321,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 
 	}
 
-	public Module getId() {
-		return Module.value(getName());
-	}
 	
-	public IGroupEnum getGrouping() {
-		return getId().getGrouping();
-	}
 
 
 	public void broadcastConsensus() {
@@ -368,30 +374,6 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	
 	
 	
-	public void renameTo(IModule to) {
-//		previousName = getId();
-		module().setId(to);
-		scheduler.invokeNow("broadcastDiscover");
-	}
-	
-	public void renameGroup(IGroupEnum to) {
-		visual.print("rename group");
-		module().setId(getId().swapGrouping(to));
-		scheduler.invokeNow("broadcastDiscover");
-	}
-	
-	
-	
-	public void renameStore () {
-		previousName = getId();
-	}
-	
-	public void renameRestore () {
-		visual.print("$$$ restore name " + getId() + " to " + previousName);
-		getModule().setProperty("name", previousName.toString());
-		visual.colorize();
-		scheduler.invokeNow("broadcastDiscover");
-	}
 
 	
 	
@@ -426,7 +408,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 //			// -1 means that a meta module is present but not fully initialised with a meta id yet
 //			p.setMetaSourceId(-1);
 //		}
-		p.setSource(getId());
+		p.setSource(getID());
 		p.setModRole(module().role);
 	}
 	
@@ -437,6 +419,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	private void broadcast(Packet p,int exceptConnector) {
 		addToPacket(p);
 		
+//		visual.print("SEND: "+Packet.getType(p.setSourceConnector((byte) 1).serialize()));
 		visual.print(p,".broadcast (" + p.toString() + ") ");
 
 		for (byte c = 0; c < 8; c++) {
@@ -529,13 +512,19 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	
 	public void receivePacket (PacketRegion p) {					
 		// the origin will become the boss
-		meta().setRegionID(p.getMetaID());
-		meta().setCountInRegion ((byte) 2);
-
-//				stateOperationCntrRec = 0;
-//				stateOperationCounter = 0;
-			
-		stateMngr.commit("BOSS ID received");
+		if (stateMngr.check(p,StateOperation.CHOOSE) && (p.getState().getInstruction() == 2 || (meta().regionID() == 0 || meta().regionID() == p.getRegionID()))) {
+			visual.print(p.toString());
+			meta().setRegionID(p.getRegionID());
+			meta().setCountInRegion (p.sizeMeta);
+			meta().setVar("orientation",p.orientation);
+			if (p.indirectNb != 0) {
+				unicast(new PacketRegion(this),nbs().nbsWithMetaId(p.indirectNb).connectors());
+			}	
+			stateMngr.commit("BOSS ID received");
+		}
+		else {
+			visual.print("REJECTED " + p.toString());
+		}
 	}
 	
 //////////////////////////////////////////////////////////////
@@ -544,25 +533,41 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	
 
 	protected void symmetryFix(PacketSymmetry p) {
-
+		byte connDest = p.connDest;
+		
+//		if ((isNORTH(p.connSource) == isNORTH(connDest) && isWEST(p.connSource) == isNORTH(connDest)) || (isNORTH(p.connSource) != isNORTH(connDest) && isWEST(p.connSource) != isSOUTH(connDest))) {
+//			if (!stateMngr.committed()) {
+//				context.switchNorthSouth();
+//				connDest = (byte) ((connDest + 4) % 8);
+//			}
+//		}
+		
 		if (isFEMALE(p.connDest)) {
-			if (!stateMngr.committed()) {
-				if (isWEST(p.connSource) == isNORTH(p.connDest)) {
+//			if (!stateMngr.committed()) {
+				if (isWEST(p.connSource) != isSOUTH(connDest)) {
 					context.switchNorthSouth();
-				}	
-				context.switchEastWestHemisphere(isNORTH(p.connSource) == isWEST(p.connDest), isSOUTH(p.connDest));
-			}				
+					connDest = (byte) ((connDest + 4) % 8);
+				}
+			
+			
+				context.switchEastWestHemisphere(isNORTH(p.connSource) == isWEST(connDest), isSOUTH(connDest));
+//			}				
 		}
 		else if (isMALE(p.connDest)) {
-			if (!stateMngr.committed()) {
-				context.switchEastWestHemisphere(isSOUTH(p.connSource) == isWEST(p.connDest), isSOUTH(p.connDest));
-
-				if (isWEST(p.connSource) == isSOUTH(p.connDest)) {
+//			if (!stateMngr.committed()) {
+				if (isWEST(p.connSource) != isNORTH(connDest)) {
 					context.switchNorthSouth();
+					connDest = (byte) ((connDest + 4) % 8);
 				}
-			}
+			
+				
+//				context.switchEastWestHemisphere(isSOUTH(p.connSource) == isEAST(p.connDest), isSOUTH(p.connDest));
+
+				// sure!!
+				context.switchEastWestHemisphere(isNORTH(p.connSource) == isEAST(connDest), isSOUTH(connDest));
+//			}
 		}
-		if (freqLimit("SYMM passthrough", 500)) {
+		if (freqLimit("SYMM passthrough", 0.5f)) {
 			broadcast(new PacketSymmetry(this));
 		}
 		stateMngr.commit("Symmetry fix done");
@@ -579,5 +584,9 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	public abstract BagModuleCore module();
 	
 	public abstract IMetaBag meta();
+
+
+
+	
 	
 }

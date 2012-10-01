@@ -31,7 +31,7 @@ public class ModuleSet implements IModuleHolder {
 	public ModuleSet onGroup (IGroupEnum g) {
 		ModuleSet ret = new ModuleSet();
 		for (IModule m: modules) {
-			if (m.getGrouping().equals(g)) {
+			if (m.getGroup().equals(g)) {
 				ret.add(m);
 			}
 		}

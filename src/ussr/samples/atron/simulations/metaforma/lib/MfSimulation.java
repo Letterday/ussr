@@ -15,9 +15,16 @@ import ussr.samples.atron.GenericATRONSimulation;
 public abstract class MfSimulation extends GenericATRONSimulation {
 
 
+	private static MfStats stats;
+	
+	public MfStats stats() {
+		return stats;
+		
+	}
+
 	public static void initSimulator () {
 		PhysicsParameters.get().setRealisticCollision(true);
-		
+		stats = new MfStats();
 		PhysicsParameters.get().setPhysicsSimulationStepSize(0.004f);
 		PhysicsFactory.getOptions().setStartPaused(false);
 		ussr.physics.jme.robots.JMEATRONFactory.setConnectorMaxAlignmentForce(10f);
