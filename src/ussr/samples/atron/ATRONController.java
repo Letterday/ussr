@@ -370,15 +370,15 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	 * @see ussr.samples.atron.IATRONAPI#isConnected(int)
 	 */
     public boolean isConnected(int i) {
-    	if (i%2 ==1) {
-    		try {
-				throw new Exception("isConnected() NOT ALLOWED ON FEMALE CONNECTOR!!");
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-    	}
+//    	if (i%2 ==1) {
+//    		try {
+//				throw new Exception("isConnected() NOT ALLOWED ON FEMALE CONNECTOR!!");
+//			} catch (Exception e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//
+//    	}
     	return module.getConnectors().get(i).isConnected();
     }
     

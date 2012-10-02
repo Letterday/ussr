@@ -132,7 +132,7 @@ public abstract class Packet extends PacketBase {
 		String ret = "";
 		ret += getDir().toString() + " ";
 		ret += getClass().getSimpleName().replaceAll("Packet", "") + " ";
-		ret += " from: " + getSource() + "(" + metaID + " using "+regionID+")" + "(over " + connSource + ") " + state + " " + " ";
+		ret += " from: " + getSource() + "(" + metaID + " using "+regionID+")" + "(over " + connSource + " to " + connDest + ") " + state + " " + " ";
 		return ret;
 	}
 	

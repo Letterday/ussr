@@ -41,17 +41,22 @@ public class MfVisualizer {
 		ctrl.getModule().getComponent(0).setModuleComponentColor(ctrl.getContext().isSwitchedNorthSouth() ? south : north);
 		ctrl.getModule().getComponent(1).setModuleComponentColor(ctrl.getContext().isSwitchedNorthSouth() ? north : south);
 
-		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(0)).setColor(Color.BLUE);
-		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(1)).setColor(Color.BLACK);
-		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(2)).setColor(Color.RED);
-		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(3)).setColor(Color.WHITE);
+		ctrl.getModule().getConnectors().get(translate(0)).setColor(Color.BLUE);
+		ctrl.getModule().getConnectors().get(translate(1)).setColor(Color.BLACK);
+		ctrl.getModule().getConnectors().get(translate(2)).setColor(Color.RED);
+		ctrl.getModule().getConnectors().get(translate(3)).setColor(Color.WHITE);
 		
-		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(4)).setColor(Color.BLUE);
-		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(5)).setColor(Color.BLACK);
-		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(6)).setColor(Color.RED);
-		ctrl.getModule().getConnectors().get(ctrl.getContext().abs2rel(7)).setColor(Color.WHITE);
+		ctrl.getModule().getConnectors().get(translate(4)).setColor(Color.BLUE);
+		ctrl.getModule().getConnectors().get(translate(5)).setColor(Color.BLACK);
+		ctrl.getModule().getConnectors().get(translate(6)).setColor(Color.RED);
+		ctrl.getModule().getConnectors().get(translate(7)).setColor(Color.WHITE);
 	}
 	
+	private int translate(int i) {
+		return ctrl.getContext().rel2abs(i);
+	}
+
+
 	private String getIdString () {
 		String ret = "";
 		ret += ctrl.getID() + " ";

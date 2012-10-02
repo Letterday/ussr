@@ -166,7 +166,7 @@ public class MfStateManager {
 	
 	
 	private boolean consensusReached(int count) {
-		return consensusReached(count, 98);
+		return consensusReached(count, 95);
 	}
 	
 	private boolean consensusReached(int count, int degradePerc) {

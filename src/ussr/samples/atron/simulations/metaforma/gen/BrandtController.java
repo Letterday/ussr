@@ -505,6 +505,9 @@ public class BrandtController extends MfController implements ControllerInformat
 				if (module().gradH == 0 && module().gradV == 3) {
 					module().setVar("isRef",true);
 				}
+				else {
+					module().setVar("isRef",false);
+				}
 				stateMngr.commitMyselfIfNotUsed();
 			}
 	
@@ -547,8 +550,13 @@ public class BrandtController extends MfController implements ControllerInformat
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			
 			if (stateMngr.doWait(10)) {
+				actuation.connect(Mod.Uplifter_Right,Mod.Uplifter_Top);
+				stateMngr.commitMyselfIfNotUsed();
+			}
+			
+			
+			if (stateMngr.doWait(11)) {
 				if (!module().getGroup().equals(Group.F)) {
 					module().restoreID();
 				}
@@ -556,27 +564,30 @@ public class BrandtController extends MfController implements ControllerInformat
 			}
 			
 			
-			if (stateMngr.doWait(11)) {
+			if (stateMngr.doWait(12)) {
 				actuation.connect(Group.F,Group.F);
 				stateMngr.commitMyselfIfNotUsed();
 			}
+		
+		
 			
-			if (stateMngr.doUntil(12)) {
+			if (stateMngr.doUntil(13)) {
 	//			discoverNeighbors();
 				if (module().isRef) {
 					broadcast(new PacketSymmetry(this));
 					stateMngr.commit("symmetry initiated");
 				}
+				stateMngr.spend(6);
 			}
 			
-			if (stateMngr.doWait (13)) {
+			if (stateMngr.doWait (14)) {
 				if (module().isRef) {
 					module().setVar("isRef",false);
 				}
 				stateMngr.spend(3);
 			}
 			
-			if (stateMngr.doWait (14)) {
+			if (stateMngr.doWait (15)) {
 				finish();
 			}
 			
@@ -620,117 +631,120 @@ public class BrandtController extends MfController implements ControllerInformat
 				if (module().gradH == 0 && module().gradV == 3) {
 					module().setVar("isRef",true);
 				}
+				else {
+					module().setVar("isRef",false);
+				}
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
 			
 			if (stateMngr.doWait(3)) {
-//				actuation.disconnect(Mod.Clover_West, Mod.Clover_South);
+				actuation.disconnect(Mod.Clover_West, Mod.Clover_South);
 				stateMngr.commitMyselfIfNotUsed();
 			}
-			
-//			if (stateMngr.doWait(4)) {
-//				actuation.rotate(Mod.Clover_East,QUART);
-//				stateMngr.commitMyselfIfNotUsed();
-//			}
-//				
-//			if (stateMngr.doWait(5)) {
-//				actuation.rotate(Mod.Clover_North,HALF);
-//				stateMngr.commitMyselfIfNotUsed();
-//			}
-//			
-//			if (stateMngr.doWait(6)) {
-//				actuation.rotate(Mod.Clover_East,QUART);
-//				stateMngr.commitMyselfIfNotUsed();
-//			}
-//			
-//			if (stateMngr.doWait(7)) {
-//				actuation.connect(Mod.Clover_North,Group.F);
-//				stateMngr.commitMyselfIfNotUsed();
-//			}
-//			
-//			if (stateMngr.doWait(8)) {
-//				actuation.connect(Mod.Clover_West,Group.F);
-//				stateMngr.commitMyselfIfNotUsed();
-//			}
-//			
-//			if (stateMngr.doWait(9)) {
-//				actuation.disconnect(new ModuleSet().add(Mod.Clover_South).add(Mod.Clover_East),Group.F);
-//				stateMngr.commitMyselfIfNotUsed();
-//			}
-//			
-//			if (stateMngr.doWait(10)) {
-//				actuation.rotate(Mod.Clover_East,-QUART);
-//				stateMngr.commitMyselfIfNotUsed();
-//			}
-//	
-//			if (stateMngr.doWait(11)) {
-//				actuation.rotate(Mod.Clover_North,QUART);
-//				stateMngr.commitMyselfIfNotUsed();
-//			}
-//						
-//	
-//			if (stateMngr.doWait(12)) {
-//				actuation.rotate(Mod.Clover_East,-QUART);
-//				stateMngr.commitMyselfIfNotUsed();
-//			}
-//			
-//			if (stateMngr.doWait(13)) {
-//				actuation.rotate(Mod.Clover_North,QUART);
-//				stateMngr.commitMyselfIfNotUsed();
-//			}
-//			
-//	
-//			if (stateMngr.doWait(14)) {
-//				actuation.connect(Mod.Clover_South,Mod.Clover_West);
-//				stateMngr.commitMyselfIfNotUsed();
-//			}
-		
-			
 			
 			if (stateMngr.doWait(4)) {
-				actuation.disconnect(Mod.Clover_East,Group.F);
-				actuation.disconnect(Mod.Clover_South,Mod.Clover_East);
+				actuation.rotate(Mod.Clover_East,QUART);
 				stateMngr.commitMyselfIfNotUsed();
 			}
+				
 			if (stateMngr.doWait(5)) {
-				actuation.rotate(Mod.Clover_West,-180);
-				actuation.rotate(Mod.Clover_South,-180);
+				actuation.rotate(Mod.Clover_North,HALF);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doUntil(6)) {
-				if (module().isRef) {
-					broadcast(new PacketSymmetry(this));
-					stateMngr.commit();
-				}
-//				stateMngr.commit();
+			if (stateMngr.doWait(6)) {
+				actuation.rotate(Mod.Clover_East,QUART);
+				stateMngr.commitMyselfIfNotUsed();
 			}
+			
 			if (stateMngr.doWait(7)) {
-				actuation.rotate(Mod.Clover_South,180);
-				delay(3000);
+				actuation.connect(Mod.Clover_North,Group.F);
 				stateMngr.commitMyselfIfNotUsed();
 			}
-			if (stateMngr.doUntil(8)) {
-				if (module().isRef) {
-					delay(1000);
-					broadcast(new PacketSymmetry(this));
-					stateMngr.commit();
-				}
+			
+			if (stateMngr.doWait(8)) {
+				actuation.connect(Mod.Clover_West,Group.F);
+				stateMngr.commitMyselfIfNotUsed();
 			}
+			
 			if (stateMngr.doWait(9)) {
-				actuation.rotate(Mod.Clover_West,180);
-				delay(3000);
+				actuation.disconnect(new ModuleSet().add(Mod.Clover_South).add(Mod.Clover_East),Group.F);
 				stateMngr.commitMyselfIfNotUsed();
 			}
-			if (stateMngr.doUntil(10)) {
+			
+			if (stateMngr.doWait(10)) {
+				actuation.rotate(Mod.Clover_East,-QUART);
+				stateMngr.commitMyselfIfNotUsed();
+			}
+	
+			if (stateMngr.doWait(11)) {
+				actuation.rotate(Mod.Clover_North,QUART);
+				stateMngr.commitMyselfIfNotUsed();
+			}
+						
+	
+			if (stateMngr.doWait(12)) {
+				actuation.rotate(Mod.Clover_East,-QUART);
+				stateMngr.commitMyselfIfNotUsed();
+			}
+			
+			if (stateMngr.doWait(13)) {
+				actuation.rotate(Mod.Clover_North,QUART);
+				stateMngr.commitMyselfIfNotUsed();
+			}
+			
+	
+			if (stateMngr.doWait(14)) {
+				actuation.connect(Mod.Clover_South,Mod.Clover_West);
+				stateMngr.commitMyselfIfNotUsed();
+			}
+		
+			
+//			
+//			if (stateMngr.doWait(4)) {
+//				actuation.disconnect(Mod.Clover_East,Group.F);
+//				actuation.disconnect(Mod.Clover_South,Mod.Clover_East);
+//				stateMngr.commitMyselfIfNotUsed();
+//			}
+//			if (stateMngr.doWait(5)) {
+//				actuation.rotate(Mod.Clover_West,-180);
+//				actuation.rotate(Mod.Clover_South,-180);
+//				stateMngr.commitMyselfIfNotUsed();
+//			}
+//			
+//			if (stateMngr.doUntil(6)) {
+//				if (module().isRef) {
+//					broadcast(new PacketSymmetry(this));
+//					stateMngr.commit();
+//				}
+////				stateMngr.commit();
+//			}
+//			if (stateMngr.doWait(7)) {
+//				actuation.rotate(Mod.Clover_South,180);
+//				delay(3000);
+//				stateMngr.commitMyselfIfNotUsed();
+//			}
+//			if (stateMngr.doUntil(8)) {
+//				if (module().isRef) {
+//					delay(1000);
+//					broadcast(new PacketSymmetry(this));
+//					stateMngr.commit();
+//				}
+//			}
+//			if (stateMngr.doWait(9)) {
+//				actuation.rotate(Mod.Clover_West,180);
+//				delay(3000);
+//				stateMngr.commitMyselfIfNotUsed();
+//			}
+			if (stateMngr.doUntil(15)) {
 				if (module().isRef) {
-					delay(1000);
 					broadcast(new PacketSymmetry(this));
 					stateMngr.commit();
 				}
+				stateMngr.spend(6);
 			}
-			if (stateMngr.doWait (114)) {
+			if (stateMngr.doWait (16)) {
 				if (module().getGroup() == Group.Clover) {
 					module().restoreID();
 				}
@@ -738,7 +752,7 @@ public class BrandtController extends MfController implements ControllerInformat
 			}
 			
 			
-			if (stateMngr.doWait (20)) {
+			if (stateMngr.doWait (17)) {
 				finish();
 				
 			}
@@ -866,13 +880,13 @@ public class BrandtController extends MfController implements ControllerInformat
 	public boolean receivePacket (PacketSymmetry p) {
 		boolean handled = false;
 		
-		if (stateMngr.check(p,new State(StateOperation.FLIPTHROUGH_TOPLEFT,12)) || stateMngr.check(p,new State(StateOperation.FLIPTHROUGH_TOPRIGHT,12)) || stateMngr.check(p,new State(StateOperation.FLIPTHROUGH_BOTTOMLEFT,12)) || stateMngr.check(p,new State(StateOperation.FLIPTHROUGH_BOTTOMRIGHT,12))) {	
+		if (stateMngr.check(p,new State(StateOperation.FLIPTHROUGH_TOPLEFT,13)) || stateMngr.check(p,new State(StateOperation.FLIPTHROUGH_TOPRIGHT,13)) || stateMngr.check(p,new State(StateOperation.FLIPTHROUGH_BOTTOMLEFT,13)) || stateMngr.check(p,new State(StateOperation.FLIPTHROUGH_BOTTOMRIGHT,13))) {	
 			symmetryFix(p);
 			handled = true;
 		}
 		
 		
-		if (stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,6)) || stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,10)) || stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,8))) {	
+		if (stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,15)) || stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,10)) || stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,8))) {	
 			symmetryFix(p);
 			handled = true;
 		}

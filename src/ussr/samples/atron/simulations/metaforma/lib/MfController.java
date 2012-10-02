@@ -181,7 +181,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 				PacketDiscover p = (PacketDiscover)new PacketDiscover(this).deserialize(msg,connector);
 				preprocessPacket(p);
 				receivePacket((Packet)p);
-				System.out.println(".receivediscover " + p);
+				System.out.println(getID() + ".receivediscover " + p);
 			}
 			else if (typeNr == PacketSymmetry.getTypeNr()) {
 				PacketSymmetry p = (PacketSymmetry)new PacketSymmetry(this).deserialize(msg,connector);
@@ -249,8 +249,8 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 				meta().setVar(var, e.getValue().fst(),e.getValue().snd());
 			}
 			if (meta().getVarSeqNr(var) == e.getValue().snd() && e.getValue().fst() != meta().getVar(var)) {
-				meta().setVar(var, MfApi.max(e.getValue().fst(),meta().getVar(var)));
 				visual.print("Conflict in " + var + " between " + e.getValue().fst() + " and " + meta().getVar(var) + ", take highest");
+				meta().setVar(var, MfApi.max(e.getValue().fst(),meta().getVar(var)));
 			}
 			
 			//TODO: BrandtController.StateOperation.CHOOSE needs to be converted to independent state
@@ -542,6 +542,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 //			}
 //		}
 	
+		visual.print("orig: " + p.connSource + " " + isNORTH(p.connSource) + " == " + isWEST(connDest) + " " + connDest);
 		if (isFEMALE(p.connDest)) {
 			if (!stateMngr.committed()) {
 				if (isWEST(p.connSource) != isSOUTH(connDest)) {
@@ -561,19 +562,18 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 					connDest = (byte) ((connDest + 4) % 8);
 				}
 			
-			
-//				context.switchEastWestHemisphere(isSOUTH(p.connSource) == isEAST(p.connDest), isSOUTH(p.connDest));
-
-					// sure!!
+				// sure!!
 				context.switchEastWestHemisphere(isNORTH(p.connSource) == isEAST(connDest), isSOUTH(connDest));
 				
 				
 			}
 		}
 		if (freqLimit("SYMM passthrough", 0.5f)) {
+			module().discover();
 			broadcast(new PacketSymmetry(this));
 		}
-		stateMngr.commit("Symmetry fix done");
+//		stateMngr.commit("Symmetry fix done");
+		
 	}
 
 	public abstract IRole getInstRole();

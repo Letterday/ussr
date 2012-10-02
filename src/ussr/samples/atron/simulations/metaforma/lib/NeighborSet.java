@@ -199,27 +199,6 @@ public class NeighborSet  {
 		return ret;
 	}
 	
-//	public NeighborSet maleAlignedWithFemale () {
-//		NeighborSet ret = new NeighborSet(this.ctrl);
-//		for (Map.Entry<IModule, Byte []> e : entrySet()) {
-//			if (e.getValue()[CON_SRC]%2 == 0 && e.getValue()[CON_DEST]%2 == 1) {
-//				ret.assoc(e);
-//			}
-//		}
-//		return ret;
-//	}
-	
-//	public NeighborSet genderDismatch () {
-//		NeighborSet ret = new NeighborSet(this.ctrl);
-//		for (Map.Entry<IModule, Byte []> e : entrySet()) {
-//			if (e.getValue()[CON_SRC]%2 == e.getValue()[CON_DEST]%2) {
-//				ret.assoc(e);
-//			}
-//		}
-//		return ret;
-//	} 
-	
-
 	public NeighborSet nbsOnGroup (IGroupEnum g) {
 		NeighborSet ret = new NeighborSet(this.ctrl);
 		for (Map.Entry<IModule, Byte []> e : entrySet()) {
@@ -256,9 +235,16 @@ public class NeighborSet  {
 		for (Map.Entry<IModule, Byte[]> entry : nbs().entrySet()) {
 			assoc(entry.getKey(), (entry.getValue()[CON_SRC] + 4) % 8, entry.getValue()[CON_DEST],entry.getValue()[NR_ROLE],entry.getValue()[ID_META],entry.getValue()[ID_REGION]);
 		}
+		deleteAll();	//TODO: Remove
 	}
 	
 	
+	private void deleteAll() {
+		modules.clear();
+		connectors.clear();
+		
+	}
+
 	public void updateSymmetryEW (boolean south) {
 		for (Map.Entry<IModule, Byte[]> entry : nbs().entrySet()) {
 			if (entry.getValue()[CON_SRC] < 4 && !south) {
@@ -268,6 +254,7 @@ public class NeighborSet  {
 				assoc(entry.getKey(), ((entry.getValue()[CON_SRC] + 2) % 4) + 4, entry.getValue()[CON_DEST],entry.getValue()[NR_ROLE],entry.getValue()[ID_META],entry.getValue()[ID_REGION]);
 			}
 		}
+		deleteAll();	//TODO: Remove
 	}
 
 	public NeighborSet nbsIn(IModuleHolder g) {

@@ -14,6 +14,7 @@ public class MfContext  {
 	private NeighborSet neighbors;
 	
 	protected boolean[] femaleConnectorCache = new boolean[8];
+	private boolean debug = false;
 	
 	public MfContext(MfController c) {
 		ctrl = c;
@@ -30,19 +31,19 @@ public class MfContext  {
 	
 	public byte abs2rel (int nr) {
 		byte ret = (byte) nr;
-	
+		
 		if (isSwitchedEastWestN() && ret <= 3) {
 			ret = (byte) ((ret + 2)%4);
 		}
 		if (isSwitchedEastWestS() && ret >= 4) {
 			ret = (byte) ((ret + 2)%4 + 4);
 		}
+		
 		if (isSwitchedNorthSouth()) {
 			ret = (byte) ((ret + 4)%8);
 		}
-		
 		if (nr != ret) {
-			ctrl.visual.print("ABS2REL " + nr + " to " + ret + " " + getFlipString());
+			if (!debug)System.out.println("ABS2REL " + nr + " to " + ret + " " + getFlipString());
 		}
 		return ret;
 	}
@@ -50,17 +51,18 @@ public class MfContext  {
 	public byte rel2abs (int nr) {
 		byte ret = (byte) nr;
 		
+		if (isSwitchedNorthSouth()) {
+			ret = (byte) ((ret + 4)%8);
+		}
 		if (isSwitchedEastWestN() && ret <= 3) {
 			ret = (byte) ((ret + 2)%4);
 		}
 		if (isSwitchedEastWestS() && ret >= 4) {
 			ret = (byte) ((ret + 2)%4 + 4);
 		}
-		if (isSwitchedNorthSouth()) {
-			ret = (byte) ((ret + 4)%8);
-		}
+		
 		if (nr != ret) {
-			ctrl.visual.print("rel2abs " + nr + " to " + ret + " " + getFlipString());
+			if (!debug)System.out.println("rel2abs " + nr + " to " + ret + " " + getFlipString());
 		}
 		
 		return ret;
@@ -68,9 +70,9 @@ public class MfContext  {
 	
 	public String getFlipString() {
 		String flipStr = "";
-		if (ctrl.getContext().isSwitchedNorthSouth()) flipStr += "NORTH-SOUTH ";
-		if (ctrl.getContext().isSwitchedEastWestN()) flipStr += "EAST-WEST-N ";
-		if (ctrl.getContext().isSwitchedEastWestS()) flipStr += "EAST-WEST-S ";
+		if (isSwitchedNorthSouth()) flipStr += "NORTH-SOUTH ";
+		if (isSwitchedEastWestN()) flipStr += "EAST-WEST-N ";
+		if (isSwitchedEastWestS()) flipStr += "EAST-WEST-S ";
 		
 		if (flipStr.equals("")) {
 			flipStr = "<none>";
@@ -81,9 +83,9 @@ public class MfContext  {
 	public void switchEastWestHemisphere (boolean isCorrect, boolean southSide) {
 		String side = southSide ? " southside " : " northside ";
 		String correct = isCorrect ? " correct " : " incorrect ";
-		ctrl.getVisual().print("$$$ Switch East West " + side + correct);
+		print("$$$ Switch East West " + side + correct);
 		int angle = getAngle();
-		if (southSide) {
+		if (southSide == !isSwitchedNorthSouth()) {
 			if (!isCorrect) {
 				switchEWS();
 				if (angle == 0) {
@@ -106,22 +108,20 @@ public class MfContext  {
 				switchEWS();
 			}
 		}
-		ctrl.module().discover();// TODO: OK?
 		
-		
-		ctrl.getVisual().colorize();
+		if (!debug)ctrl.getVisual().colorize();
 	}	
 	
-	private void switchEWN () {
-		neighbors.updateSymmetryEW(false);
+	public void switchEWN () {
+		if (!debug)neighbors.updateSymmetryEW(false);
 		switchEastWestN = !switchEastWestN;
-		ctrl.getVisual().print("# switch EW N");
+		print("# switch EW N");
 	}
 	
-	private void switchEWS () {
-		neighbors.updateSymmetryEW(true);
+	public void switchEWS () {
+		if (!debug)neighbors.updateSymmetryEW(true);
 		switchEastWestS = !switchEastWestS;
-		ctrl.getVisual().print("# switch EW S");
+		print("# switch EW S");
 	}
 	
 	public void switchEastWest () {
@@ -131,8 +131,15 @@ public class MfContext  {
 	
 	public void switchNorthSouth () {
 		 switchNorthSouth =! switchNorthSouth;
-		 ctrl.getVisual().print("# Switch North South");
-		 neighbors.updateSymmetryNS();
+		 print("# Switch North South");
+		 if (!debug)neighbors.updateSymmetryNS();
+	}
+
+	private void print(String string) {
+		if (!debug) {
+			ctrl.getVisual().print(string);
+		}
+		
 	}
 
 	public void addNeighbor(IModule source, byte connDest, byte connSource,IRole r, byte metaId, byte regionId) {
@@ -162,13 +169,13 @@ public class MfContext  {
 	
 	public boolean isConnConnected (int c) {
 		if (c == -1) return false;
-		 
-		if (MfController.isFEMALE(c)){
-			return femaleConnectorCache[c];
-		}
-		else {
-			return ctrl.isConnected(abs2rel(c));
-		}
+		//TODO: Restore 
+//		if (MfController.isFEMALE(c)){
+//			return femaleConnectorCache[c];
+//		}
+//		else {
+			return ctrl.isConnected(rel2abs(c));
+//		}
 	}
 
 	public void setFemaleConnected(int connectorNr, boolean connectorConnected) {

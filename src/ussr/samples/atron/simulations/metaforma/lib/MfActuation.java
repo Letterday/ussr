@@ -127,10 +127,10 @@ public class MfActuation  {
 	
 	 protected void connection(int c, boolean connect) {
 		 if (connect && !ctrl.context.isConnConnected(c)) {
-			 ctrl.connect(ctrl.context.abs2rel(c)); 
+			 ctrl.connect(ctrl.context.rel2abs(c)); 
 		 }
 		 else if (!connect && ctrl.context.isConnConnected(c)) {
-			 ctrl.disconnect(ctrl.context.abs2rel(c));
+			 ctrl.disconnect(ctrl.context.rel2abs(c));
 		 }
 	}
 	

@@ -68,8 +68,8 @@ public class MfBuilder {
 		buildClover(mod, mPos, aPos(-2,height,2),8);
 		
 //		buildClover(mod, mPos, aPos(6,height,10),12);
-//		buildClover(mod, mPos, aPos(6,height,10),16);
-//		buildClover(mod, mPos, aPos(4,height,8),20);
+//		buildClover(mod, mPos, aPos(6,height,6),16);
+//		buildClover(mod, mPos, aPos(8,height,4),20);
 		
 //		buildClover(mod, mPos, aPos(2,height,6),12);
 //		
