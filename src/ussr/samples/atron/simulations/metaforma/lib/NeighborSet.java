@@ -235,15 +235,15 @@ public class NeighborSet  {
 		for (Map.Entry<IModule, Byte[]> entry : nbs().entrySet()) {
 			assoc(entry.getKey(), (entry.getValue()[CON_SRC] + 4) % 8, entry.getValue()[CON_DEST],entry.getValue()[NR_ROLE],entry.getValue()[ID_META],entry.getValue()[ID_REGION]);
 		}
-		deleteAll();	//TODO: Remove
+//		deleteAll();	//TODO: Remove
 	}
 	
 	
-	private void deleteAll() {
-		modules.clear();
-		connectors.clear();
-		
-	}
+//	private void deleteAll() {
+//		modules.clear();
+//		connectors.clear();
+//		
+//	}
 
 	public void updateSymmetryEW (boolean south) {
 		for (Map.Entry<IModule, Byte[]> entry : nbs().entrySet()) {
@@ -254,7 +254,10 @@ public class NeighborSet  {
 				assoc(entry.getKey(), ((entry.getValue()[CON_SRC] + 2) % 4) + 4, entry.getValue()[CON_DEST],entry.getValue()[NR_ROLE],entry.getValue()[ID_META],entry.getValue()[ID_REGION]);
 			}
 		}
-		deleteAll();	//TODO: Remove
+		
+		
+		
+//		deleteAll();	//TODO: Remove
 	}
 
 	public NeighborSet nbsIn(IModuleHolder g) {

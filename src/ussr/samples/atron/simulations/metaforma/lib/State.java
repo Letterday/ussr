@@ -27,11 +27,11 @@ public class State implements IState,Cloneable {
 	}
 	
 	public boolean merge (State s) {
-		return merge (s,true);
+		return merge (s,true,false);
 	}
 	
 	public boolean isNewer (State s) {
-		return merge (s,false);
+		return merge (s,false,false);
 	}
 	
 	/**
@@ -40,22 +40,18 @@ public class State implements IState,Cloneable {
 	 * @return
 	 */
 	public boolean isConsecutive (State s) {
-		try {
-			return isNewer(s) && !isNewer (((State)s.clone()).setInstruction((byte) (s.getInstruction()-1)));
-		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-		}
-		return false;
+		return !merge (s,false,true);
 	}
 	
-	private boolean merge (State s,boolean modify) {
-		if (getOperationCounter() == s.getOperationCounter() && getInstruction() < s.getInstruction()) {
+	private boolean merge (State s,boolean modify,boolean checkConsecutive) {
+		int offset = checkConsecutive ? 1 : 0;
+		if (getOperationCounter() == s.getOperationCounter() && getInstruction() < s.getInstruction() - offset) {
 			if (modify) {
 				instruction = s.getInstruction();
 			}
 			return true;
 		}
-		else if (getOperationCounter() < s.getOperationCounter()) {
+		else if (getOperationCounter() < s.getOperationCounter() - offset) {
 			if (modify) {
 				operationCounter = s.getOperationCounter();
 				operation = s.getOperation();

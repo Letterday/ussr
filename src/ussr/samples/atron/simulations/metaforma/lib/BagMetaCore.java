@@ -26,22 +26,36 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	}
 	
 	public IMetaBag setVar (String name, int val, int seqNr) {
-		// Make sure no byte overflow occurs
-		byte value = MfApi.min(Byte.MAX_VALUE,val);
-		seqNrs.put(name,(byte)(MfApi.max(getVarSeqNr(name),seqNr)));
 		
-		if (getVar(name) != value) {
-			super.setVar(name, value);
-			ArrayList<String> l = new ArrayList<String>();
-			l.add(name);
-//			ctrl.visual.print(ctrl.hashCode() +" - "+ ctrl.meta().hashCode() + name + ":::" + ctrl.meta().getVarSeqNr(name));
-			ctrl.broadcastMetaVars(l);
+		if (getVarSeqNr(name) == seqNr) {
+			if (val != getVar(name)) {
+				ctrl.visual.print("Conflict in " + name + " between " + getVar(name) + " and " + val + ", take highest");
+				val = MfApi.max(val,getVar(name));
+			}
+		}
+		
+		if (getVarSeqNr(name) <= seqNr) {
+		
+			// Make sure no byte overflow occurs
+			byte value = MfApi.min(Byte.MAX_VALUE,val);
+			seqNrs.put(name,(byte)seqNr);
+			
+			if (getVar(name) != value) {
+				super.setVar(name, value);
+				ArrayList<String> l = new ArrayList<String>();
+				l.add(name);
+	//			ctrl.visual.print(ctrl.hashCode() +" - "+ ctrl.meta().hashCode() + name + ":::" + ctrl.meta().getVarSeqNr(name));
+				broadcastVars(l);
+			}
 		}
 		return this;
 	}
 	
 	public IMetaBag setVar (String name, int val) {
-		return setVar(name,val,getVarSeqNr(name)+1);
+		if (getVar(name) != val) {
+			return setVar(name,val,getVarSeqNr(name)+1);
+		}
+		return this;
 	}
 	
 	public String getVarByNr(byte nr) {
@@ -70,14 +84,15 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	public void releaseRegion () {
 		ctrl.visual.print(".releaseRegion ");
 		MfStats.getInst().addEnd(ctrl.stateMngr.getState().getOperation(),regionID(),ctrl.stateMngr.timeSpentInSequence());
-		setRegionID((byte)0);
+		setRegionID((byte)0);		
 		
+		setCountInRegion((byte) 1);
+	}
+	
+	public void resetVars () {
 		for (Field field:this.getClass().getFields()) {
 			setVar(field.getName(),0);
 		}
-		
-		
-		setCountInRegion((byte) 1);
 	}
 
 	public void createRegion(byte[] metaIDs,byte orient) {
@@ -175,6 +190,20 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	
 	public byte completed() {
 		return completed;
+	}
+	
+	
+	public void broadcastVars () {
+		if (ctrl.module().metaID != 0) {
+			broadcastVars(getVars());
+		}
+	}
+	
+	public void broadcastVars (ArrayList<String> names) {
+//		visual.print(".....broadcastMetaVars " + names);
+		PacketMetaVarSync p = new PacketMetaVarSync(ctrl);
+		p.setVarList(names);
+		ctrl.broadcast(p);
 	}
 	
 }

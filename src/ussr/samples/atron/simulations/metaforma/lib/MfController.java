@@ -1,7 +1,6 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,14 +42,14 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		
 	private HashMap<String,Float> doRepeat = new HashMap<String,Float>();
 	
-	protected SettingsBase set;
+	protected SettingsBase settings;
 
 //	protected BagRegionCore regionBag;
 	
 	
 	public MfController(SettingsBase s) {
 		this();
-		set = s;
+		settings = s;
 	}
 	
 	public MfController() {
@@ -76,12 +75,15 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	 
 	
 	public void waitAndDiscover () {
-		scheduler.invokeIfScheduled ("broadcastDiscover");
-		
-		delay(500);
+		scheduler.invokeIfScheduled ("module.discover");
+		delay();
 		yield();
 	}
 		
+	public void delay () {
+		delay(300);
+	}
+	
 
 	public void activate() {
 		setup();
@@ -100,16 +102,13 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		
 		 // All threads and controllers need to be ready before proceeding!
 		 
-		scheduler.setInterval("broadcastDiscover",1000);
-		scheduler.setInterval("broadcastConsensus",4000);
-		scheduler.setInterval("broadcastMetaVars",5000);
-		
-//		scheduler.setInterval("broadcastSymmetry",2000);
+		scheduler.enable("module.broadcastConsensus");
 			
 		
 		
 		for (int i=0; i<5; i++) {
-			discoverNeighbors();
+			scheduler.invokeNowDiscover();
+			delay();
 		}
 		
 		while (true) {
@@ -181,6 +180,9 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 				PacketDiscover p = (PacketDiscover)new PacketDiscover(this).deserialize(msg,connector);
 				preprocessPacket(p);
 				receivePacket((Packet)p);
+				if (p.getDir() == Dir.REQ) {
+					send(new PacketDiscover(this).setDir(Dir.ACK),connector);
+				}
 				System.out.println(getID() + ".receivediscover " + p);
 			}
 			else if (typeNr == PacketSymmetry.getTypeNr()) {
@@ -244,14 +246,9 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	public boolean receivePacket (PacketMetaVarSync p) {
 		for (Map.Entry<String,Pair<Byte,Byte>> e:p.vars.entrySet()) {
 			String var = e.getKey();
-			if (meta().getVarSeqNr(var) < e.getValue().snd()) {
-				// TODO: Merge when seq nrs are the same.
-				meta().setVar(var, e.getValue().fst(),e.getValue().snd());
-			}
-			if (meta().getVarSeqNr(var) == e.getValue().snd() && e.getValue().fst() != meta().getVar(var)) {
-				visual.print("Conflict in " + var + " between " + e.getValue().fst() + " and " + meta().getVar(var) + ", take highest");
-				meta().setVar(var, MfApi.max(e.getValue().fst(),meta().getVar(var)));
-			}
+
+			meta().setVar(var, e.getValue().fst(),e.getValue().snd());
+			
 			
 			//TODO: BrandtController.StateOperation.CHOOSE needs to be converted to independent state
 			if (var.equals("regionID")) {
@@ -284,10 +281,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 
 
 	
-	public void discoverNeighbors () {
-		scheduler.invokeNow("broadcastDiscover");
-		delay(300);
-	}
+	
 
 	
 
@@ -324,13 +318,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	
 
 
-	public void broadcastConsensus() {
-//		visual.print(".broadcastConsensus()");
-		if (!stateMngr.getConsensus().equals(BigInteger.ZERO) && module().metaID != 0) {
-			debugForceMetaId();
-			broadcast((PacketConsensus)new PacketConsensus(this).setVar("consensus", stateMngr.getConsensus()));
-		}
-	}
+	
 
 	public void debugForceMetaId() {
 		if (module().metaID == 0) {
@@ -343,24 +331,6 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		}
 	}
 
-	public void broadcastDiscover () {
-		module().discover();
-	}
-	
-	public void broadcastMetaVars () {
-		if (module().metaID != 0) {
-			broadcastMetaVars(meta().getVars());
-		}
-	}
-	
-	public void broadcastMetaVars (ArrayList<String> names) {
-//		visual.print(".....broadcastMetaVars " + names);
-		PacketMetaVarSync p = new PacketMetaVarSync(this);
-		p.setVarList(names);
-		broadcast(p);
-	}
-
-	
 
 	public abstract void handleStates();
 	public abstract void init();
@@ -373,30 +343,6 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	}
 	
 	
-	
-
-	
-	
-//	public void send(MetaPacket p, int destID) {
-//		p.setDest((byte) destID); 
-//		
-//		if (destID == module().metaID) {
-//			visual.error("Already at !! " + destID);
-//		}
-//		
-//		for (byte c=0; c< 8; c++) {
-//			if (nbs().getMetaIdByConnector(c) == destID || (module().metaID == p.source && nbs().getRegionIdByConnector(c) == p.source && nbs().getMetaIdByConnector(c) != module().metaID)) {
-//				sendMessage(p.getBytes(), (byte) p.getBytes().length, context.abs2rel(c));
-//			}
-//		}
-//	}
-//	
-	
-	
-//	
-//	private boolean isRegionBoss() {
-//		return module().getId().ord() == module().metaID;
-//	}
 
 	private void addToPacket (Packet p) {
 		p.addState(stateMngr.getState());
@@ -476,6 +422,10 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		return stateMngr;
 	}
 	
+	public SettingsBase getSettings () {
+		return settings;
+	}
+	
 
 	public MfScheduler getScheduler() {
 		return scheduler;
@@ -507,7 +457,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		// Instead of throwing all NB's away, only remove the unconnected ones
 		context.deleteUnconnectedNeighbors();
 		doRepeat.clear();
-		visual.colorize();
+//		visual.colorize();  problems?
 	}
 	
 	public void receivePacket (PacketRegion p) {					
@@ -568,11 +518,11 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 				
 			}
 		}
-		if (freqLimit("SYMM passthrough", 0.5f)) {
+		if (freqLimit("SYMM passthrough", settings.getPropagationRate())) {
 			module().discover();
 			broadcast(new PacketSymmetry(this));
 		}
-//		stateMngr.commit("Symmetry fix done");
+		stateMngr.commit("Symmetry fix done");
 		
 	}
 

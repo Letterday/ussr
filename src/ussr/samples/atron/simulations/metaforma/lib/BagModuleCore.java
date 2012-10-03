@@ -1,5 +1,8 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
+import java.math.BigInteger;
+
+import ussr.samples.atron.simulations.metaforma.lib.Packet.PacketConsensus;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.PacketDiscover;
 
 public abstract class BagModuleCore extends Bag {
@@ -54,6 +57,14 @@ public abstract class BagModuleCore extends Bag {
 
 	public void setMetaID(int i) {
 		setVar("metaID", (byte)i);
+	}
+	
+	public void broadcastConsensus() {
+//		visual.print(".broadcastConsensus()");
+		if (!ctrl.stateMngr.getConsensus().equals(BigInteger.ZERO) && metaID != 0) {
+			ctrl.debugForceMetaId();
+			ctrl.broadcast((PacketConsensus)new PacketConsensus(ctrl).setVar("consensus", ctrl.stateMngr.getConsensus()));
+		}
 	}
 	
 	public abstract boolean atT();

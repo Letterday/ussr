@@ -93,7 +93,7 @@ public class MfVisualizer {
 		out.append("angle: " + ctrl.getContext().getAngle() + " ("+ctrl.getAngle()+")"  + "  flips: " + getFlipString());
 		out.append("\n");
 		
-		out.append("intervals: " + ctrl.getScheduler().intervalMs);
+		out.append("intervals: " + ctrl.getScheduler().intervals);
 		out.append("\n");
 		out.append("prevs: " + ctrl.getScheduler().previousAction);
 		out.append("\n");
@@ -158,8 +158,6 @@ public class MfVisualizer {
 			ret[1] = Color.RED;;
 		}
 
-		ret[0] = Color.BLUE;
-		ret[1] = Color.RED;
 		return ret;
 	}
 	

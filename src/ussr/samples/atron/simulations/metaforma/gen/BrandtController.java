@@ -361,7 +361,7 @@ public class BrandtController extends MfController implements ControllerInformat
 		visual.setColor(StateOperation.FLIPALONG_UPRIGHT,Color.MAGENTA);
 		visual.setColor(StateOperation.INIT,Color.WHITE);
 		
-		visual.setMessageFilter(255^ pow2(PacketDiscover.getTypeNr()));
+		visual.setMessageFilter(255);//^ pow2(PacketDiscover.getTypeNr()));
 		visual.setMessageFilterMeta(255);				
 	}
 
@@ -377,23 +377,25 @@ public class BrandtController extends MfController implements ControllerInformat
 				if (module().role == ModuleRole.Left)	{	
 					unicast((PacketSetMetaId)new PacketSetMetaId(this).setVar("newMetaID", module().metaID),EAST&MALE&NORTH);
 				}
-				broadcast(new PacketDiscover(this));
+//				broadcast(new PacketDiscover(this));
 			}
 		}
 		
 		if (stateMngr.at(StateOperation.CHOOSE)) {
 			
-			if (stateMngr.doUntil(0,set.getMetaDirectDiscoverInterval())) {
+			if (stateMngr.doWait(0)) {
 				// Share meta neighborhood hor + ver
-				scheduler.invokeNow("broadcastMetaVars");
-				scheduler.invokeNow("broadcastDiscover");
-				stateMngr.spend(set.getMetaDirectDiscoverTime());
+				scheduler.enable("meta.broadcastVars");
+				
+				
+//				stateMngr.spend("meta.broadcastVars");
+//				Share meta neighborhood diag
+				scheduler.enable("meta.broadcastNeighbors");
+				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doUntil(1,set.getMetaIndirectDiscoverInterval())) {
-				// Share meta neighborhood diag
-				meta().broadcastNeighbors();
-				stateMngr.spend(set.getMetaIndirectDiscoverTime());
+			if (stateMngr.doUntil(1)) {
+				stateMngr.spend("meta.broadcastNeighbors");		
 			}
 				
 			
@@ -431,13 +433,13 @@ public class BrandtController extends MfController implements ControllerInformat
 					}
 				}
 				
-				if (meta().Bottom == 0  && meta().Top != 0) {
-//					if (meta().Left == 0  && meta().TopLeft == 0) {
-//						meta().createRegion(new byte[]{meta().Top},(byte)0);
-//						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH_BOTTOMLEFT);
-//						stateMngr.commit();
-//					}
-					if (meta().Right == 0  && meta().TopRight == 0) {
+				if (meta().Bottom == 0  && meta().Top != 0 && meta().Left == 0  && meta().Right == 0 ) {
+					if (meta().TopLeft == 0) {
+						meta().createRegion(new byte[]{meta().Top},(byte)0);
+						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH_BOTTOMLEFT);
+						stateMngr.commit();
+					}
+					if (meta().TopRight == 0) {
 						meta().createRegion(new byte[]{meta().Top},(byte)0);
 						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH_BOTTOMRIGHT);
 						stateMngr.commit();
@@ -485,17 +487,17 @@ public class BrandtController extends MfController implements ControllerInformat
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doUntil(1,set.getGradientInterval()))  {
-				
-				module().gradientPropagate();
-				stateMngr.spend(set.getGradientTime());
-			}
-			
-			if (stateMngr.doWait(2)) {
+			if (stateMngr.doWait(1))  {
+				scheduler.enable("module.gradientPropagate");
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
+			if (stateMngr.doUntil(2)) {
+				stateMngr.spend("module.gradientPropagate");
+			}
+			
 			if (stateMngr.doWait(3)) {
+				scheduler.disable("module.gradientPropagate");
 				assign (1,1,Mod.Uplifter_Left);
 				assign (0,2,Mod.Uplifter_Right);
 				assign (0,1,Mod.Dummy_Left);
@@ -508,7 +510,7 @@ public class BrandtController extends MfController implements ControllerInformat
 				else {
 					module().setVar("isRef",false);
 				}
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commit("ALL DONE in state 3");
 			}
 	
 			if (stateMngr.doWait(4)) {
@@ -577,14 +579,13 @@ public class BrandtController extends MfController implements ControllerInformat
 					broadcast(new PacketSymmetry(this));
 					stateMngr.commit("symmetry initiated");
 				}
-				stateMngr.spend(6);
 			}
 			
 			if (stateMngr.doWait (14)) {
 				if (module().isRef) {
 					module().setVar("isRef",false);
 				}
-				stateMngr.spend(3);
+				stateMngr.commitMyselfIfNotUsed();
 			}
 			
 			if (stateMngr.doWait (15)) {
@@ -618,12 +619,19 @@ public class BrandtController extends MfController implements ControllerInformat
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doUntil(1,set.getGradientInterval()))  {
-				module().gradientPropagate();
-				stateMngr.spend(set.getGradientTime());
+			if (stateMngr.doWait(1))  {
+				scheduler.enable("module.gradientPropagate");
+				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(2)) {
+			if (stateMngr.doUntil(2))  {
+				
+				stateMngr.spend("module.gradientPropagate");
+			}
+			
+			if (stateMngr.doWait(3)) {
+				scheduler.disable("module.gradientPropagate");
+			
 				assign (3,0,Mod.Clover_West);
 				assign (2,0,Mod.Clover_South);
 				assign (3,1,Mod.Clover_North);
@@ -638,64 +646,64 @@ public class BrandtController extends MfController implements ControllerInformat
 			}
 			
 			
-			if (stateMngr.doWait(3)) {
+			if (stateMngr.doWait(4)) {
 				actuation.disconnect(Mod.Clover_West, Mod.Clover_South);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(4)) {
+			if (stateMngr.doWait(5)) {
 				actuation.rotate(Mod.Clover_East,QUART);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 				
-			if (stateMngr.doWait(5)) {
+			if (stateMngr.doWait(6)) {
 				actuation.rotate(Mod.Clover_North,HALF);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(6)) {
+			if (stateMngr.doWait(7)) {
 				actuation.rotate(Mod.Clover_East,QUART);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(7)) {
+			if (stateMngr.doWait(8)) {
 				actuation.connect(Mod.Clover_North,Group.F);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(8)) {
+			if (stateMngr.doWait(9)) {
 				actuation.connect(Mod.Clover_West,Group.F);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(9)) {
+			if (stateMngr.doWait(10)) {
 				actuation.disconnect(new ModuleSet().add(Mod.Clover_South).add(Mod.Clover_East),Group.F);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(10)) {
+			if (stateMngr.doWait(11)) {
 				actuation.rotate(Mod.Clover_East,-QUART);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 	
-			if (stateMngr.doWait(11)) {
+			if (stateMngr.doWait(12)) {
 				actuation.rotate(Mod.Clover_North,QUART);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 						
 	
-			if (stateMngr.doWait(12)) {
+			if (stateMngr.doWait(13)) {
 				actuation.rotate(Mod.Clover_East,-QUART);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(13)) {
+			if (stateMngr.doWait(14)) {
 				actuation.rotate(Mod.Clover_North,QUART);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
 	
-			if (stateMngr.doWait(14)) {
+			if (stateMngr.doWait(15)) {
 				actuation.connect(Mod.Clover_South,Mod.Clover_West);
 				stateMngr.commitMyselfIfNotUsed();
 			}
@@ -737,14 +745,14 @@ public class BrandtController extends MfController implements ControllerInformat
 //				delay(3000);
 //				stateMngr.commitMyselfIfNotUsed();
 //			}
-			if (stateMngr.doUntil(15)) {
+			if (stateMngr.doUntil(16)) {
 				if (module().isRef) {
 					broadcast(new PacketSymmetry(this));
 					stateMngr.commit();
 				}
-				stateMngr.spend(6);
 			}
-			if (stateMngr.doWait (16)) {
+			
+			if (stateMngr.doWait (17)) {
 				if (module().getGroup() == Group.Clover) {
 					module().restoreID();
 				}
@@ -752,11 +760,11 @@ public class BrandtController extends MfController implements ControllerInformat
 			}
 			
 			
-			if (stateMngr.doWait (17)) {
+			if (stateMngr.doWait (18)) {
 				finish();
 				
 			}
-		
+	
 		}
 		
 
@@ -767,6 +775,9 @@ public class BrandtController extends MfController implements ControllerInformat
 			module().storeID();
 			module().setID(m);
 		}
+		else {
+			visual.print("Coordinate dismatch for " + m + " - " + h + "," + v + " ! = " + module().gradH + "," + module().gradV);
+		}
 	}
 
 
@@ -774,21 +785,13 @@ public class BrandtController extends MfController implements ControllerInformat
 	public void finish () {
 		meta().disable();
 		meta().releaseRegion();
+		meta().resetVars();
 		module().setMetaID(0);
 		module().setRole(ModuleRole.NONE);
 		stateMngr.nextOperation(StateOperation.INIT);
 	}
 	
 	
-//	private void assign(int h, int v, IModule m) {
-//		visual.print("## " + h + "," + v + " --- " + varGet(VarLocal.gradH) + "," + varGet(VarLocal.gradV));
-//		if (varGet(VarLocal.gradH) == h && varGet(VarLocal.gradV) == v){
-//			renameStore();
-//			renameTo(m);
-//			
-//		}
-//		
-//	}
 		
 	public void receiveCustomPacket(byte typeNr, byte[] msg, byte connector) {
 		if (typeNr == PacketGradient.getTypeNr()) {
@@ -864,7 +867,7 @@ public class BrandtController extends MfController implements ControllerInformat
 //					stateMngr.nextInstruction();
 			}
 			else {
-				if (freqLimit("META_ID_SET",set.getMetaIndirectDiscoverInterval())) {
+				if (freqLimit("META_ID_SET",settings.getPropagationRate())) {
 					unicast((PacketSetMetaId)new PacketSetMetaId(this).setVar("newMetaID", p.newMetaID),pow2((p.connDest + 4) % 8));
 				}
 			}	
@@ -886,7 +889,7 @@ public class BrandtController extends MfController implements ControllerInformat
 		}
 		
 		
-		if (stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,15)) || stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,10)) || stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,8))) {	
+		if (stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,16)) || stateMngr.check(p,new State(StateOperation.FLIPALONG_UPLEFT,16))) {	
 			symmetryFix(p);
 			handled = true;
 		}
@@ -895,23 +898,32 @@ public class BrandtController extends MfController implements ControllerInformat
 	}
 
 	protected boolean receivePacket(PacketAddNeighbor p) {
-		visual.print(".PacketAddNeighbor" + p);
-		if (p.metaID == meta().Left) {
-			meta().setVar("TopLeft",p.first);
-			meta().setVar("BottomLeft",p.second);
-		}
-		if (p.metaID == meta().Right) {
-			meta().setVar("TopRight", p.first);
-			meta().setVar("BottomRight", p.second);
-		}
-		if (p.metaID == meta().Top) {
-			meta().setVar("TopLeft", p.first);
-			meta().setVar("TopRight", p.second);
-		}
-		if (p.metaID == meta().Bottom) {
-			meta().setVar("BottomLeft", p.first);
-			meta().setVar("BottomRight", p.second);
-		}
+		
+//		if (stateMngr.check(p,new State(StateOperation.CHOOSE,2))) {
+						
+			visual.print(".PacketAddNeighbor" + p);
+			if (p.metaID == meta().Left) {
+				meta().setVar("TopLeft",p.first);
+				meta().setVar("BottomLeft",p.second);
+			}
+			if (p.metaID == meta().Right) {
+				meta().setVar("TopRight", p.first);
+				meta().setVar("BottomRight", p.second);
+			}
+			if (p.metaID == meta().Top) {
+				meta().setVar("TopLeft", p.first);
+				meta().setVar("TopRight", p.second);
+			}
+			if (p.metaID == meta().Bottom) {
+				meta().setVar("BottomLeft", p.first);
+				meta().setVar("BottomRight", p.second);
+			}
+//		}
+//		else {
+//			visual.print(".!!!PacketAddNeighbor" + p);
+//		}
+			
+		
 		return true;
 	}
 	
