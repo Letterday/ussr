@@ -46,41 +46,42 @@ public class MfBuilder {
 	public ArrayList<ModulePosition> buildGrid(SettingsBase set, IModEnum mod) {
 		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
 		int height = -5;
-//		
-//		if (set.getLadderWidth() == 2) {
-//			for (int i=1; i< set.getLadderLength()+1; i++) {
-//				buildClover(mod, mPos, aPos(i*2,height,4-i*2),i-1*4);
-//			}
-//		}
-//		
-//		for (int i=0; i< set.getLadderLength(); i++) {
-//			buildClover(mod, mPos, aPos(i*2,height,-i*2),set.getLadderLength()*4+i*4);
-//		}
-//		
-//		
-//		if (set.getLadderBegin()) {
-//			buildClover(mod, mPos, aPos(-2,height,-2),set.getLadderLength()*8+4);
-//		}
+		
+		if (set.getLadderWidth() == 2) {
+			for (int i=1; i< set.getLadderLength()+1; i++) {
+				buildClover(mod, mPos, aPos(i*2,height,4-i*2),i-1*4);
+			}
+		}
+		
+		for (int i=0; i< set.getLadderLength(); i++) {
+			buildClover(mod, mPos, aPos(i*2,height,-i*2),set.getLadderLength()*4+i*4);
+		}
+		
+		
+		if (set.getLadderBegin()) {
+			buildClover(mod, mPos, aPos(-2,height,-2),set.getLadderLength()*8+4);
+		}
 		
 	
-		buildClover(mod, mPos, aPos(0,height,4),0);
-		buildClover(mod, mPos, aPos(0,height,0),4);
-		buildClover(mod, mPos, aPos(-2,height,2),8);
+//		buildClover(mod, mPos, aPos(2,height,2),0);
+//		buildClover(mod, mPos, aPos(0,height,0),4);
+//		buildClover(mod, mPos, aPos(-2,height,2),8);
 		
 //		buildClover(mod, mPos, aPos(4,height,8),12);
 //		buildClover(mod, mPos, aPos(8,height,8),16);
 //		buildClover(mod, mPos, aPos(6,height,10),20);
 		
-//		buildClover(mod, mPos, aPos(2,height,6),12);
-//		
+//		buildClover(mod, mPos, aPos(0,height,4),8);
 //		buildClover(mod, mPos, aPos(4,height,0),12);
 //		buildClover(mod, mPos, aPos(2,height,-2),16);
-//
+//		buildClover(mod, mPos, aPos(0,height,-4),20);
+//		buildClover(mod, mPos, aPos(-2,height,-6),24);
+
 //		buildClover(mod, mPos, aPos(6,height,-2),20);
 //		buildClover(mod, mPos, aPos(8,height,-4),32);
 //		buildClover(mod, mPos, aPos(-2,height,6),24);
 //		buildClover(mod, mPos, aPos(-4,height,8),28);
-		
+//		
 		
 		
         return mPos;

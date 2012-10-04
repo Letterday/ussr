@@ -2,7 +2,6 @@ package ussr.samples.atron.simulations.metaforma.lib;
 
 import java.math.BigInteger;
 
-import ussr.samples.atron.simulations.metaforma.gen.BrandtController.StateOperation;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.Packet;
 
 public class MfStateManager {
@@ -21,6 +20,7 @@ public class MfStateManager {
 
 
 	private IStateOperation stateOperationNext;
+	private Orientation orientationNext;
 	
 	private boolean commitAutoAfterState = true;
 	private int commitCountToReach;
@@ -33,7 +33,7 @@ public class MfStateManager {
 	}
 	
 	public void init (IStateOperation op) {
-		stateCurrent = new State (op,0,0);
+		stateCurrent = new State (op,0,0,Orientation.TOPLEFT);
 	}
 	
 	public void commitMyselfIfNotUsed () {
@@ -112,8 +112,8 @@ public class MfStateManager {
 				nextInstruction();
 			}
 			else {
-				ctrl.visual.print("CONSENSUS REACHED - " + stateOperationNext);
-				nextOperation(stateOperationNext);
+				ctrl.visual.print("CONSENSUS REACHED - " + stateOperationNext + " - " + orientationNext);
+				nextOperation(stateOperationNext,orientationNext);
 			}
 		}
 		
@@ -127,6 +127,7 @@ public class MfStateManager {
 	
 	
 	public void cleanConsensus() {
+		ctrl.visual.print(".cleanConsensus()");
 		consensus = BigInteger.ZERO;
 		consensusReceived = BigInteger.ZERO;
 	}
@@ -137,6 +138,7 @@ public class MfStateManager {
 		stateNeighborsDiscovered = false;
 		stateStartTime = ctrl.time();
 		stateOperationNext = null;
+		orientationNext = Orientation.TOPLEFT;
 		commitAutoAfterState = true;
 
 		cleanConsensus();
@@ -153,7 +155,7 @@ public class MfStateManager {
 		if (ctrl.module().metaID != 0) {
 			// If I am part of a region, I must be boss of that region!
 			// Consensus on meta-module level may only happen at INIT state, in other states Consensus must happen on region level!!
-			if (((ctrl.meta().regionID() != 0 && ctrl.meta().regionID() == ctrl.module().metaID) || at(StateOperation.INIT) || at(new State(StateOperation.CHOOSE,0)) || at(new State(StateOperation.CHOOSE,1)))) {
+			if (((ctrl.meta().regionID() != 0 && ctrl.meta().regionID() == ctrl.module().metaID))){// || at(new State(StateOperation.CHOOSE,0)) || at(new State(StateOperation.CHOOSE,1)))) {
 				if (commitCountToReach == 0) {
 					return consensusReached(ctrl.meta().getCountInRegion() * ctrl.getInstRole().size());
 				}
@@ -231,10 +233,14 @@ public class MfStateManager {
 	}
 	
 	public void nextOperation (IStateOperation op) {
+		nextOperation(op,Orientation.TOPLEFT);
+	}
+	
+	public void nextOperation (IStateOperation op,Orientation orient) {
 		if (stateCurrent.equals(op)){
 			ctrl.visual.error("OPERATION " + op + " equals " + stateCurrent.getOperation());
 		}
-		nextState(new State(stateCurrent).nextOperation(op));
+		nextState(new State(stateCurrent).nextOperation(op,orient));
 		
 	}
 	
@@ -273,10 +279,11 @@ public class MfStateManager {
 		return stateCurrent.getOperation().equals(op);
 	}	
 
-	public void setAfterConsensus(IStateOperation op) {
+	public void setAfterConsensus(IStateOperation op,Orientation orient) {
 		if (!op.equals(stateOperationNext)) {
 			ctrl.visual.print(".setAfterConsensus " + op);
 			stateOperationNext = op;
+			orientationNext = orient;
 			MfStats.getInst().addStart(op,ctrl.module().metaID,ctrl.time());
 		}
 	}

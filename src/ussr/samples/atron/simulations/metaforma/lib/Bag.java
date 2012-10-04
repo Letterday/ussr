@@ -11,7 +11,7 @@ public class Bag implements IBag {
 			field.setAccessible(true);
 //			if (!value.equals(getVar(name))) {
 				field.set(this, value);
-				ctrl.visual.print("setVar(" + name + "," + value + ")");
+				
 //			}
 		}
 		catch (Exception e) {

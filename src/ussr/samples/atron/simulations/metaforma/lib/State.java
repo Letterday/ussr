@@ -1,8 +1,10 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
+
 public class State implements IState,Cloneable {
 	private byte instruction;
 	private IStateOperation operation;
+	private Orientation orient;
 	private byte operationCounter;
 	
 	
@@ -10,20 +12,22 @@ public class State implements IState,Cloneable {
 		instruction = s.getInstruction();
 		operation = s.getOperation();
 		operationCounter = s.getOperationCounter();
+		orient = s.getOrientation();
 	}
 	
 	public State () {
-		this(null,0,0);
+		this(null,0,0,Orientation.TOPLEFT);
 	}
 	
-	public State (IStateOperation op, int opCounter,int instr) {
+	public State (IStateOperation op, int opCounter,int instr, Orientation o) {
 		instruction = (byte) instr;
 		operation = op;
 		operationCounter = (byte) opCounter;
+		orient = o;
 	}
 	
 	public State (IStateOperation op,int instr) {
-		this(op,-1,instr);
+		this(op,-1,instr,Orientation.TOPLEFT);
 	}
 	
 	public boolean merge (State s) {
@@ -35,7 +39,7 @@ public class State implements IState,Cloneable {
 	}
 	
 	/**
-	 * Checks wheter state s is consecutive on this
+	 * Checks whether state s is consecutive on this
 	 * @param State
 	 * @return
 	 */
@@ -53,9 +57,11 @@ public class State implements IState,Cloneable {
 		}
 		else if (getOperationCounter() < s.getOperationCounter() - offset) {
 			if (modify) {
-				operationCounter = s.getOperationCounter();
+				
 				operation = s.getOperation();
+				orient = s.getOrientation();
 				instruction = s.getInstruction();
+				operationCounter = s.getOperationCounter();
 			}
 			return true;
 		}
@@ -64,6 +70,10 @@ public class State implements IState,Cloneable {
 		}
 	}
 	
+	public Orientation getOrientation() {
+		return orient;
+	}
+
 	public byte getInstruction () {
 		return instruction;
 	}
@@ -72,10 +82,11 @@ public class State implements IState,Cloneable {
 		return operation;
 	}
 	
-	public State nextOperation (IStateOperation op) {
+	public State nextOperation (IStateOperation op,Orientation o) {
 		operation = op;
 		operationCounter++;
 		instruction = 0;
+		orient = o;
 		return this;
 	}
 	
@@ -97,11 +108,11 @@ public class State implements IState,Cloneable {
 	}
 	
 	public String toString () {
-		return "[" + operation + "(" + operationCounter + ") #" + instruction + "]";
+		return "[" + operation + " " + orient + " (" + operationCounter + ") #" + instruction + "]";
 	}
 	
 	public boolean equals (State s) {
-		return operation != null && operation.equals(s.getOperation()) && instruction == s.getInstruction() && (operationCounter == s.getOperationCounter() || operationCounter == -1 || s.getOperationCounter() == -1);
+		return operation != null && operation.equals(s.getOperation()) && instruction == s.getInstruction() && orient == s.getOrientation() &&(operationCounter == s.getOperationCounter() || operationCounter == -1 || s.getOperationCounter() == -1);
 		
 	}
 }

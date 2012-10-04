@@ -10,19 +10,18 @@ import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 public abstract class BagMetaCore extends Bag implements IMetaBag {
 	public byte completed;
 	public byte regionID;
-	private byte metaModulesInRegion = 1;
+	public byte metaModulesInRegion = 1;
 	public byte orientation = 0;
+	private float timeInitRegion;
 	
 	private HashMap<String,Byte> seqNrs = new HashMap<String, Byte>();
 	
-	
-
 	public byte getCountInRegion () {
 		return metaModulesInRegion;
 	}
 	
 	public void setCountInRegion(byte groupSize) {
-		metaModulesInRegion = groupSize;
+		setVar("metaModulesInRegion",groupSize);
 	}
 	
 	public IMetaBag setVar (String name, int val, int seqNr) {
@@ -34,19 +33,25 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 			}
 		}
 		
-		if (getVarSeqNr(name) <= seqNr) {
-		
+		if (seqNr >= getVarSeqNr(name)) {
+			seqNrs.put(name,(byte)seqNr);
 			// Make sure no byte overflow occurs
 			byte value = MfApi.min(Byte.MAX_VALUE,val);
-			seqNrs.put(name,(byte)seqNr);
+			
 			
 			if (getVar(name) != value) {
 				super.setVar(name, value);
+				ctrl.visual.print("setVar(" + name + "," + value + "," + seqNr + ")");
 				ArrayList<String> l = new ArrayList<String>();
 				l.add(name);
 	//			ctrl.visual.print(ctrl.hashCode() +" - "+ ctrl.meta().hashCode() + name + ":::" + ctrl.meta().getVarSeqNr(name));
 				broadcastVars(l);
+
+				if (name.equals("regionID")) {
+					ctrl.getStateMngr().cleanConsensus();
+				}
 			}
+			
 		}
 		return this;
 	}
@@ -78,6 +83,7 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	public void disable () {
 		ctrl.visual.print("DISABLE META!");
 		setVar("completed",0);
+		ctrl.module().setMetaID(0);
 		// TODO: WHAT TO DO HERE?
 	}
 		
@@ -94,12 +100,21 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 			setVar(field.getName(),0);
 		}
 	}
+	
+	public boolean regionTakesTooLong() {
+		if (regionID() != 0 && regionID() == ctrl.module().metaID && ctrl.time() - timeInitRegion > ctrl.settings.getWithdrawTime()) {
+			ctrl.visual.print("Region takes too long!!");
+			return true;
+		}
+		return false;
+	}
 
 	public void createRegion(byte[] metaIDs,byte orient) {
 		ctrl.visual.print(".createRegion " + ctrl.module().metaID);
 		
-		regionID = ctrl.module().metaID;
+		setRegionID(ctrl.module().metaID);	
 		
+		timeInitRegion = ctrl.time();
 		metaModulesInRegion = (byte) (metaIDs.length+1);
 		
 		for (byte metaID : metaIDs) {
@@ -139,6 +154,9 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	
 	public void setRegionID(byte ID){
 		setVar("regionID",ID);
+		if (ID == 0) {
+			setCountInRegion((byte) 1);
+		}
 	}
 	
 	
@@ -147,7 +165,7 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	public byte getVarNr(String name) {
 		byte i=0;
 		try {
-			for (Field f :this.getClass().getFields()) {
+			for (Field f : getClass().getFields()) {
 				if(f.getName().equals(name)) {
 					return i;
 				}

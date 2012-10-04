@@ -107,7 +107,7 @@ class PacketGradient extends Packet {
 public class BrandtController extends MfController implements ControllerInformationProvider {
 	
 	public enum StateOperation implements IStateOperation {
-		INIT, CHOOSE, FLIPALONG_UPLEFT, FLIPALONG_UPRIGHT, FLIPTHROUGH_TOPLEFT, FLIPTHROUGH_TOPRIGHT, FLIPTHROUGH_BOTTOMLEFT, FLIPTHROUGH_BOTTOMRIGHT;
+		INIT, CHOOSE, FLIPOVER, FLIPTHROUGH, FLIPALONG;
 		public byte ord() {return (byte) ordinal();	}
 		public IStateOperation fromByte(byte b) {return values()[b];}
 	}
@@ -163,6 +163,7 @@ public class BrandtController extends MfController implements ControllerInformat
 		public byte BottomLeft;
 		public byte BottomRight;
 		
+		
 		public void neighborHook (Packet p) {
 //			visual.print(getID() + ".nbhook!!");
 			if (p.metaID != ctrl.module().metaID && ctrl.module().metaID != 0) {
@@ -198,6 +199,8 @@ public class BrandtController extends MfController implements ControllerInformat
 		}
 
 		
+
+		
 	}
 
 	
@@ -214,6 +217,8 @@ public class BrandtController extends MfController implements ControllerInformat
 		}
 		
 	} 
+	
+	
 	public enum Mod  implements IModule,IModEnum{
 		ALL,
 		NONE,
@@ -305,7 +310,8 @@ public class BrandtController extends MfController implements ControllerInformat
 		}
 
 	}
-	enum Group implements IGroupEnum,IModuleHolder{ALL, NONE, F, Clover, Left, Right, Uplifter,Dummy;
+	
+	public enum Group implements IGroupEnum,IModuleHolder{ALL, NONE, F, Clover, Left, Right, Uplifter,Dummy;
 		public boolean contains(IModule m) {
 			return equals(m.getGroup());
 		}
@@ -325,6 +331,9 @@ public class BrandtController extends MfController implements ControllerInformat
 			return valueOf(string);
 		}
 	}	
+	
+	
+	
 	
 	private BagModule module;
 	private BagMeta meta;
@@ -353,12 +362,12 @@ public class BrandtController extends MfController implements ControllerInformat
 		visual.setColor(Mod.Clover_East, Color.PINK.darker().darker().darker());
 		visual.setColor(Group.Uplifter, Color.WHITE);
 
-		visual.setColor(StateOperation.FLIPTHROUGH_TOPLEFT,Color.CYAN);
-		visual.setColor(StateOperation.FLIPTHROUGH_TOPRIGHT,Color.YELLOW);
-		visual.setColor(StateOperation.FLIPTHROUGH_BOTTOMLEFT,Color.PINK);
-		visual.setColor(StateOperation.FLIPTHROUGH_BOTTOMRIGHT,Color.RED);
-		visual.setColor(StateOperation.FLIPALONG_UPLEFT,Color.GREEN);
-		visual.setColor(StateOperation.FLIPALONG_UPRIGHT,Color.MAGENTA);
+		visual.setColor(StateOperation.FLIPTHROUGH,Color.CYAN);
+//		visual.setColor(StateOperation.FLIPTHROUGH_TOPRIGHT,Color.YELLOW);
+//		visual.setColor(StateOperation.FLIPTHROUGH_BOTTOMLEFT,Color.PINK);
+//		visual.setColor(StateOperation.FLIPTHROUGH_BOTTOMRIGHT,Color.RED);
+//		visual.setColor(StateOperation.FLIPALONG_UPLEFT,Color.GREEN);
+		visual.setColor(StateOperation.FLIPALONG,Color.MAGENTA);
 		visual.setColor(StateOperation.INIT,Color.WHITE);
 		
 		visual.setMessageFilter(255);//^ pow2(PacketDiscover.getTypeNr()));
@@ -382,53 +391,41 @@ public class BrandtController extends MfController implements ControllerInformat
 		}
 		
 		if (stateMngr.at(StateOperation.CHOOSE)) {
-			
-			if (stateMngr.doWait(0)) {
-				// Share meta neighborhood hor + ver
-				scheduler.enable("meta.broadcastVars");
-				
-				
-//				stateMngr.spend("meta.broadcastVars");
-//				Share meta neighborhood diag
-				scheduler.enable("meta.broadcastNeighbors");
-				stateMngr.commitMyselfIfNotUsed();
-			}
-			
-			if (stateMngr.doUntil(1)) {
+			if (stateMngr.doUntil(0)) {
 				stateMngr.spend("meta.broadcastNeighbors");		
 			}
 				
-			
-			if (stateMngr.doUntil(2)) {
-				if (meta().regionID() != 0 && stateMngr.timeSpentInState() > 25) {
+			if (stateMngr.doUntil(1)) {
+				if (meta().regionTakesTooLong()) {
 					meta().releaseRegion();
 					stateMngr.nextOperation(StateOperation.CHOOSE);
+					return;
 				}
 				
 				
 				
-				if (meta().Top == 0 && meta().Bottom == 0 && meta().Right != 0) {
+				if (meta().Top == 0 && meta().Bottom == 0 && meta().Right != 0 && meta().Left == 0) {
 					if (meta().TopRight == 0) {
 						meta().createRegion(new byte[]{meta().Right},(byte)0);
-						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH_TOPLEFT);
+						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH,Orientation.TOPLEFT);
 						stateMngr.commit();
 					}
 					else {
 						meta().createRegion(new byte[]{meta().TopRight,meta().Right},(byte)0);
-						stateMngr.setAfterConsensus(StateOperation.FLIPALONG_UPLEFT);
+						stateMngr.setAfterConsensus(StateOperation.FLIPALONG,Orientation.TOPLEFT);
 						stateMngr.commit();
 					}
 				}
 				
-				if (meta().Top == 0  && meta().Bottom == 0 && meta().Left != 0) {
+				if (meta().Top == 0  && meta().Bottom == 0 && meta().Left != 0  && meta().Right == 0) {
 					if (meta().TopLeft == 0) {
 						meta().createRegion(new byte[]{meta().Left},(byte)0);
-						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH_TOPRIGHT);
+						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH,Orientation.TOPRIGHT);
 						stateMngr.commit();
 					}
 					else {
 						meta().createRegion(new byte[]{meta().TopLeft,meta().Left},(byte)0);
-						stateMngr.setAfterConsensus(StateOperation.FLIPALONG_UPRIGHT);
+						stateMngr.setAfterConsensus(StateOperation.FLIPALONG,Orientation.TOPRIGHT);
 						stateMngr.commit();
 					}
 				}
@@ -436,47 +433,47 @@ public class BrandtController extends MfController implements ControllerInformat
 				if (meta().Bottom == 0  && meta().Top != 0 && meta().Left == 0  && meta().Right == 0 ) {
 					if (meta().TopLeft == 0) {
 						meta().createRegion(new byte[]{meta().Top},(byte)0);
-						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH_BOTTOMLEFT);
+						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH,Orientation.BOTTOMLEFT);
 						stateMngr.commit();
 					}
-					if (meta().TopRight == 0) {
-						meta().createRegion(new byte[]{meta().Top},(byte)0);
-						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH_BOTTOMRIGHT);
-						stateMngr.commit();
-					}
+//					if (meta().TopRight == 0) {
+//						meta().createRegion(new byte[]{meta().Top},(byte)0);
+//						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH_BOTTOMRIGHT);
+//						stateMngr.commit();
+//					}
 				}
 			}
 		}
 
 		
-		if (stateMngr.at(StateOperation.FLIPTHROUGH_TOPLEFT) || stateMngr.at(StateOperation.FLIPTHROUGH_TOPRIGHT) || stateMngr.at(StateOperation.FLIPTHROUGH_BOTTOMLEFT) || stateMngr.at(StateOperation.FLIPTHROUGH_BOTTOMRIGHT)) {
+		if (stateMngr.at(StateOperation.FLIPTHROUGH)) {
 			if (stateMngr.doWait(0)) {
 				
 				boolean sourceH = false;
 				boolean sourceV = false; 
 				
-				if (stateMngr.at(StateOperation.FLIPTHROUGH_TOPLEFT)) {
+				if (stateMngr.getState().getOrientation() == Orientation.TOPLEFT) {
 					sourceH = module().atB();
 					sourceV = module().atL();
 					QUART = -90;
 					HALF = -180;
 				}
 				
-				if (stateMngr.at(StateOperation.FLIPTHROUGH_TOPRIGHT)) {
+				if (stateMngr.getState().getOrientation() == Orientation.TOPRIGHT) {
 					sourceH = module().atB();
 					sourceV = module().atR();
 					QUART = 90;
 					HALF = 180;
 				}
 				
-				if (stateMngr.at(StateOperation.FLIPTHROUGH_BOTTOMLEFT)) {
+				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMLEFT) {
 					sourceH = module().atR();
 					sourceV = module().atB();
 					QUART = -90;
 					HALF = -180;
 				}
 				
-				if (stateMngr.at(StateOperation.FLIPTHROUGH_BOTTOMRIGHT)) {
+				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMRIGHT) {
 					sourceH = module().atL();
 					sourceV = module().atB();
 					QUART = 90;
@@ -595,20 +592,24 @@ public class BrandtController extends MfController implements ControllerInformat
 			
 		}
 	
+//		
+//		if (stateMngr.at(StateOperation.FLIPOVER_UPLEFT) || stateMngr.at(StateOperation.FLIPALONG_UPRIGHT)) {
+//			
+//		}
 		
-		if (stateMngr.at(StateOperation.FLIPALONG_UPLEFT) || stateMngr.at(StateOperation.FLIPALONG_UPRIGHT)) {
+		if (stateMngr.at(StateOperation.FLIPALONG)) {
 			if (stateMngr.doWait(0)) {
 				boolean sourceH = false;;
 				boolean sourceV = false; 
 				
-				if (stateMngr.at(StateOperation.FLIPALONG_UPRIGHT)) {
+				if (stateMngr.getState().getOrientation() == Orientation.TOPRIGHT) {
 					sourceH = module().atL();
 					sourceV = module().atB();
 					QUART = 90;
 					HALF = 180;
 				}
 				
-				if (stateMngr.at(StateOperation.FLIPALONG_UPLEFT)) {
+				if (stateMngr.getState().getOrientation() == Orientation.TOPLEFT) {
 					sourceH = module().atR();
 					sourceV = module().atB();
 					QUART = -90;
@@ -883,13 +884,13 @@ public class BrandtController extends MfController implements ControllerInformat
 	public boolean receivePacket (PacketSymmetry p) {
 		boolean handled = false;
 		
-		if (stateMngr.check(p,new State(StateOperation.FLIPTHROUGH_TOPLEFT,13)) || stateMngr.check(p,new State(StateOperation.FLIPTHROUGH_TOPRIGHT,13)) || stateMngr.check(p,new State(StateOperation.FLIPTHROUGH_BOTTOMLEFT,13)) || stateMngr.check(p,new State(StateOperation.FLIPTHROUGH_BOTTOMRIGHT,13))) {	
+		if (stateMngr.check(p,new State(StateOperation.FLIPTHROUGH,13))) {	
 			symmetryFix(p);
 			handled = true;
 		}
 		
 		
-		if (stateMngr.check(p,new State(StateOperation.FLIPALONG_UPRIGHT,16)) || stateMngr.check(p,new State(StateOperation.FLIPALONG_UPLEFT,16))) {	
+		if (stateMngr.check(p,new State(StateOperation.FLIPALONG,16))) {	
 			symmetryFix(p);
 			handled = true;
 		}
@@ -898,31 +899,25 @@ public class BrandtController extends MfController implements ControllerInformat
 	}
 
 	protected boolean receivePacket(PacketAddNeighbor p) {
-		
-//		if (stateMngr.check(p,new State(StateOperation.CHOOSE,2))) {
-						
-			visual.print(".PacketAddNeighbor" + p);
-			if (p.metaID == meta().Left) {
-				meta().setVar("TopLeft",p.first);
-				meta().setVar("BottomLeft",p.second);
-			}
-			if (p.metaID == meta().Right) {
-				meta().setVar("TopRight", p.first);
-				meta().setVar("BottomRight", p.second);
-			}
-			if (p.metaID == meta().Top) {
-				meta().setVar("TopLeft", p.first);
-				meta().setVar("TopRight", p.second);
-			}
-			if (p.metaID == meta().Bottom) {
-				meta().setVar("BottomLeft", p.first);
-				meta().setVar("BottomRight", p.second);
-			}
-//		}
-//		else {
-//			visual.print(".!!!PacketAddNeighbor" + p);
-//		}
-			
+					
+		visual.print(".PacketAddNeighbor" + p);
+		if (p.metaID == meta().Left) {
+			meta().setVar("TopLeft",p.first);
+			meta().setVar("BottomLeft",p.second);
+		}
+		if (p.metaID == meta().Right) {
+			meta().setVar("TopRight", p.first);
+			meta().setVar("BottomRight", p.second);
+		}
+		if (p.metaID == meta().Top) {
+			meta().setVar("TopLeft", p.first);
+			meta().setVar("TopRight", p.second);
+		}
+		if (p.metaID == meta().Bottom) {
+			meta().setVar("BottomLeft", p.first);
+			meta().setVar("BottomRight", p.second);
+		}
+
 		
 		return true;
 	}

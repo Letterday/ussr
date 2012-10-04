@@ -6,6 +6,6 @@ public interface IGroupEnum {
 	String name();
 
 	IGroupEnum valueFrom(String string);
-	
-	
+
+
 }

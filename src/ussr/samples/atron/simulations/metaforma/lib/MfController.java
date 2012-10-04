@@ -13,6 +13,7 @@ import ussr.samples.atron.simulations.metaforma.lib.NeighborSet;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 import ussr.util.Pair;
 
+
 public abstract class MfController extends MfApi implements ControllerInformationProvider{
 
 	public final static byte NORTH = (byte) (pow2(0) + pow2(1) + pow2(2) + pow2(3));
@@ -103,7 +104,8 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		 // All threads and controllers need to be ready before proceeding!
 		 
 		scheduler.enable("module.broadcastConsensus");
-			
+		scheduler.enable("meta.broadcastNeighbors");
+		scheduler.enable("meta.broadcastVars");	
 		
 		
 		for (int i=0; i<5; i++) {
@@ -202,7 +204,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 			}
 			else if (typeNr == PacketConsensus.getTypeNr()) {
 				PacketConsensus p = (PacketConsensus)new PacketConsensus(this).deserialize(msg,connector);
-				if (p.regionID == meta().regionID() && preprocessPacket(p)) {
+				if (p.regionID == meta().regionID() && preprocessPacket(p) ) {
 					getStateMngr().update((BigInteger)p.getVar("consensus"),p.getState());
 				}
 				receivePacket((Packet)p);
@@ -252,9 +254,8 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 			
 			//TODO: BrandtController.StateOperation.CHOOSE needs to be converted to independent state
 			if (var.equals("regionID")) {
-				// The new region ID may not be zero!
+				// The new region ID is not allowed to be zero!
 				if (stateMngr.at(BrandtController.StateOperation.CHOOSE) && e.getValue().fst() != 0) {
-					getStateMngr().cleanConsensus();
 					getStateMngr().commit("BOSS ID received through meta sync");
 //					visual.print("COMMMMIIITT");
 				}

@@ -8,6 +8,7 @@ import ussr.util.Pair;
 public class SettingsBase {
 	public HashMap<String,Pair<Float,Float>> intervals = new HashMap<String, Pair<Float,Float>>();
 	private float propagationRate;
+	private float withdrawTime;
 
 	
 	
@@ -18,12 +19,18 @@ public class SettingsBase {
 		intervals.put("meta.broadcastVars", new Pair<Float,Float>(4f,0f));
 		intervals.put("meta.broadcastNeighbors", new Pair<Float,Float>(4f,15f));
 		
+		
+		
 		propagationRate = 0.3f;
-	
+		withdrawTime = 20f;
 	}
 	
 	public float getPropagationRate() {
 		return propagationRate;	
+	}
+	
+	public float getWithdrawTime() {
+		return withdrawTime;	
 	}
 	
 	public float getInterval (String name) {
@@ -34,9 +41,9 @@ public class SettingsBase {
 		return intervals.get(name).snd();
 	}
 	
-//	private int ladderLength = 1;
-//	private int ladderWidth = 2;
-//	private boolean ladderBegin = true;
+	private int ladderLength = 3;
+	private int ladderWidth = 1;
+	private boolean ladderBegin = false;
 //	
 //	private float metaVarSyncTime = 7;
 //	private float discoverTime = 5;
@@ -45,18 +52,18 @@ public class SettingsBase {
 //	private byte metaTTL = 2;
 //	private float metaIndirectDiscoverInterval = 0.5f;
 //	private float metaDirectDiscoverInterval = 0.2f;
-//
-//	public int getLadderLength() {
-//		return ladderLength;
-//	}
-//	
-//	public int getLadderWidth() {
-//		return ladderWidth;
-//	}
-//	
-//	public boolean getLadderBegin() {
-//		return ladderBegin;
-//	}
+
+	public int getLadderLength() {
+		return ladderLength;
+	}
+	
+	public int getLadderWidth() {
+		return ladderWidth;
+	}
+	
+	public boolean getLadderBegin() {
+		return ladderBegin;
+	}
 //	
 //
 //	public float getMetaIndirectDiscoverTime() {

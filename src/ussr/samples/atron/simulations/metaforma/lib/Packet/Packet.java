@@ -5,6 +5,7 @@ import ussr.samples.atron.simulations.metaforma.lib.IModule;
 import ussr.samples.atron.simulations.metaforma.lib.IRole;
 import ussr.samples.atron.simulations.metaforma.lib.MfController;
 import ussr.samples.atron.simulations.metaforma.lib.Module;
+import ussr.samples.atron.simulations.metaforma.lib.Orientation;
 import ussr.samples.atron.simulations.metaforma.lib.State;
 
 
@@ -68,7 +69,7 @@ public abstract class Packet extends PacketBase {
 //			throw new Error("sourceConnector = -1");
 //		}
 		// 0 is used to determine difference between packet and metapacket
-		ret[0] = (byte) 0;
+		ret[0] = (byte) (state.getOrientation().ordinal()%8);
 		ret[1] = (byte) (source.ord());
 		ret[2] = (byte) (type%8 | ((connSource%8)<<3) | ((dir.ord()%2)<<6) |((connectorConnected?1:0)<<7));
 		ret[3] = (byte) (state.getInstruction()%32 | (role.index()%8)<<5);
@@ -86,8 +87,11 @@ public abstract class Packet extends PacketBase {
 		if (!isPacket(msg)) {
 			System.err.println("NOT a packet!");
 		}
+		
+		connDest 					= connector;
+		
 		source = Module.value(msg[1]&255);
-		connDest = connector;
+		
 		
 		type = 				(byte)  (((msg[2]&255)>>0)%8);  
 		connSource = 		(byte) 	(((msg[2]&255)>>3)%8);
@@ -99,7 +103,7 @@ public abstract class Packet extends PacketBase {
 		
 		regionID = msg[4];
 		metaID = msg[5];
-		state = new State(ctrl.getInstOperation().fromByte((byte) ((msg[6]&255)%8)),(byte) (((msg[6]&255)>>3)%32),(byte) ((msg[3]&255)%32));
+		state = new State(ctrl.getInstOperation().fromByte((byte) ((msg[6]&255)%8)),(byte) (((msg[6]&255)>>3)%32),(byte) ((msg[3]&255)%32),Orientation.values()[(msg[0]&255)%8]);
 		
 		byte[] payload = new byte[ msg.length-HEADER_LENGTH ];		
 		
