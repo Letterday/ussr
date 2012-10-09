@@ -19,7 +19,7 @@ class BrandtSimulation extends MfSimulation {
 	class Settings extends SettingsBase {
 		
 	}
-	public SettingsBase set = new Settings();
+	public Settings set = new Settings();
 	
 	
 	public static void main(String[] args) {
@@ -356,22 +356,17 @@ public class BrandtController extends MfController implements ControllerInformat
 		module().role = ModuleRole.NONE;
 		
 		
-		visual.setColor(Mod.Clover_North, Color.PINK);
-		visual.setColor(Mod.Clover_South, Color.PINK.darker());
-		visual.setColor(Mod.Clover_West, Color.PINK.darker().darker());
-		visual.setColor(Mod.Clover_East, Color.PINK.darker().darker().darker());
-		visual.setColor(Group.Uplifter, Color.WHITE);
-
-		visual.setColor(StateOperation.FLIPTHROUGH,Color.CYAN);
-//		visual.setColor(StateOperation.FLIPTHROUGH_TOPRIGHT,Color.YELLOW);
-//		visual.setColor(StateOperation.FLIPTHROUGH_BOTTOMLEFT,Color.PINK);
-//		visual.setColor(StateOperation.FLIPTHROUGH_BOTTOMRIGHT,Color.RED);
-//		visual.setColor(StateOperation.FLIPALONG_UPLEFT,Color.GREEN);
-		visual.setColor(StateOperation.FLIPALONG,Color.MAGENTA);
-		visual.setColor(StateOperation.INIT,Color.WHITE);
+//		visual.setColor(Mod.Clover_North, Color.PINK);
+//		visual.setColor(Mod.Clover_South, Color.PINK.darker());
+//		visual.setColor(Mod.Clover_West, Color.PINK.darker().darker());
+//		visual.setColor(Mod.Clover_East, Color.PINK.darker().darker().darker());
+//		visual.setColor(Group.Uplifter, Color.WHITE);
+//
+//		visual.setColor(StateOperation.FLIPTHROUGH,Color.CYAN);
+//		visual.setColor(StateOperation.FLIPALONG,Color.MAGENTA);
+//		visual.setColor(StateOperation.INIT,Color.WHITE);
 		
-		visual.setMessageFilter(255);//^ pow2(PacketDiscover.getTypeNr()));
-		visual.setMessageFilterMeta(255);				
+		visual.setMessageFilter(255);//^ pow2(PacketDiscover.getTypeNr()));		
 	}
 
 	public void handleStates() {
@@ -406,12 +401,12 @@ public class BrandtController extends MfController implements ControllerInformat
 				
 				if (meta().Top == 0 && meta().Bottom == 0 && meta().Right != 0 && meta().Left == 0) {
 					if (meta().TopRight == 0) {
-						meta().createRegion(new byte[]{meta().Right},(byte)0);
+						meta().createRegion(new byte[]{meta().Right});
 						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH,Orientation.TOPLEFT);
 						stateMngr.commit();
 					}
 					else {
-						meta().createRegion(new byte[]{meta().TopRight,meta().Right},(byte)0);
+						meta().createRegion(new byte[]{meta().TopRight,meta().Right});
 						stateMngr.setAfterConsensus(StateOperation.FLIPALONG,Orientation.TOPLEFT);
 						stateMngr.commit();
 					}
@@ -419,28 +414,28 @@ public class BrandtController extends MfController implements ControllerInformat
 				
 				if (meta().Top == 0  && meta().Bottom == 0 && meta().Left != 0  && meta().Right == 0) {
 					if (meta().TopLeft == 0) {
-						meta().createRegion(new byte[]{meta().Left},(byte)0);
+						meta().createRegion(new byte[]{meta().Left});
 						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH,Orientation.TOPRIGHT);
 						stateMngr.commit();
 					}
 					else {
-						meta().createRegion(new byte[]{meta().TopLeft,meta().Left},(byte)0);
+						meta().createRegion(new byte[]{meta().TopLeft,meta().Left});
 						stateMngr.setAfterConsensus(StateOperation.FLIPALONG,Orientation.TOPRIGHT);
 						stateMngr.commit();
 					}
 				}
 				
 				if (meta().Bottom == 0  && meta().Top != 0 && meta().Left == 0  && meta().Right == 0 ) {
-					if (meta().TopLeft == 0) {
-						meta().createRegion(new byte[]{meta().Top},(byte)0);
-						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH,Orientation.BOTTOMLEFT);
-						stateMngr.commit();
-					}
-//					if (meta().TopRight == 0) {
+//					if (meta().TopLeft == 0) { 
 //						meta().createRegion(new byte[]{meta().Top},(byte)0);
-//						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH_BOTTOMRIGHT);
+//						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH,Orientation.BOTTOMLEFT);
 //						stateMngr.commit();
 //					}
+					if (meta().TopRight == 0) {
+						meta().createRegion(new byte[]{meta().Top});
+						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH,Orientation.BOTTOMRIGHT);
+						stateMngr.commit();
+					}
 				}
 			}
 		}
@@ -939,20 +934,13 @@ public class BrandtController extends MfController implements ControllerInformat
 
 	@Override
 	public BagModule module() {
-		if (module == null) {
-//			module = (BagModule)new BagModule().setController(this);
-		}
 		return (BagModule) module;
 
 	}
 	
 	@Override
 	public BagMeta meta() {
-		if (meta == null) {
-//			meta = (BagMeta)new BagMeta().setController(this);
-		}
 		return meta;
-
 	}
 	
 	public void makePacket(byte[] msg, byte connector) {

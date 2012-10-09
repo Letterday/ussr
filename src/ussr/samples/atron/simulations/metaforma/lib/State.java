@@ -112,7 +112,16 @@ public class State implements IState,Cloneable {
 	}
 	
 	public boolean equals (State s) {
-		return operation != null && operation.equals(s.getOperation()) && instruction == s.getInstruction() && orient == s.getOrientation() &&(operationCounter == s.getOperationCounter() || operationCounter == -1 || s.getOperationCounter() == -1);
+		return 
+			operation != null 
+			&& operation.equals(s.getOperation()) 
+			&& instruction == s.getInstruction() 
+//			&& orient == s.getOrientation() TO MATCH IT WHEN RECEIVING PACKETS 
+			&& (
+				operationCounter == s.getOperationCounter() 
+				|| operationCounter == -1 
+				|| s.getOperationCounter() == -1
+			);
 		
 	}
 }

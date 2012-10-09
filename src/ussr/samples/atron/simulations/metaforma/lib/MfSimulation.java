@@ -53,6 +53,6 @@ public abstract class MfSimulation extends GenericATRONSimulation {
         generator.setObstacleSize(0.07f);
         //generator.activateCircleGap(); 
         //generator.obstacalize(ObstacleGenerator.ObstacleType.CIRCLE, world);
-        world.setPlaneTexture(WorldDescription.GRASS_TEXTURE);
+        world.setPlaneTexture(WorldDescription.WHITE_TEXTURE);
     }
 }

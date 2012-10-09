@@ -11,7 +11,6 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	public byte completed;
 	public byte regionID;
 	public byte metaModulesInRegion = 1;
-	public byte orientation = 0;
 	private float timeInitRegion;
 	
 	private HashMap<String,Byte> seqNrs = new HashMap<String, Byte>();
@@ -76,7 +75,14 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	}
 	
 	public void enable () {
-		ctrl.visual.print("ENABLE META!");
+		
+		if (ctrl.module().getMetaID() == 0) {
+			ctrl.visual.print("ENABLE (EMPTY) META!");
+			ctrl.module().setMetaID(1);
+		}
+		else {
+			ctrl.visual.print("ENABLE META!");
+		}
 		setVar("completed",1);
 	}
 	
@@ -109,7 +115,7 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 		return false;
 	}
 
-	public void createRegion(byte[] metaIDs,byte orient) {
+	public void createRegion(byte[] metaIDs) {
 		ctrl.visual.print(".createRegion " + ctrl.module().metaID);
 		
 		setRegionID(ctrl.module().metaID);	
@@ -128,7 +134,6 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 		
 		PacketRegion p = new PacketRegion(ctrl);
 		p.sizeMeta = metaModulesInRegion;
-		p.orientation = orient;
 		for (byte metaID : metaIDs) {
 			if (ctrl.nbs().nbsWithMetaId(metaID).isEmpty()) {
 				// One of the indirect neighbors can travel along with the packet
@@ -193,9 +198,7 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 		return ret;
 	}
 	
-	public abstract void neighborHook (Packet p);
 	
-	public abstract void broadcastNeighbors();
 
 	public String toString() {
 		return super.toString() + "\n" + seqNrs;
@@ -223,5 +226,9 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 		p.setVarList(names);
 		ctrl.broadcast(p);
 	}
+	
+//	public abstract void neighborHook (Packet p);	
+//	
+//	public abstract void broadcastNeighbors();
 	
 }

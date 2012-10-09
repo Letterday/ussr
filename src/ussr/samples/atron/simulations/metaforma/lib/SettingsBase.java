@@ -7,6 +7,7 @@ import ussr.util.Pair;
 
 public class SettingsBase {
 	public HashMap<String,Pair<Float,Float>> intervals = new HashMap<String, Pair<Float,Float>>();
+	public HashMap<String,Float> settings = new HashMap<String,Float>();
 	private float propagationRate;
 	private float withdrawTime;
 
@@ -19,7 +20,10 @@ public class SettingsBase {
 		intervals.put("meta.broadcastVars", new Pair<Float,Float>(4f,0f));
 		intervals.put("meta.broadcastNeighbors", new Pair<Float,Float>(4f,15f));
 		
-		
+		settings.put("turnAroundTime", 2f);
+		settings.put("backwardTime", 10f);
+		settings.put("assignTime", 4f);
+		settings.put("proximity", 0.20f);
 		
 		propagationRate = 0.3f;
 		withdrawTime = 20f;
@@ -93,5 +97,9 @@ public class SettingsBase {
 //	public float getMetaDirectDiscoverInterval() {
 //		return metaDirectDiscoverInterval;
 //	}
+
+	public float get(String name) {
+		return settings.get(name);
+	}
 
 }

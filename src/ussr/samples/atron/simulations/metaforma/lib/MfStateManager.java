@@ -25,7 +25,7 @@ public class MfStateManager {
 	private boolean commitAutoAfterState = true;
 	private int commitCountToReach;
 	
-
+	float stateTimeToSpend; 
 
 	
 	public MfStateManager (MfController c) {
@@ -34,6 +34,7 @@ public class MfStateManager {
 	
 	public void init (IStateOperation op) {
 		stateCurrent = new State (op,0,0,Orientation.TOPLEFT);
+		stateReceived = new State (op,0,0,Orientation.TOPLEFT);
 	}
 	
 	public void commitMyselfIfNotUsed () {
@@ -42,7 +43,7 @@ public class MfStateManager {
 		}
 	}
 	
-	public void commitSetCount(int count) {
+	public void consensusSetCount(int count) {
 		commitCountToReach = count;
 	}
 	
@@ -73,14 +74,12 @@ public class MfStateManager {
 	
 	
 	public void spend (String action) {
+		spend(ctrl.getSettings().getDuration(action));
+	}
+	
+	public void spend(float time) {
 		commitNotAutomatic(ctrl.getID());
-		float timeToSpend = ctrl.getSettings().getDuration(action);
-		if (timeSpentInState() > timeToSpend) {
-//			commit("Spent " + timeToSpend + " in state!");
-			ctrl.visual.print("Spent " + timeToSpend + " in state!");
-			nextInstruction();
-		}
-		
+		stateTimeToSpend = time;
 	}
 	
 	public BigInteger getConsensus() {
@@ -134,13 +133,14 @@ public class MfStateManager {
 
 	protected void cleanForNew() {
 		ctrl.prepareNextState();
-				
+		stateTimeToSpend = 0;
 		stateNeighborsDiscovered = false;
 		stateStartTime = ctrl.time();
+		commitCountToReach = 0;
 		stateOperationNext = null;
 		orientationNext = Orientation.TOPLEFT;
 		commitAutoAfterState = true;
-
+		
 		cleanConsensus();
 		
 	}
@@ -155,13 +155,11 @@ public class MfStateManager {
 		if (ctrl.module().metaID != 0) {
 			// If I am part of a region, I must be boss of that region!
 			// Consensus on meta-module level may only happen at INIT state, in other states Consensus must happen on region level!!
-			if (((ctrl.meta().regionID() != 0 && ctrl.meta().regionID() == ctrl.module().metaID))){// || at(new State(StateOperation.CHOOSE,0)) || at(new State(StateOperation.CHOOSE,1)))) {
-				if (commitCountToReach == 0) {
-					return consensusReached(ctrl.meta().getCountInRegion() * ctrl.getInstRole().size());
-				}
-				else {
-					return consensusReached(commitCountToReach);
-				}
+			if (commitCountToReach > 0) {
+				return consensusReached(commitCountToReach);
+			}
+			else if (((ctrl.meta().regionID() != 0 && ctrl.meta().regionID() == ctrl.module().metaID))){// || at(new State(StateOperation.CHOOSE,0)) || at(new State(StateOperation.CHOOSE,1)))) {
+				return consensusReached(ctrl.meta().getCountInRegion() * ctrl.getInstRole().size());
 			}
 		}
 		return false;
@@ -251,6 +249,7 @@ public class MfStateManager {
 	
 	
 	public boolean doUntil (int stateInstr, float interval) {
+		checkForTimeSpent();
 		if (stateCurrent.getInstruction() == stateInstr && ctrl.freqLimit("doRepeat" + stateInstr,interval)) {
 			if (!stateNeighborsDiscovered) {
 				stateNeighborsDiscovered = true;
@@ -261,7 +260,11 @@ public class MfStateManager {
 		return false;
 	}
 	
+	
 	public boolean doWait(int state) {
+		checkForTimeSpent();
+		
+		
 		if (getStateInstruction() == state && !committed()) {
 			ctrl.getScheduler().invokeNowDiscover();
 			ctrl.delay();
@@ -271,6 +274,14 @@ public class MfStateManager {
 	}
 			
 	
+	private void checkForTimeSpent() {
+		if (stateTimeToSpend != 0 && timeSpentInState() > stateTimeToSpend) {
+//			commit("Spent " + timeToSpend + " in state!");
+			ctrl.visual.print("Spent " + stateTimeToSpend + " in state!");
+			nextInstruction();
+		}
+	}
+
 	public boolean at (State s) {
 		return stateCurrent.equals(s);
 	}
@@ -297,22 +308,21 @@ public class MfStateManager {
 	}
 
 	public boolean update(BigInteger consensusUpd, State stateUpd) {
-//		ctrl.getVisual().print(".upd " + stateUpd + " " + stateRec);
-//		if (!(consensusRec.or(consensusUpd).equals(consensusRec))) {
-			if (stateReceived.isNewer(stateUpd)) {
-				consensusReceived = consensusUpd;
-				stateReceived = stateUpd;
-				return true;
+		boolean ret = false;
+		
+		if (stateReceived.isNewer(stateUpd)) {
+			ctrl.getVisual().print(".upd "  + stateUpd + " " + stateReceived);
+			consensusReceived = consensusUpd; 
+			stateReceived = stateUpd;
+			ret = true;
+		}
+		if (stateReceived.equals(stateUpd)) {
+			if (!consensusReceived.or(consensusUpd).equals(consensusReceived)) {
+				consensusReceived = consensusReceived.or(consensusUpd);
+				ret = true;
 			}
-			else if (stateReceived.equals(stateUpd)) {
-				if (!consensusReceived.or(consensusUpd).equals(consensusReceived)) {
-					consensusReceived = consensusReceived.or(consensusUpd);
-					return true;
-				}
-			}
-			
-//		}
-			return false;
+		}
+		return ret;
 	}
 
 	public boolean check(Packet p, State state) {
@@ -322,5 +332,7 @@ public class MfStateManager {
 	public boolean check(Packet p, IStateOperation state) {
 		return at(p.getState().getOperation()) && p.getState().match(state);
 	}
+
+	
 
 }

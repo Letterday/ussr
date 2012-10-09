@@ -2,17 +2,17 @@ package ussr.samples.atron.simulations.metaforma.lib;
 
 import java.math.BigInteger;
 
+import ussr.model.Sensor;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.PacketConsensus;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.PacketDiscover;
 
 public abstract class BagModuleCore extends Bag {
 	public IRole role;
 	public byte metaID;
-	private Module id; 
 	private Module idPrevious;
 	
 	public Module getID () {
-		return id;
+		return ctrl.getID();
 	}
 
 	public void setRole(IRole r) {
@@ -30,16 +30,17 @@ public abstract class BagModuleCore extends Bag {
 	}
 	
 	public void setID(IModule idNew) {
-		ctrl.visual.print("$$$ rename " + id + " to " + idNew);
-		ctrl.getModule().setProperty("name", idNew.toString());
-		id = new Module(idNew);
-		ctrl.visual.colorize();
-		discover ();
+		if (!ctrl.getID().equals(idNew)) {
+			ctrl.visual.print("$$$ rename " + ctrl.getID() + " to " + idNew);
+			ctrl.getModule().setProperty("name", idNew.toString());
+			ctrl.visual.colorize();
+			discover ();
+		}
 	}
 	
-	public void renameGroup(IGroupEnum to) {
-		ctrl.visual.print("rename group");
-		setID(getID().swapGrouping(to));
+	public void swapGroup(IGroupEnum to) {
+		ctrl.visual.print("swap group from " + getGroup() + " to " + to + " result:" + getID().swapGroup(to));
+		setID(getID().swapGroup(to));
 	}
 	
 	public void storeID () {
@@ -59,6 +60,10 @@ public abstract class BagModuleCore extends Bag {
 		setVar("metaID", (byte)i);
 	}
 	
+	public byte getMetaID() {
+		return getVar("metaID");
+	}
+	
 	public void broadcastConsensus() {
 //		visual.print(".broadcastConsensus()");
 		if (!ctrl.stateMngr.getConsensus().equals(BigInteger.ZERO) && metaID != 0) {
@@ -67,9 +72,22 @@ public abstract class BagModuleCore extends Bag {
 		}
 	}
 	
-	public abstract boolean atT();
-	public abstract boolean atB();
-	public abstract boolean atL();
-	public abstract boolean atR();
+	public float proximitySensor() {
+		float ret = 0;
+		for(Sensor s: ctrl.getModule().getSensors()) {
+            if(s.getName().startsWith("Proximity")) {
+                float v = s.readValue();
+                ret = Math.max(v,ret);
+            }
+		}
+		return ret;
+	}
+	
+	public boolean atT(){return false;}
+	public boolean atB(){return false;}
+	public boolean atL(){return false;}
+	public boolean atR(){return false;}
+
+	
 	
 }

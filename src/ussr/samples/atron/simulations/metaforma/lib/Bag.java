@@ -28,8 +28,11 @@ public class Bag implements IBag {
 //			System.out.println(ctrl.getId() + ": " +ctrl.meta().getClass().getSimpleName() + ".getVar(" + name + ") = " + ret);
 			return ret;
 		}
+		catch (NoSuchFieldException e) {
+			System.out.println(e.getMessage());
+		}
 		catch (Exception e) {
-			System.err.println("Error at " + this.getClass());
+			ctrl.visual.error("Error at " + this.getClass());
 			e.printStackTrace();
 		}
 		return 0;

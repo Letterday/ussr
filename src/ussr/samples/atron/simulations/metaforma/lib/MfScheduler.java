@@ -71,7 +71,11 @@ public class MfScheduler {
 		try {
 			m = dest.getClass().getMethod(func);
 			m.setAccessible(true);
+			
 			m.invoke(dest,params);
+		}
+		catch(NoSuchMethodException e) {
+			System.out.println(e.getMessage());
 		}
 		catch (Exception e) {
 			System.err.println("Error on invoking " + func);

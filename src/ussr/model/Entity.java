@@ -49,7 +49,10 @@ public abstract class Entity {
      * @param value the value of the property
      */
     public synchronized void setProperty(String key, String value) {
-        if(properties==null) properties = new HashMap<String,String>();
+        if(properties==null) {
+        	properties = new HashMap<String,String>();
+        	System.out.println("Created new properties Hashmap");
+        }
         properties.put(key, value);
         synchronized(properties) {
         	properties.notifyAll();

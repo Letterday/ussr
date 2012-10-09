@@ -4,6 +4,9 @@ import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 
+import ussr.model.Sensor;
+import ussr.samples.atron.simulations.metaforma.gen.ObstacleAvoidanceController.Group;
+
 public class Module implements IModuleHolder,IModule {
 
 	public static IModEnum Mod;
@@ -29,8 +32,15 @@ public class Module implements IModuleHolder,IModule {
 	}	
 	
 	public boolean equals (Object m) {
-//		System.out.println(number + "==" + ((IModule)m).getNr());
-		return mod.equals(((IModule)m).getMod()) && number == ((IModule)m).getNr();		
+		if (this.toString().equals(m.toString())) {
+//			System.out.println(this + "==" + m);
+			return true;
+		}
+		else {
+//			System.out.println(this + "!=" + m);
+			return false;
+		}
+		
 	}
 	
 	public Module () {
@@ -110,8 +120,17 @@ public class Module implements IModuleHolder,IModule {
 		return mod.toString() + ((mod.getCount()!=1) ? "_" + number : "");
 	}
 	
-	public Module swapGrouping (IGroupEnum to) {
-		return new Module(Mod.valueFrom(to.name() + "_" + mod.name().split("_")[1]));
+	public Module swapGroup (IGroupEnum to) {
+		String parts[] = mod.toString().split("_");
+		
+		if (parts.length == 2){
+			return Module.value(to.name() + "_" + parts[1]);
+		}
+		else {
+			return Module.value(to.name() + "_" + number);
+		}
+
+		
 		
 	}
 	
@@ -119,7 +138,9 @@ public class Module implements IModuleHolder,IModule {
 		return Group.valueFrom(mod.name().split("_")[0]);
 	}
 
-
+	
+	
+	
 	@Override
 	public byte getNr() {
 		return number;
@@ -128,6 +149,10 @@ public class Module implements IModuleHolder,IModule {
 	@Override
 	public IModEnum getMod() {
 		return mod;
+	}
+
+	public void setGroup(IGroupEnum g) {
+		mod = Mod.valueFrom(g.name()); 
 	}
 	
 }

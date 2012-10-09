@@ -1,5 +1,5 @@
 package ussr.samples.atron.simulations.metaforma.lib;
-
+ 
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
@@ -94,7 +94,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		
 		init();
 		
-		module().setID(getID());
+//		module().setID(getID());
 		
 		System.out.println(getName() + ": " + getID());
 		
@@ -104,6 +104,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		 // All threads and controllers need to be ready before proceeding!
 		 
 		scheduler.enable("module.broadcastConsensus");
+		scheduler.enable("module.discover");
 		scheduler.enable("meta.broadcastNeighbors");
 		scheduler.enable("meta.broadcastVars");	
 		
@@ -115,7 +116,9 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		
 		while (true) {
 			// To make sure it will remain at correct pos
-			rotateToDegreeInDegrees(angle % 360);
+			if (actuation.iscontinuousPositioningEnabled()) {
+				rotateToDegreeInDegrees(angle % 360);
+			}
 			
 			scheduler.sync();
 			
@@ -129,16 +132,14 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 			if (freqLimit("colorize",0.5f)) {		
 				visual.colorize();
 			}
+			if (freqLimit("active",3f)) {		
+				System.out.println(getID() + ".active at " + time());
+			}
 			
 		}
 	} 
 	
-	public void addMetaNeighborhood (StringBuffer out) {
-		out.append(String.format("% 3d  % 3d  % 3d",meta().getVar("TopLeft"),meta().getVar("Top"),meta().getVar("TopRight")) + "\n");
-		out.append(String.format("% 3d        % 3d",meta().getVar("Left"),meta().getVar("Right")) + "\n");
-		out.append(String.format("% 3d  % 3d  % 3d",meta().getVar("BottomLeft"),meta().getVar("Bottom"),meta().getVar("BottomRight")) + "\n");
-	}
-	
+
 	
 	public void handleMessage(byte[] message, int messageLength, int connectorNr) {
 		// Translate absolute connector to relative connector (symmetry feature)
@@ -160,7 +161,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		}
 		getContext().addNeighbor(p.getSource(), p.connDest, p.getSourceConnector(),p.getModRole(),p.getMetaID(),p.getRegionID());
 	
-		if ((p.regionID == meta().regionID() && meta().regionID() != 0) || (p.metaID == module().metaID && module().metaID != 0)) {
+		if ((p.regionID == meta().regionID() && meta().regionID() != 0) || (p.metaID == module().metaID && module().metaID != 0) ) {//|| (p.metaID == 0 && module().metaID == 0) 
 			// If packet is in region or in meta-module, then update state!
 			if (getStateMngr().update(BigInteger.ZERO, p.getState())) {
 				visual.print("state update from " + p.getSource() + " : " + p.getState());
@@ -204,7 +205,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 			}
 			else if (typeNr == PacketConsensus.getTypeNr()) {
 				PacketConsensus p = (PacketConsensus)new PacketConsensus(this).deserialize(msg,connector);
-				if (p.regionID == meta().regionID() && preprocessPacket(p) ) {
+				if (preprocessPacket(p) ) { //p.regionID == meta().regionID() && 
 					getStateMngr().update((BigInteger)p.getVar("consensus"),p.getState());
 				}
 				receivePacket((Packet)p);
@@ -467,7 +468,6 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 			visual.print(p.toString());
 			meta().setRegionID(p.getRegionID());
 			meta().setCountInRegion (p.sizeMeta);
-			meta().setVar("orientation",p.orientation);
 			if (p.indirectNb != 0) {
 				unicast(new PacketRegion(this),nbs().nbsWithMetaId(p.indirectNb).connectors());
 			}	

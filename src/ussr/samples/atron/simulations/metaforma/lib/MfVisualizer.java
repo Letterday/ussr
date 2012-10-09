@@ -15,7 +15,6 @@ public class MfVisualizer {
 	private MfController ctrl;
 	
 	protected byte msgFilter;
-	private byte msgFilterMeta;
 	
 	private Map<IModuleHolder, Color> colorsModuleHolder = new HashMap<IModuleHolder, Color>();
 	
@@ -80,6 +79,8 @@ public class MfVisualizer {
 		return flipStr;
 	}
 
+
+	
 	public String getModuleInformation() {
 		StringBuffer out = new StringBuffer();
 		
@@ -92,6 +93,7 @@ public class MfVisualizer {
 
 		out.append("angle: " + ctrl.getContext().getAngle() + " ("+ctrl.getAngle()+")"  + "  flips: " + getFlipString());
 		out.append("\n");
+	
 		
 		out.append("intervals: " + ctrl.getScheduler().intervals);
 		out.append("\n");
@@ -105,6 +107,8 @@ public class MfVisualizer {
 		
 		
 		out.append("=== module ===\n" + ctrl.module() + "\n");
+		out.append("Proximity: " + ctrl.module().proximitySensor() + "\n");
+		
 		out.append("===  meta  ===\n" + ctrl.meta() + "\n");
 	
 		out.append("do repeat: " + ctrl.getDoRepeat());
@@ -119,11 +123,16 @@ public class MfVisualizer {
 	
 		out.append("\n");
 		
-		ctrl.addMetaNeighborhood(out);
-		
+		addMetaNeighborhood(out);
 		return out.toString();
 	}
 
+	public void addMetaNeighborhood (StringBuffer out) {
+		out.append(String.format("% 3d % 3d % 3d",ctrl.meta().getVar("TopLeft"),ctrl.meta().getVar("Top"),ctrl.meta().getVar("TopRight")) + "\n");
+		out.append(String.format("% 3d     % 3d",ctrl.meta().getVar("Left"),ctrl.meta().getVar("Right")) + "\n");
+		out.append(String.format("% 3d % 3d % 3d",ctrl.meta().getVar("BottomLeft"),ctrl.meta().getVar("Bottom"),ctrl.meta().getVar("BottomRight")) + "\n");
+	}
+	
 	public void setColor(IModuleHolder m, Color color) {
 		colorsModuleHolder.put(m, color);
 		colorize();
@@ -166,9 +175,6 @@ public class MfVisualizer {
 		print("Message filter " + msg);
 	}
 	
-	public void setMessageFilterMeta (int msg) {
-		msgFilterMeta = (byte) msg;
-	}
 	
 	public void print (PacketBase p, String msg) {
 		if ((MfController.pow2(p.getType()) & msgFilter) != 0) {
@@ -195,7 +201,7 @@ public class MfVisualizer {
 	
 	public void printStatePre() {
 		StringBuffer metaNbs = new StringBuffer();
-		ctrl.addMetaNeighborhood(metaNbs);
+		addMetaNeighborhood(metaNbs);
 		print("New state: " + ctrl.getStateMngr().getState() + "\n=================================\n" + ctrl.getContext().nbs()+"\n" + metaNbs +"\n");
 	}
 	
@@ -203,8 +209,5 @@ public class MfVisualizer {
 	public String getTitle() {
 		return getIdString();
 	}
-
-
-	
 
 }

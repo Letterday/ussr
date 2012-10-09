@@ -1,10 +1,13 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
+import ussr.samples.atron.simulations.metaforma.gen.ObstacleAvoidanceController.Group;
+
 
 
 public class MfActuation  {
 	
 	private MfController ctrl;
+	private boolean disableContinuousPositioning;
 
 
 
@@ -13,6 +16,7 @@ public class MfActuation  {
 	}
 
 	public void rotate(int degrees) {
+		enableContinuousPositioning();
 		ctrl.visual.print("## rotate " + degrees + ", current = " + ctrl.getAngle() + "; new = " + (degrees + ctrl.getAngle()) + "");
 		// TODO: There is still a strange issue: when rotating 180 degrees, it is undefined whether it goes CW or CCW (randomly).
 		if (Math.abs(degrees) < 180) {
@@ -39,6 +43,7 @@ public class MfActuation  {
 	
 	
 	public void rotate(IModuleHolder g, int degrees) {
+		enableContinuousPositioning();
 		ctrl.stateMngr.commitNotAutomatic(g);
 		if (g.contains(ctrl.module().getID()) ) {
 			rotate(degrees);
@@ -171,6 +176,32 @@ public class MfActuation  {
 	
 	public void disconnectPart (IModuleHolder g, int part) {
 		connectionPart(g, part, false);
+	}
+
+	public void rotate_continuous(Group g, float velocity) {
+		ctrl.visual.print("# " + g + " rotate_continuous " + velocity);
+		if (g.contains(ctrl.module().getID())) {
+			ctrl.visual.print("# rotateContinuous " + velocity);
+			disableContinuousPositioning();
+			ctrl.rotateContinuous(velocity);
+			ctrl.stateMngr.commit();
+		}
+		
+	}
+
+	private void disableContinuousPositioning() {
+		disableContinuousPositioning = true;
+		
+	}
+	
+	public boolean iscontinuousPositioningEnabled() {
+		return !disableContinuousPositioning;
+	}
+	
+	private void enableContinuousPositioning() {
+//		angle = ctrl.getAngle();
+		disableContinuousPositioning = false;
+		
 	}
 
 //	THIS DOES NOT WORK FOR FEMALE CONNECTORS!

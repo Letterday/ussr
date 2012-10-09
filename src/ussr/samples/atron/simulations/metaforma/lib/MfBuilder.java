@@ -1,7 +1,9 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
 import java.util.ArrayList;
-import java.util.BitSet;
+
+import com.jme.math.Quaternion;
+import com.jme.math.Vector3f;
 
 import ussr.description.geometry.RotationDescription;
 import ussr.description.geometry.VectorDescription;
@@ -41,6 +43,30 @@ public class MfBuilder {
 		mPos.add(new ModulePosition(mod + "_" + (startId + 2), aPos (1,0,-1, pos), ATRON.ROTATION_EW));
 		mPos.add(new ModulePosition(mod + "_" + (startId + 3), aPos (1,0,1, pos), ATRON.ROTATION_EW));
 		
+    }
+    
+    public ArrayList<ModulePosition> buildCar(int numberOfWheels, IModEnum mod) {
+    	ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>();
+    	VectorDescription offset = new VectorDescription(2,0,0);
+        if(numberOfWheels==2) {
+        	offset = new VectorDescription(2,1,0);
+            mPos.add(new ModulePosition(mod + "_" + 0, aPos(-1,-1,0,offset), ATRON.ROTATION_UD));
+            mPos.add(new ModulePosition(mod + "_" + 1, aPos(-1,-2,1,offset), ATRON.ROTATION_SN));
+            mPos.add(new ModulePosition(mod + "_" + 2, aPos(-1,-2,-1,offset), ATRON.ROTATION_NS));
+        } 
+        else if(numberOfWheels==4) {
+            mPos.add(new ModulePosition(mod + "_" + 0, aPos(0,0,0,offset), ATRON.ROTATION_EW));
+            mPos.add(new ModulePosition(mod + "_" + 1, aPos(1,-1,0,offset), ATRON.ROTATION_UD));
+            mPos.add(new ModulePosition(mod + "_" + 2, aPos(-1,-1,0,offset), ATRON.ROTATION_UD));
+            mPos.add(new ModulePosition(mod + "_" + 3, aPos(-1,-2,1,offset), ATRON.ROTATION_SN));
+            mPos.add(new ModulePosition(mod + "_" + 4, aPos(-1,-2,-1,offset), ATRON.ROTATION_NS));
+            mPos.add(new ModulePosition(mod + "_" + 5, aPos(1,-2,1,offset), ATRON.ROTATION_SN));
+            mPos.add(new ModulePosition(mod + "_" + 6, aPos(1,-2,-1,offset), ATRON.ROTATION_NS));
+        } 
+        else {
+            throw new Error("Not implemented yet");
+        }
+        return mPos;
     }
     
 	public ArrayList<ModulePosition> buildGrid(SettingsBase set, IModEnum mod) {
@@ -87,15 +113,15 @@ public class MfBuilder {
         return mPos;
 	}
 	
-	 public ArrayList<ModulePosition> buildEight2(VectorDescription position) {
+	 public ArrayList<ModulePosition> buildEight(VectorDescription position) {
 		 ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
-        mPos.add(new ModulePosition("Struct_0", aPos(0,0,0,position), ATRON.ROTATION_NS_BROKEN));
-        mPos.add(new ModulePosition("Struct_1", aPos(1,0,1,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("Struct_2", aPos(1,0,-1,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("Struct_3", aPos(2,0,0,position), ATRON.ROTATION_NS_BROKEN));
-        mPos.add(new ModulePosition("Struct_4", aPos(3,0,1,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("Struct_5", aPos(3,0,-1,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("Struct_6", aPos(4,0,0,position), ATRON.ROTATION_NS_BROKEN));
+        mPos.add(new ModulePosition("F_0", aPos(0,0,0,position), ATRON.ROTATION_NS_BROKEN));
+        mPos.add(new ModulePosition("F_1", aPos(1,0,1,position), ATRON.ROTATION_EW));
+        mPos.add(new ModulePosition("F_2", aPos(1,0,-1,position), ATRON.ROTATION_EW));
+        mPos.add(new ModulePosition("F_3", aPos(2,0,0,position), ATRON.ROTATION_NS_BROKEN));
+        mPos.add(new ModulePosition("F_4", aPos(3,0,1,position), ATRON.ROTATION_EW));
+        mPos.add(new ModulePosition("F_5", aPos(3,0,-1,position), ATRON.ROTATION_EW));
+        mPos.add(new ModulePosition("F_6", aPos(4,0,0,position), ATRON.ROTATION_NS_BROKEN));
         return mPos;
     }
 	    
@@ -111,4 +137,7 @@ public class MfBuilder {
         final float Zoffset = offset.getZ();
         return new VectorDescription(x*ATRON.UNIT+Xoffset, y*ATRON.UNIT+Yoffset, z*ATRON.UNIT+Zoffset);
     }
+
+
+	
 }
