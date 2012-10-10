@@ -170,72 +170,65 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 			return true;
 		}
 		
-//		visual.print(p,".reject: " + p);
+		visual.print(p,".reject: " + p);
 		return false;
 	}
 	
 	
 	
 	public void makePacket(byte[] msg, byte connector) {
-		if (Packet.isPacket(msg)) {
-			byte typeNr = Packet.getType(msg);
-			if (typeNr == PacketDiscover.getTypeNr()) {
-				PacketDiscover p = (PacketDiscover)new PacketDiscover(this).deserialize(msg,connector);
-				preprocessPacket(p);
-				receivePacket((Packet)p);
-				if (p.getDir() == Dir.REQ) {
-					send(new PacketDiscover(this).setDir(Dir.ACK),connector);
-				}
-				System.out.println(getID() + ".receivediscover " + p);
+		
+		byte typeNr = Packet.getType(msg);
+		if (typeNr == PacketDiscover.getTypeNr()) {
+			PacketDiscover p = (PacketDiscover)new PacketDiscover(this).deserialize(msg,connector);
+			preprocessPacket(p);
+			receivePacket((Packet)p);
+			if (p.getDir() == Dir.REQ) {
+				send(new PacketDiscover(this).setDir(Dir.ACK),connector);
 			}
-			else if (typeNr == PacketSymmetry.getTypeNr()) {
-				PacketSymmetry p = (PacketSymmetry)new PacketSymmetry(this).deserialize(msg,connector);
-				if (preprocessPacket(p)) {
-					receivePacket(p);
-				}
-				receivePacket((Packet)p);
-			}
-			else if (typeNr == PacketSetMetaId.getTypeNr()) {
-				PacketSetMetaId p = (PacketSetMetaId)new PacketSetMetaId(this).deserialize(msg,connector);
-				// This packet is used to create a meta-module, so we cant do the preprocess check before receiving!
-				visual.print(p,".receive: " + p);
+			System.out.println(getID() + ".receivediscover " + p);
+		}
+		else if (typeNr == PacketSymmetry.getTypeNr()) {
+			PacketSymmetry p = (PacketSymmetry)new PacketSymmetry(this).deserialize(msg,connector);
+			if (preprocessPacket(p)) {
 				receivePacket(p);
-				receivePacket((Packet)p);
-				
 			}
-			else if (typeNr == PacketConsensus.getTypeNr()) {
-				PacketConsensus p = (PacketConsensus)new PacketConsensus(this).deserialize(msg,connector);
-				if (preprocessPacket(p) ) { //p.regionID == meta().regionID() && 
-					getStateMngr().update((BigInteger)p.getVar("consensus"),p.getState());
-				}
-				receivePacket((Packet)p);
+			receivePacket((Packet)p);
+		}
+		else if (typeNr == PacketSetMetaId.getTypeNr()) {
+			PacketSetMetaId p = (PacketSetMetaId)new PacketSetMetaId(this).deserialize(msg,connector);
+			// This packet is used to create a meta-module, so we cant do the preprocess check before receiving!
+			visual.print(p,".receive: " + p);
+			receivePacket(p);
+			receivePacket((Packet)p);
+			
+		}
+		else if (typeNr == PacketConsensus.getTypeNr()) {
+			PacketConsensus p = (PacketConsensus)new PacketConsensus(this).deserialize(msg,connector);
+			if (preprocessPacket(p) ) { //p.regionID == meta().regionID() && 
+				getStateMngr().update((BigInteger)p.getVar("consensus"),p.getState());
 			}
-			else if (typeNr == PacketMetaVarSync.getTypeNr()) {
-				PacketMetaVarSync p = (PacketMetaVarSync)new PacketMetaVarSync(this).deserialize(msg,connector);
-				// Meta var sync only within meta module
-				if (preprocessPacket(p) && module().metaID == p.metaID) {
-					receivePacket(p);
-				}
-				receivePacket((Packet)p);
-			}
-			else if (typeNr == PacketRegion.getTypeNr()) {
-				PacketRegion p = (PacketRegion)new PacketRegion(this).deserialize(msg,connector);
-				preprocessPacket(p);
+			receivePacket((Packet)p);
+		}
+		else if (typeNr == PacketMetaVarSync.getTypeNr()) {
+			PacketMetaVarSync p = (PacketMetaVarSync)new PacketMetaVarSync(this).deserialize(msg,connector);
+			// Meta var sync only within meta module
+			if (preprocessPacket(p) && module().metaID == p.metaID) {
 				receivePacket(p);
-				receivePacket((Packet)p);
 			}
-			else {
-				visual.error("Unknown packet with nr !" + typeNr);
-				receiveCustomPacket(typeNr,msg,connector);
-			}
-			
-			
+			receivePacket((Packet)p);
+		}
+		else if (typeNr == PacketRegion.getTypeNr()) {
+			PacketRegion p = (PacketRegion)new PacketRegion(this).deserialize(msg,connector);
+			preprocessPacket(p);
+			receivePacket(p);
+			receivePacket((Packet)p);
 		}
 		else {
-			visual.error("META packet received??");
-//			receivePacket(MetaPacket(msg));
+			visual.error("Unknown packet with nr !" + typeNr);
+			receiveCustomPacket(typeNr,msg,connector);
 		}
-
+	
 	}
 
 	

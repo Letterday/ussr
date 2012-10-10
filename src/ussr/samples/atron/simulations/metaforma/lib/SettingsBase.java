@@ -47,7 +47,7 @@ public class SettingsBase {
 	
 	private int ladderLength = 3;
 	private int ladderWidth = 1;
-	private boolean ladderBegin = false;
+	private boolean ladderBegin = true;
 //	
 //	private float metaVarSyncTime = 7;
 //	private float discoverTime = 5;

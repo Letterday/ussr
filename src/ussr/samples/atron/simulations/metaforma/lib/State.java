@@ -124,4 +124,8 @@ public class State implements IState,Cloneable {
 			);
 		
 	}
+
+	public boolean isInSequence() {
+		return operation.ord() > 1;
+	}
 }

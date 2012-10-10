@@ -143,9 +143,24 @@ public class BrandtController extends MfController implements ControllerInformat
 		public boolean atT() {return nbs(WEST&MALE).nbsInRegion(true).size() == 2 && nbs(EAST&NORTH&MALE).nbsInRegion(true).isEmpty() || nbs(WEST&FEMALE).nbsInRegion(true).size() == 2 && nbs(EAST&SOUTH&FEMALE).nbsInRegion(true).isEmpty();}
 		public boolean atB() {return nbs(EAST&MALE).nbsInRegion(true).size() == 2 && nbs(WEST&SOUTH&MALE).nbsInRegion(true).isEmpty() || nbs(EAST&FEMALE).nbsInRegion(true).size() == 2 && nbs(WEST&NORTH&FEMALE).nbsInRegion(true).isEmpty();}
 
-		public void gradientInit(boolean sH, boolean sV) {
-			sourceH = sH;
-			sourceV = sV;
+		public void gradientInit() {
+			if (stateMngr.getState().getOrientation() == Orientation.BOTTOMLEFT) {
+				sourceV = module().atB();
+				sourceH = module().atL();
+			}
+			if (stateMngr.getState().getOrientation() == Orientation.TOPLEFT) {
+				sourceV = module().atT();
+				sourceH = module().atL();
+			}
+			if (stateMngr.getState().getOrientation() == Orientation.BOTTOMRIGHT) {
+				sourceV = module().atB();
+				sourceH = module().atR();
+			}
+			if (stateMngr.getState().getOrientation() == Orientation.TOPRIGHT) {
+				sourceV = module().atT();
+				sourceH = module().atR();
+			}
+			
 			visual.print("gradientInit()");
 			setVar("gradH",(byte)MAX_BYTE);
 			setVar("gradV",(byte)MAX_BYTE);			
@@ -224,11 +239,16 @@ public class BrandtController extends MfController implements ControllerInformat
 		NONE,
 		Dummy_Left,
 		Dummy_Right,
-		F(100),
+		F(32),
 		Clover_North, Clover_South, Clover_West, Clover_East, 
-		Left(5),
-		Right(5), 
-		Uplifter_Left, Uplifter_Right, Uplifter_Top, Uplifter_Bottom,Dummy_Ref;
+		Outside(32),
+		Inside(32),
+		OutsideLifter_Top,
+		OutsideLifter_Bottom,
+		InsideLifter_Top,
+		InsideLifter_Bottom,
+		Uplifter_Left, Uplifter_Right, Uplifter_Top, Uplifter_Bottom,
+		Dummy_Ref;
 
 		byte count;
 		
@@ -311,7 +331,7 @@ public class BrandtController extends MfController implements ControllerInformat
 
 	}
 	
-	public enum Group implements IGroupEnum,IModuleHolder{ALL, NONE, F, Clover, Left, Right, Uplifter,Dummy;
+	public enum Group implements IGroupEnum,IModuleHolder{ALL, NONE, F, Clover, Outside, Inside, InsideLifter,OutsideLifter,Uplifter,Dummy;
 		public boolean contains(IModule m) {
 			return equals(m.getGroup());
 		}
@@ -356,15 +376,27 @@ public class BrandtController extends MfController implements ControllerInformat
 		module().role = ModuleRole.NONE;
 		
 		
-//		visual.setColor(Mod.Clover_North, Color.PINK);
-//		visual.setColor(Mod.Clover_South, Color.PINK.darker());
-//		visual.setColor(Mod.Clover_West, Color.PINK.darker().darker());
-//		visual.setColor(Mod.Clover_East, Color.PINK.darker().darker().darker());
-//		visual.setColor(Group.Uplifter, Color.WHITE);
-//
-//		visual.setColor(StateOperation.FLIPTHROUGH,Color.CYAN);
-//		visual.setColor(StateOperation.FLIPALONG,Color.MAGENTA);
-//		visual.setColor(StateOperation.INIT,Color.WHITE);
+		visual.setColor(Mod.Clover_North, Color.WHITE);
+		visual.setColor(Mod.Clover_South, Color.BLACK);
+		visual.setColor(Mod.Clover_West, Color.YELLOW);
+		visual.setColor(Mod.Clover_East, Color.GREEN);
+		
+		visual.setColor(Group.Outside, Color.CYAN);
+		visual.setColor(Group.Inside, Color.MAGENTA);
+		visual.setColor(Group.OutsideLifter, Color.CYAN.darker().darker().darker());
+		visual.setColor(Group.InsideLifter, Color.MAGENTA.darker().darker().darker());
+
+		visual.setColor(Mod.Uplifter_Top, Color.YELLOW);
+		visual.setColor(Mod.Uplifter_Bottom, Color.MAGENTA);
+		visual.setColor(Mod.Uplifter_Left, Color.GREEN);
+		visual.setColor(Mod.Uplifter_Right, Color.PINK);
+		visual.setColor(Mod.Dummy_Left, Color.WHITE);
+		visual.setColor(Mod.Dummy_Right, Color.BLACK);
+		
+		visual.setColor(StateOperation.FLIPOVER,Color.YELLOW);
+		visual.setColor(StateOperation.FLIPTHROUGH,Color.CYAN);
+		visual.setColor(StateOperation.FLIPALONG,Color.MAGENTA);
+		visual.setColor(StateOperation.INIT,Color.WHITE);
 		
 		visual.setMessageFilter(255);//^ pow2(PacketDiscover.getTypeNr()));		
 	}
@@ -397,7 +429,11 @@ public class BrandtController extends MfController implements ControllerInformat
 					return;
 				}
 				
-				
+//				if (meta().Top != 0 && meta().Left != 0) {
+//					meta().createRegion(new byte[]{meta().Top,meta().Left});
+//					stateMngr.setAfterConsensus(StateOperation.FLIPOVER,Orientation.BOTTOMRIGHT);
+//					stateMngr.commit();
+//				}
 				
 				if (meta().Top == 0 && meta().Bottom == 0 && meta().Right != 0 && meta().Left == 0) {
 					if (meta().TopRight == 0) {
@@ -407,7 +443,7 @@ public class BrandtController extends MfController implements ControllerInformat
 					}
 					else {
 						meta().createRegion(new byte[]{meta().TopRight,meta().Right});
-						stateMngr.setAfterConsensus(StateOperation.FLIPALONG,Orientation.TOPLEFT);
+						stateMngr.setAfterConsensus(StateOperation.FLIPALONG,Orientation.BOTTOMRIGHT);
 						stateMngr.commit();
 					}
 				}
@@ -420,7 +456,7 @@ public class BrandtController extends MfController implements ControllerInformat
 					}
 					else {
 						meta().createRegion(new byte[]{meta().TopLeft,meta().Left});
-						stateMngr.setAfterConsensus(StateOperation.FLIPALONG,Orientation.TOPRIGHT);
+						stateMngr.setAfterConsensus(StateOperation.FLIPALONG,Orientation.BOTTOMLEFT);
 						stateMngr.commit();
 					}
 				}
@@ -443,39 +479,28 @@ public class BrandtController extends MfController implements ControllerInformat
 		
 		if (stateMngr.at(StateOperation.FLIPTHROUGH)) {
 			if (stateMngr.doWait(0)) {
-				
-				boolean sourceH = false;
-				boolean sourceV = false; 
-				
+								
 				if (stateMngr.getState().getOrientation() == Orientation.TOPLEFT) {
-					sourceH = module().atB();
-					sourceV = module().atL();
-					QUART = -90;
-					HALF = -180;
+					QUART = 90;
+					HALF = 180;
 				}
 				
 				if (stateMngr.getState().getOrientation() == Orientation.TOPRIGHT) {
-					sourceH = module().atB();
-					sourceV = module().atR();
 					QUART = 90;
 					HALF = 180;
 				}
 				
 				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMLEFT) {
-					sourceH = module().atR();
-					sourceV = module().atB();
 					QUART = -90;
 					HALF = -180;
 				}
 				
 				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMRIGHT) {
-					sourceH = module().atL();
-					sourceV = module().atB();
-					QUART = 90;
-					HALF = 180;
+					QUART = -90;
+					HALF = -180;
 				}
 				
-				module().gradientInit(sourceH,sourceV);
+				module().gradientInit();
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
@@ -587,31 +612,148 @@ public class BrandtController extends MfController implements ControllerInformat
 			
 		}
 	
-//		
-//		if (stateMngr.at(StateOperation.FLIPOVER_UPLEFT) || stateMngr.at(StateOperation.FLIPALONG_UPRIGHT)) {
-//			
-//		}
 		
-		if (stateMngr.at(StateOperation.FLIPALONG)) {
+		if (stateMngr.at(StateOperation.FLIPOVER)) {
 			if (stateMngr.doWait(0)) {
-				boolean sourceH = false;;
-				boolean sourceV = false; 
-				
-				if (stateMngr.getState().getOrientation() == Orientation.TOPRIGHT) {
-					sourceH = module().atL();
-					sourceV = module().atB();
-					QUART = 90;
-					HALF = 180;
-				}
-				
+								
 				if (stateMngr.getState().getOrientation() == Orientation.TOPLEFT) {
-					sourceH = module().atR();
-					sourceV = module().atB();
 					QUART = -90;
 					HALF = -180;
 				}
 				
-				module().gradientInit(sourceH,sourceV);
+				if (stateMngr.getState().getOrientation() == Orientation.TOPRIGHT) {
+					QUART = 90;
+					HALF = 180;
+				}
+				
+				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMLEFT) {
+					QUART = -90;
+					HALF = -180;
+				}
+				
+				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMRIGHT) {
+					QUART = 90;
+					HALF = 180;
+				}
+				
+				module().gradientInit();
+				stateMngr.commitMyselfIfNotUsed();
+			}
+			
+			if (stateMngr.doWait(1))  {
+				scheduler.enable("module.gradientPropagate");
+				stateMngr.commitMyselfIfNotUsed();
+			}
+			
+			if (stateMngr.doUntil(2)) {
+				stateMngr.spend("module.gradientPropagate");
+			}
+			
+			if (stateMngr.doWait(3)) {
+				scheduler.disable("module.gradientPropagate");
+				
+				if (module().gradH == 0 && module().gradV == 3) {
+					module().setVar("isRef",true);
+				}
+				else {
+					module().setVar("isRef",false);
+				}
+				stateMngr.commitMyselfIfNotUsed();
+			}
+			
+			if (stateMngr.doWait(4)) {
+				module().storeID();
+				if (module().getVar("gradH") == 0 && module().getVar("gradV") < 3 || module().getVar("gradV") == 0 && module().getVar("gradH") < 3) {
+					module().swapGroup(Group.Outside);
+				}
+				if (module().getVar("gradH") > 0 && module().getVar("gradV") > 0 ) {
+					module().swapGroup(Group.Inside);
+				}	
+				if (module().getVar("gradH") == 3 && module().getVar("gradV") == 1 ) {
+					module().setID(Mod.InsideLifter_Top);
+				}
+				if (module().getVar("gradH") == 1 && module().getVar("gradV") == 3 ) {
+					module().setID(Mod.InsideLifter_Bottom);
+				}
+				if (module().getVar("gradH") == 2 && module().getVar("gradV") == 0 ) {
+					module().setID(Mod.OutsideLifter_Top);
+				}
+				if (module().getVar("gradH") == 0 && module().getVar("gradV") == 2 ) {
+					module().setID(Mod.OutsideLifter_Bottom);
+				}
+				stateMngr.commitMyselfIfNotUsed();
+				
+			}	
+			
+			if (stateMngr.doWait(5)) {
+				actuation.disconnect(Group.Outside, Group.Inside);
+				stateMngr.commitMyselfIfNotUsed();
+			}
+			
+			if (stateMngr.doWait(6)) {
+				actuation.disconnect(Group.OutsideLifter, Group.Inside);
+				stateMngr.commitMyselfIfNotUsed();
+			}
+		
+			if (stateMngr.doWait(7)) {
+				actuation.rotate(Mod.InsideLifter_Top,HALF);
+				actuation.rotate(Mod.InsideLifter_Bottom,-HALF);
+				stateMngr.commitMyselfIfNotUsed();
+			}
+			
+			if (stateMngr.doWait(8)) {
+				actuation.rotate(Mod.OutsideLifter_Top,HALF);
+				actuation.rotate(Mod.OutsideLifter_Bottom,-HALF);
+				stateMngr.commitMyselfIfNotUsed();
+			}
+
+			if (stateMngr.doWait(9)) {
+				actuation.connect(Group.Outside,Group.Inside);
+				stateMngr.commitMyselfIfNotUsed();
+			}
+			
+			if (stateMngr.doWait(10)) {
+				actuation.connect(Group.InsideLifter,Group.Outside);
+				stateMngr.commitMyselfIfNotUsed();
+			}
+			
+			
+			if (stateMngr.doUntil(11)) {
+				if (module().isRef) {
+					broadcast(new PacketSymmetry(this));
+					stateMngr.commit();
+				}
+			}
+			
+			if (stateMngr.doWait (12)) {
+				module().restoreID();
+				stateMngr.commitMyselfIfNotUsed();
+			}
+			
+			
+			if (stateMngr.doWait (13)) {
+				finish();
+				
+			}
+
+
+			
+		}
+		
+		if (stateMngr.at(StateOperation.FLIPALONG)) {
+			if (stateMngr.doWait(0)) {
+				
+				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMLEFT) {
+					QUART = 90;
+					HALF = 180;
+				}
+				
+				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMRIGHT) {
+					QUART = -90;
+					HALF = -180;
+				}
+				
+				module().gradientInit();
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
@@ -810,14 +952,12 @@ public class BrandtController extends MfController implements ControllerInformat
 			updated = true;
 		}
 		if (updated) {
-			scheduler.invokeNow("gradientCreate");
+			scheduler.invokeNow("module.gradientPropagate");
 		}
 		return true;
 	}
 	
-	public void gradientCreate() {
-		module().gradientPropagate();
-	}
+	
 	
 	
 	public boolean receivePacket (Packet p) {
@@ -890,6 +1030,11 @@ public class BrandtController extends MfController implements ControllerInformat
 			handled = true;
 		}
 		
+		if (stateMngr.check(p,new State(StateOperation.FLIPOVER,11))) {
+			symmetryFix(p);
+			handled = true;
+		}
+		
 		return handled;
 	}
 
@@ -944,27 +1089,24 @@ public class BrandtController extends MfController implements ControllerInformat
 	}
 	
 	public void makePacket(byte[] msg, byte connector) {
-		if (Packet.isPacket(msg)) {
-			byte typeNr = Packet.getType(msg);
-			if (typeNr == PacketGradient.getTypeNr()) {
-				PacketGradient p = (PacketGradient)new PacketGradient(this).deserialize(msg,connector);
-				if (preprocessPacket(p)) {
-					receivePacket(p);
-				}
-			}
-			else if (typeNr == PacketAddNeighbor.getTypeNr()) {
-				PacketAddNeighbor p = (PacketAddNeighbor)new PacketAddNeighbor(this).deserialize(msg,connector);
-				preprocessPacket(p);
+
+		byte typeNr = Packet.getType(msg);
+		if (typeNr == PacketGradient.getTypeNr()) {
+			PacketGradient p = (PacketGradient)new PacketGradient(this).deserialize(msg,connector);
+			if (preprocessPacket(p)) {
 				receivePacket(p);
 			}
-			else {
-				super.makePacket(msg, connector);
-			}
-			
+		}
+		else if (typeNr == PacketAddNeighbor.getTypeNr()) {
+			PacketAddNeighbor p = (PacketAddNeighbor)new PacketAddNeighbor(this).deserialize(msg,connector);
+			preprocessPacket(p);
+			receivePacket(p);
 		}
 		else {
-//			receivePacket(MetaPacket(msg));
+			super.makePacket(msg, connector);
 		}
+			
+		
 	}
 	
 }

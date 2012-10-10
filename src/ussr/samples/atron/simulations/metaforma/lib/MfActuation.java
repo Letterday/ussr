@@ -114,7 +114,10 @@ public class MfActuation  {
 	}
 	
 	private void connection(IModule dest, boolean makeConnection) {
-		if (!ctrl.stateMngr.committed()) {
+		// NO, as this does not allow multiple connect/disconnect actions to be nested in one instruction
+		//if (!ctrl.stateMngr.committed()) {
+		// SO instead:
+		if (!ctrl.nbs().nbsIsConnected(!makeConnection).isEmpty()) {
 			byte conToNb = ctrl.nbs().getConnectorNrTo(dest);
 			byte conFromNb = ctrl.nbs().getConnectorNrFrom(dest);
 			String action = makeConnection ? " connect to " : " disconnect from ";

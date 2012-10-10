@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.sun.org.apache.bcel.internal.generic.GETSTATIC;
 
+import ussr.samples.atron.simulations.metaforma.gen.ObstacleAvoidanceController.StateOperation;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 
 
@@ -31,7 +32,7 @@ public class MfVisualizer {
 		Color north = getColors()[0];
 		Color south = getColors()[1];
 		
-		if (ctrl.module().role != null) {
+		if (ctrl.module().role != null && !ctrl.getStateMngr().getState().isInSequence()) {
 			for (int i=0; i< ctrl.module().role.index()-1;i++) {
 				north = north.darker().darker();
 			}

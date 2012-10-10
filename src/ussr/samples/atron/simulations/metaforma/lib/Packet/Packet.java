@@ -83,11 +83,7 @@ public abstract class Packet extends PacketBase {
 		return ret;
 	}
 	
-	public byte[] deserializeHeader (byte[] msg,byte connector) {
-		if (!isPacket(msg)) {
-			System.err.println("NOT a packet!");
-		}
-		
+	public byte[] deserializeHeader (byte[] msg,byte connector) {		
 		connDest 					= connector;
 		
 		source = Module.value(msg[1]&255);
@@ -217,10 +213,6 @@ public abstract class Packet extends PacketBase {
 		metaID = (byte) id;
 	}
 	
-	public static boolean isPacket(byte[] msg) {
-		return (msg[0]&255>>7)%2 == 0;
-	}
-
 
 	public State getState() {
 		return state;
