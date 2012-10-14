@@ -56,7 +56,7 @@
 //
 //}
 //
-//public class ChristensenController extends MfRuntime implements ControllerInformationProvider {
+//public class ChristensenController extends MfController implements ControllerInformationProvider {
 //		
 //	enum StateOperation implements IStateOperation {
 //		INIT, CHOOSE, GET_UP;
@@ -65,30 +65,7 @@
 //
 //		public IStateOperation fromByte(byte b) {return values()[b];}
 //	}
-//	enum VarLocal implements IVar {
-//		NONE, gradH, gradV, metaIdPrevious;
-//
-//		public byte index() {return (byte) ordinal();}
-//
-//		public VarLocal fromByte(byte b) {	return values()[b];	}
-//		
-//		public boolean isLocal() {return true;	}
-//		public boolean isLocalState() {return false;	}
-//		public boolean isMeta() {return false;	}
-//		public boolean isMetaRegion() {return false;	}
-//	}
-//	enum VarMeta implements IVar {
-//		NONE,Top, Bottom, Left, Right, TopLeft,TopRight,BottomLeft,BottomRight;
-//
-//		public byte index() {return (byte) (ordinal() + 25);}
-//
-//		public VarMeta fromByte(byte b) {return values()[b-25];}
-//
-//		public boolean isLocal() {return false;	}
-//		public boolean isLocalState() {return false;	}
-//		public boolean isMeta() {return true;	}
-//		public boolean isMetaRegion() {return false;	}
-//	}
+//	
 //	enum ModuleRole implements IRole {
 //		NONE,Left,Top,Right,Dummy;
 //
@@ -148,7 +125,7 @@
 //		}
 //
 //		@Override
-//		public Group getGrouping () {
+//		public Group getGroup () {
 //			return Group.valueOf(name().split("_")[0]);
 //		}
 //
@@ -192,7 +169,7 @@
 //	 enum Group implements IGroupEnum,IModuleHolder{ALL, NONE, Floor, Walker, Uplifter;
 //
 //		public boolean contains(IModule m) {
-//			return equals(m.getGrouping());
+//			return equals(m.getGroup());
 //		}
 //
 //
@@ -214,13 +191,6 @@
 //		}
 //	}
 //	
-//	 @Override
-//	public void addNeighborhood (StringBuffer out) {
-//		out.append(String.format("% 3d  % 3d  % 3d",varGet(VarMeta.TopLeft),varGet(VarMeta.Top),varGet(VarMeta.TopRight)) + "\n");
-//		out.append(String.format("% 3d        % 3d",varGet(VarMeta.Left),varGet(VarMeta.Right)) + "\n");
-//		out.append(String.format("% 3d  % 3d  % 3d",varGet(VarMeta.BottomLeft),varGet(VarMeta.Bottom),varGet(VarMeta.BottomRight)) + "\n");
-//	}
-//	
 //	
 //	public void init() {
 //		Module.Mod = Mod.NONE;
@@ -239,7 +209,6 @@
 //		visual.setColor(StateOperation.INIT,Color.WHITE);
 //		
 //		visual.setMessageFilter(255);
-//		visual.setMessageFilterMeta(255);
 //						
 ////		scheduler.setInterval("broadcastMetaNeighbors", 10000);
 //	}

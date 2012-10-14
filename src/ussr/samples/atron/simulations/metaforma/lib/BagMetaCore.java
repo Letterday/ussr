@@ -9,6 +9,7 @@ import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 
 public abstract class BagMetaCore extends Bag implements IMetaBag {
 	public byte completed;
+	public byte size;
 	public byte regionID;
 	public byte metaModulesInRegion = 1;
 	private float timeInitRegion;

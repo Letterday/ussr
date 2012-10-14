@@ -187,7 +187,7 @@ public class MfActuation  {
 			ctrl.visual.print("# rotateContinuous " + velocity);
 			disableContinuousPositioning();
 			ctrl.rotateContinuous(velocity);
-			ctrl.stateMngr.commit();
+//			ctrl.stateMngr.commit();
 		}
 		
 	}

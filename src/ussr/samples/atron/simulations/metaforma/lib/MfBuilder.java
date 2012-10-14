@@ -49,7 +49,6 @@ public class MfBuilder {
     	ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>();
     	VectorDescription offset = new VectorDescription(2,0,0);
         if(numberOfWheels==2) {
-        	offset = new VectorDescription(2,1,0);
             mPos.add(new ModulePosition(mod + "_" + 0, aPos(-1,-1,0,offset), ATRON.ROTATION_UD));
             mPos.add(new ModulePosition(mod + "_" + 1, aPos(-1,-2,1,offset), ATRON.ROTATION_SN));
             mPos.add(new ModulePosition(mod + "_" + 2, aPos(-1,-2,-1,offset), ATRON.ROTATION_NS));

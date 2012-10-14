@@ -42,12 +42,16 @@ public abstract class ATRON implements Robot {
 
     public static final RotationDescription ROTATION_WE = new RotationDescription(new VectorDescription(-eigth,0,0),new VectorDescription(0,-quart,0));
     public static final RotationDescription ROTATION_EW = new RotationDescription(new VectorDescription(eigth,0,0),new VectorDescription(0,quart,0));
+    public static final RotationDescription ROTATION_EW_90 = new RotationDescription(new VectorDescription(eigth,half,0),new VectorDescription(-half,quart,0));
     public static final RotationDescription ROTATION_DU = new RotationDescription(-quart,eigth,0);
     public static final RotationDescription ROTATION_UD = new RotationDescription(quart,eigth+quart,0);
     public static final RotationDescription ROTATION_SN = new RotationDescription(0,half,eigth+quart); //JME2 added (0,0,+quart)
+    public static final RotationDescription ROTATION_SN_90 = new RotationDescription(0,0,eigth+quart);
     public static final RotationDescription ROTATION_NS_BROKEN = new RotationDescription(0,0,eigth+3*quart);
     public static final RotationDescription ROTATION_NS = new RotationDescription(0,0,eigth+quart);
-
+    public static final RotationDescription ROTATION_NS_90 = new RotationDescription(0,half,eigth+quart);
+    
+    
     protected boolean zuper = false, smooth = false, realistic =false, rubberRing = false, gentle = false, radio = false, halfDuplex= false;// Different variants
     private PhysicsParameters parameters;
 

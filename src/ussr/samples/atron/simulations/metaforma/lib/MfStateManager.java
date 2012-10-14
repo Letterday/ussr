@@ -158,6 +158,9 @@ public class MfStateManager {
 			if (commitCountToReach > 0) {
 				return consensusReached(commitCountToReach);
 			}
+			else if (ctrl.meta().getVar("size") != 0) {
+				return consensusReached(ctrl.meta().getVar("size"));
+			}
 			else if (((ctrl.meta().regionID() != 0 && ctrl.meta().regionID() == ctrl.module().metaID))){// || at(new State(StateOperation.CHOOSE,0)) || at(new State(StateOperation.CHOOSE,1)))) {
 				return consensusReached(ctrl.meta().getCountInRegion() * ctrl.getInstRole().size());
 			}
