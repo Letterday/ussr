@@ -49,6 +49,7 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 
 				if (name.equals("regionID")) {
 					ctrl.getStateMngr().cleanConsensus();
+					ctrl.getStateMngr().commit("Reset my bit after cleaning");
 				}
 			}
 			
@@ -147,10 +148,6 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 		}
 		
 		
-		
-		
-		
-		
 		ctrl.stateMngr.commit("createRegion");
 	}
 
@@ -216,16 +213,16 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	
 	
 	public void broadcastVars () {
-		if (ctrl.module().metaID != 0) {
-			broadcastVars(getVars());
-		}
+		broadcastVars(getVars());
 	}
 	
 	public void broadcastVars (ArrayList<String> names) {
 //		visual.print(".....broadcastMetaVars " + names);
-		PacketMetaVarSync p = new PacketMetaVarSync(ctrl);
-		p.setVarList(names);
-		ctrl.broadcast(p);
+		if (ctrl.module().metaID != 0) {
+			PacketMetaVarSync p = new PacketMetaVarSync(ctrl);
+			p.setVarList(names);
+			ctrl.broadcast(p);
+		}
 	}
 	
 //	public abstract void neighborHook (Packet p);	

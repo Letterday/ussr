@@ -27,6 +27,9 @@ public class MfContext  {
 
 	public void deleteUnconnectedNeighbors() {
 		neighbors.deleteUnconnectedOnes();
+		// Because connected cache from females might be out of date!
+		neighbors.deleteFemaleOnes();
+		
 	}
 	
 	public byte abs2rel (int nr) {
@@ -142,7 +145,7 @@ public class MfContext  {
 		
 	}
 
-	public void addNeighbor(IModule source, byte connDest, byte connSource,IRole r, byte metaId, byte regionId) {
+	public void addNeighbor(IModule source, byte connDest, byte connSource,IMetaPart r, byte metaId, byte regionId) {
 		neighbors.add(source,connDest,connSource,r,metaId,regionId);
 		
 	}
@@ -189,5 +192,7 @@ public class MfContext  {
 	public String getFemaleConnsAsString() {
 		return "(" + isFemaleConnected(1) + "," + isFemaleConnected(3) + "," + isFemaleConnected(5) + "," + isFemaleConnected(7) + ")";
 	}
+
+	
 	
 }

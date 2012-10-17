@@ -51,11 +51,11 @@ public class MfActuation  {
 	}
 	
 	public void disconnect(IModuleHolder g1) {
-		connection(g1,false,true);
+		connection(ctrl.getID(),g1,false,true);
 	}
 	
 	public void connect(IModuleHolder g1) {
-		connection(g1,true,true);
+		connection(ctrl.getID(),g1,true,true);
 	}
 	
 	public void disconnect(IModuleHolder g1, IModuleHolder g2) {
@@ -65,51 +65,52 @@ public class MfActuation  {
 	public void connect(IModuleHolder g1, IModuleHolder g2) {
 		connect(g1, g2, true);
 	}
+	
+	
 
 
 	public void connect(IModuleHolder g1, IModuleHolder g2, boolean insideRegionOnly) {
 		ctrl.module().discover();
 		ctrl.visual.print("## connect " + g1 + "," + g2);
-		ctrl.stateMngr.commitNotAutomatic(g1,g2);
-		if (g1.contains(ctrl.getID())) {
-			connection(g2, true, insideRegionOnly);
-		}
-		if (g2.contains(ctrl.getID())) {
-			connection(g1, true, insideRegionOnly);
-		}
+		ctrl.stateMngr.commitNotAutomatic(g1);
+		ctrl.stateMngr.commitNotAutomatic(g2);
+		connection(g2,g1, true, insideRegionOnly);
+		connection(g1,g2, true, insideRegionOnly);
 	}
 	
 	
 	public void disconnect(IModuleHolder g1, IModuleHolder g2, boolean insideRegionOnly) {
 		ctrl.module().discover();
 		ctrl.visual.print("## disconnect " + g1 + "," + g2);
-		ctrl.stateMngr.commitNotAutomatic(g1,g2);
-		if (g1.contains(ctrl.getID())) {
-			connection(g2, false, insideRegionOnly);
-		}
-		if (g2.contains(ctrl.getID())) {
-			connection(g1, false, insideRegionOnly);
-		}
+		ctrl.stateMngr.commitNotAutomatic(g1);
+		ctrl.stateMngr.commitNotAutomatic(g2);
+		connection(g2,g1, false, insideRegionOnly);
+		connection(g1,g2, false, insideRegionOnly);
 		
 	}
 	
 	
-	private void connection(IModuleHolder g2, boolean connect, boolean insideRegionOnly) {
-		
-		for (IModule nb: ctrl.nbs(MfController.MALE).nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(!connect).modules()) {
-			ctrl.visual.print("##connection ME," + g2 + "  " + connect + " " + insideRegionOnly);
-			connection(nb,connect);
+	private void connection(IModuleHolder g1, IModuleHolder g2, boolean connect, boolean insideRegionOnly) {
+		if (g1.contains(ctrl.getID())) {
+			for (IModule nb: ctrl.nbs(MfController.MALE).nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(!connect).modules()) {
+				ctrl.visual.print("##connection ME," + g2 + "  " + connect + " " + insideRegionOnly);
+				connection(nb,connect);
+			}
+			
+			if ( // Am I done?
+//				ctrl.nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(!connect).isEmpty() &&  NO, 1 connection is enough!!
+				
+				// At least one of the modules must take action, in case of a group and a module
+				!ctrl.nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(connect).isEmpty() 
+			) {
+				// Commit 
+				ctrl.stateMngr.commit("Member of ME and did my action to " + g2 + " " + (insideRegionOnly? " only in region!" : ""));
+			}
+			if (g1 instanceof IGroupEnum && ctrl.nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).isEmpty()) {
+				// We need to to this because the whole grouping is excluded from automatic commit, also non-nb's!
+				ctrl.stateMngr.commit("Member of ME but not connected to " + g2);
+			}
 		}
-		
-		if (ctrl.nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(!connect).isEmpty()) {
-			// Commit 
-			ctrl.stateMngr.commit("Member of ME and did my action to " + g2);
-		}
-		if (ctrl.nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).isEmpty()) {
-			// We need to to this because the whole grouping is excluded from automatic commit, also non-nb's!
-			ctrl.stateMngr.commit("Member of ME but not connected to " + g2);
-		}
-	
 		
 	}
 	
@@ -126,7 +127,7 @@ public class MfActuation  {
 				connection(conToNb,makeConnection);
 			}
 			else {
-				throw new Error("Wrong invocation, " + dest + " is connected with feMfController.MALE connector so cant do anything: " + conToNb);
+				throw new Error("Wrong invocation, " + dest + " is connected with FEMALE connector so cant do anything: " + conToNb);
 			}
 			
 		}
@@ -134,6 +135,10 @@ public class MfActuation  {
 	
 	
 	 protected void connection(int c, boolean connect) {
+		 if (MfApi.isFEMALE(c)) {
+			 ctrl.visual.error("Cant connect/disconnect female connector " + c);
+		 }
+		 
 		 if (connect && !ctrl.context.isConnConnected(c)) {
 			 ctrl.connect(ctrl.context.rel2abs(c)); 
 		 }

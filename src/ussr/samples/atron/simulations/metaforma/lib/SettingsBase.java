@@ -20,6 +20,8 @@ public class SettingsBase {
 		intervals.put("meta.broadcastVars", new Pair<Float,Float>(4f,0f));
 		intervals.put("meta.broadcastNeighbors", new Pair<Float,Float>(4f,15f));
 		
+
+		settings.put("stateTreshold", 4f);
 		settings.put("turnAroundTime", 2f);
 		settings.put("backwardTime", 10f);
 		settings.put("assignTime", 4f);

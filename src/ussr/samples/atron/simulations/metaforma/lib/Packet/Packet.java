@@ -2,7 +2,7 @@ package ussr.samples.atron.simulations.metaforma.lib.Packet;
 
 import ussr.samples.atron.simulations.metaforma.lib.Dir;
 import ussr.samples.atron.simulations.metaforma.lib.IModule;
-import ussr.samples.atron.simulations.metaforma.lib.IRole;
+import ussr.samples.atron.simulations.metaforma.lib.IMetaPart;
 import ussr.samples.atron.simulations.metaforma.lib.MfController;
 import ussr.samples.atron.simulations.metaforma.lib.Module;
 import ussr.samples.atron.simulations.metaforma.lib.Orientation;
@@ -23,13 +23,13 @@ public abstract class Packet extends PacketBase {
 
 	protected IModule source;				// 8bits
 	
-//	private byte type = 0;	// 3bits
+//	private byte type = 0;	// 4bits
 	public byte connSource = -1;	// 3bits
 	public byte connDest = -1;	// Not in payload
 	private Dir dir = Dir.REQ;			// 1bit
 	private boolean connectorConnected;	// 1bit
 	
-	private IRole role;			// 3bits
+	private IMetaPart metaPart;			// 3bits
 	
 	public byte regionID = 0; 	// 0 is for everyone
 	
@@ -69,10 +69,10 @@ public abstract class Packet extends PacketBase {
 //			throw new Error("sourceConnector = -1");
 //		}
 		// 0 is used to determine difference between packet and metapacket
-		ret[0] = (byte) (state.getOrientation().ordinal()%8);
+		ret[0] = (byte) ((state.getOrientation().ordinal()%8)|((type%16)<<3));
 		ret[1] = (byte) (source.ord());
-		ret[2] = (byte) (type%8 | ((connSource%8)<<3) | ((dir.ord()%2)<<6) |((connectorConnected?1:0)<<7));
-		ret[3] = (byte) (state.getInstruction()%32 | (role.index()%8)<<5);
+		ret[2] = (byte) ( ((connSource%8)<<3) | ((dir.ord()%2)<<6) |((connectorConnected?1:0)<<7));
+		ret[3] = (byte) (state.getInstruction()%32 | (metaPart.index()%8)<<5);
 		ret[4] = regionID;
 		ret[5] = metaID;
 		ret[6] = (byte) ((state.getOperation().ord()%8) | (state.getOperationCounter()<<3));
@@ -86,20 +86,22 @@ public abstract class Packet extends PacketBase {
 	public byte[] deserializeHeader (byte[] msg,byte connector) {		
 		connDest 					= connector;
 		
-		source = Module.value(msg[1]&255);
+		source = 					Module.value(msg[1]&255);
 		
 		
-		type = 				(byte)  (((msg[2]&255)>>0)%8);  
+		type = 						getType(msg);
+		
+		
 		connSource = 		(byte) 	(((msg[2]&255)>>3)%8);
 		dir = Dir.values()			[((msg[2]&255)>>6)%2];
 		connectorConnected =		(((msg[2]&255)>>7)==1);
 		
 
-		role =  ctrl.getInstRole().fromByte((byte) ((msg[3]&255)>>5));
+		metaPart =  ctrl.getMetaPart().fromByte((byte) ((msg[3]&255)>>5));
 		
 		regionID = msg[4];
 		metaID = msg[5];
-		state = new State(ctrl.getInstOperation().fromByte((byte) ((msg[6]&255)%8)),(byte) (((msg[6]&255)>>3)%32),(byte) ((msg[3]&255)%32),Orientation.values()[(msg[0]&255)%8]);
+		state = new State(ctrl.getStateInit().fromByte((byte) ((msg[6]&255)%8)),(byte) (((msg[6]&255)>>3)%32),(byte) ((msg[3]&255)%32),Orientation.values()[(msg[0]&255)%8]);
 		
 		byte[] payload = new byte[ msg.length-HEADER_LENGTH ];		
 		
@@ -109,16 +111,16 @@ public abstract class Packet extends PacketBase {
 		return payload;
 	}
 	
-	public IRole getModRole () {
-		if (role == null) {
-			throw new Error("Packet " + this + " has null role!");
+	public IMetaPart getMetaPart () {
+		if (metaPart == null) {
+			throw new Error("Packet " + this + " has null metapart!");
 		}
-		return role;
+		return metaPart;
 	}
 	
-	public Packet setModRole (IRole r) {
+	public Packet setMetaPart (IMetaPart r) {
 		
-		role = r;
+		metaPart = r;
 		return this;
 	}
 		
@@ -219,7 +221,7 @@ public abstract class Packet extends PacketBase {
 	}
 
 	public static byte getType(byte[] msg) {
-		return (byte) ((msg[2]&255)%8);
+		return (byte) (((msg[0]&255)>>3)%16);
 	}
 
 	

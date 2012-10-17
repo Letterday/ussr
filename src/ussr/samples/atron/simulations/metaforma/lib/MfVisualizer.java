@@ -5,22 +5,15 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.sun.org.apache.bcel.internal.generic.GETSTATIC;
-
-import ussr.samples.atron.simulations.metaforma.gen.ObstacleAvoidanceController.StateOperation;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 
 
 public class MfVisualizer {
 	
 	private MfController ctrl;
-	
 	protected byte msgFilter;
-	
 	private Map<IModuleHolder, Color> colorsModuleHolder = new HashMap<IModuleHolder, Color>();
-	
 	private Map<IStateOperation,Color> colorsOperation = new HashMap<IStateOperation, Color>();
-
 
 	public MfVisualizer (MfController c) {
 		ctrl = c;
@@ -32,8 +25,8 @@ public class MfVisualizer {
 		Color north = getColors()[0];
 		Color south = getColors()[1];
 		
-		if (ctrl.module().role != null && !ctrl.getStateMngr().getState().isInSequence()) {
-			for (int i=0; i< ctrl.module().role.index()-1;i++) {
+		if (ctrl.module().part != null && !ctrl.getStateMngr().getState().isInSequence()) {
+			for (int i=0; i< ctrl.module().part.index()-1;i++) {
 				north = north.darker().darker();
 			}
 		}
@@ -60,7 +53,7 @@ public class MfVisualizer {
 	private String getIdString () {
 		String ret = "";
 		ret += ctrl.getID() + " ";
-		ret += ctrl.module().role + " (";
+		ret += ctrl.module().part + " (";
 		ret += ctrl.module().metaID + " // ";
 		ret += ctrl.meta().regionID() + ") ";
 		ret += ctrl.getStateMngr().getState() + " ";

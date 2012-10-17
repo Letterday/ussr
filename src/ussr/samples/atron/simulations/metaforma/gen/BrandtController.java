@@ -10,6 +10,7 @@ import ussr.description.setup.ModulePosition;
 import ussr.model.Controller;
 import ussr.model.debugging.ControllerInformationProvider;
 import ussr.samples.atron.ATRON;
+import ussr.samples.atron.simulations.metaforma.gen.ChristensenController.StateOperation;
 import ussr.samples.atron.simulations.metaforma.lib.*;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 
@@ -73,6 +74,7 @@ class PacketAddNeighbor extends Packet {
 	
 }
 
+
 class PacketGradient extends Packet {
 	public static byte getTypeNr() {return 6;}
 	
@@ -117,12 +119,6 @@ public class BrandtController extends MfController implements ControllerInformat
 		public boolean isRef;
 		public boolean sourceH;
 		public boolean sourceV;
-//		public boolean isT;
-//		public boolean isB;
-//		public boolean isL;
-//		public boolean isR;
-		
-		
 		
 		
 		public void gradientPropagate () { 
@@ -220,14 +216,14 @@ public class BrandtController extends MfController implements ControllerInformat
 
 	
 	
-	enum ModuleRole implements IRole {
+	enum MetaPart implements IMetaPart {
 		NONE,Left,Bottom,Right,Top;
-		public IRole fromByte(byte b) {
+		public IMetaPart fromByte(byte b) {
 			return values()[b];
 		}
 		public byte index() {return (byte) ordinal();}
 		public byte size() {
-			// None is no role
+			// None is no part
 			return (byte) (values().length - 1);
 		}
 		
@@ -373,7 +369,7 @@ public class BrandtController extends MfController implements ControllerInformat
 		Module.Mod = Mod.NONE;
 		Module.Group = Group.NONE;
 		stateMngr.init(StateOperation.INIT);
-		module().role = ModuleRole.NONE;
+		module().part = MetaPart.NONE;
 		
 		
 		visual.setColor(Mod.Clover_North, Color.WHITE);
@@ -406,11 +402,11 @@ public class BrandtController extends MfController implements ControllerInformat
 		if (stateMngr.at(StateOperation.INIT)) {
 			// Make groupings of 4
 			if (stateMngr.doUntil(0)) {
-				if (nbs(EAST&MALE, ModuleRole.NONE).size() == 2 && !nbs(WEST, ModuleRole.NONE).exists()) {
-					module().setRole(ModuleRole.Left);
-					module().setVar("metaID",module().getID().ord());
+				if (nbs(EAST&MALE, MetaPart.NONE).size() == 2 && !nbs(WEST, MetaPart.NONE).exists()) {
+					module().setPart(MetaPart.Left);
+					module().setMetaID (module().getID().ord());
 				}
-				if (module().role == ModuleRole.Left)	{	
+				if (module().part == MetaPart.Left)	{	
 					unicast((PacketSetMetaId)new PacketSetMetaId(this).setVar("newMetaID", module().metaID),EAST&MALE&NORTH);
 				}
 //				broadcast(new PacketDiscover(this));
@@ -920,14 +916,7 @@ public class BrandtController extends MfController implements ControllerInformat
 
 
 
-	public void finish () {
-		meta().disable();
-		meta().releaseRegion();
-		meta().resetVars();
-		module().setMetaID(0);
-		module().setRole(ModuleRole.NONE);
-		stateMngr.nextOperation(StateOperation.INIT);
-	}
+	
 	
 	
 		
@@ -985,19 +974,19 @@ public class BrandtController extends MfController implements ControllerInformat
 				module().metaID = p.newMetaID;
 				
 				if (isMALE(p.connDest)) {
-					module().setRole(ModuleRole.Right);
+					module().setPart(MetaPart.Right);
 				}
 				else {
 					if (isWEST(p.connDest)) {
-						module().setRole(ModuleRole.Top);
+						module().setPart(MetaPart.Top);
 					}
 					else {
-						module().setRole(ModuleRole.Bottom);
+						module().setPart(MetaPart.Bottom);
 					}
 				}
 			}
 			
-			if (module().getRole() == ModuleRole.Left) {
+			if (module().getPart() == MetaPart.Left) {
 				meta().enable(); // must be here, not in next state!
 				stateMngr.nextOperation(StateOperation.CHOOSE);
 //					stateMngr.nextInstruction();
@@ -1063,16 +1052,19 @@ public class BrandtController extends MfController implements ControllerInformat
 	}
 	
 	
-	
+	@Override
+	public IStateOperation getStateChoose() {
+		return StateOperation.CHOOSE;
+	}
 
 	@Override
-	public IStateOperation getInstOperation() {
+	public IStateOperation getStateInit() {
 		return StateOperation.INIT;
 	}
 
 	@Override
-	public IRole getInstRole() {
-		return ModuleRole.NONE;
+	public IMetaPart getMetaPart() {
+		return MetaPart.NONE;
 	}
 
 

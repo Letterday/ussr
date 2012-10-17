@@ -27,9 +27,13 @@ public class State implements IState,Cloneable {
 	}
 	
 	public State (IStateOperation op,int instr) {
-		this(op,-1,instr,Orientation.TOPLEFT);
+		this(op,-1,instr,Orientation.BOTTOMLEFT);
 	}
 	
+	public State(IStateOperation op) {
+		this(op,0,0,Orientation.BOTTOMLEFT);
+	}
+
 	public boolean merge (State s) {
 		return merge (s,true,false);
 	}
@@ -49,6 +53,13 @@ public class State implements IState,Cloneable {
 	
 	private boolean merge (State s,boolean modify,boolean checkConsecutive) {
 		int offset = checkConsecutive ? 1 : 0;
+		
+		// We need to make an exception here, to allow the state to be reset to counter 0 when completed.
+		// The state cannot always be increased (overflow!)
+		if (s.getOperation().ord() == 0 && s.getOperationCounter() == 0 && getOperationCounter() > 1) {
+			return true;
+		}
+		
 		if (getOperationCounter() == s.getOperationCounter() && getInstruction() < s.getInstruction() - offset) {
 			if (modify) {
 				instruction = s.getInstruction();
@@ -69,6 +80,7 @@ public class State implements IState,Cloneable {
 			return false;
 		}
 	}
+	
 	
 	public Orientation getOrientation() {
 		return orient;

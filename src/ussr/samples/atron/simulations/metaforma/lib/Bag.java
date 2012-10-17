@@ -50,7 +50,7 @@ public class Bag implements IBag {
 		String ret = "";
 		try {
 			for (Field f:this.getClass().getFields()) {
-				if (!isOwnField(f)) {
+				if (!isOwnField(f) && !f.getName().contains("Left") && !f.getName().contains("Right") && !f.getName().contains("Top") && !f.getName().contains("Bottom")) {
 					f.setAccessible(true);
 					ret += f.getName() + ":" + f.get(this) + "  ";
 				}

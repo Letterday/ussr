@@ -25,9 +25,9 @@ public abstract class MfSimulation extends GenericATRONSimulation {
 	public static void initSimulator () {
 		PhysicsParameters.get().setRealisticCollision(true);
 		stats = new MfStats();
-		PhysicsParameters.get().setPhysicsSimulationStepSize(0.004f);
+		PhysicsParameters.get().setPhysicsSimulationStepSize(0.005f);
 		PhysicsFactory.getOptions().setStartPaused(false);
-		ussr.physics.jme.robots.JMEATRONFactory.setConnectorMaxAlignmentForce(5f);
+		ussr.physics.jme.robots.JMEATRONFactory.setConnectorMaxAlignmentForce(10f);
 		ussr.physics.jme.robots.JMEATRONFactory.setConnectorMaxAlignmentDistance(0.02f);
 		ussr.physics.jme.robots.JMEATRONFactory.setConnectorEpsilonAlignmentDistance(0.01f);
 

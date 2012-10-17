@@ -13,7 +13,7 @@ public class NeighborSet  {
 	private MfController ctrl;
 	private final byte CON_SRC = 0;
 	private final byte CON_DEST = 1;
-	private final byte NR_ROLE = 2;
+	private final byte NR_META_PART = 2;
 	private final byte ID_META = 3;
 	private final byte ID_REGION = 4;
 	
@@ -44,22 +44,22 @@ public class NeighborSet  {
 	}
 	
 	public void assoc (Map.Entry<IModule, Byte[]> e) {
-		assoc(e.getKey(),e.getValue()[CON_SRC],e.getValue()[CON_DEST],e.getValue()[NR_ROLE],e.getValue()[ID_META],e.getValue()[ID_REGION]);
+		assoc(e.getKey(),e.getValue()[CON_SRC],e.getValue()[CON_DEST],e.getValue()[NR_META_PART],e.getValue()[ID_META],e.getValue()[ID_REGION]);
 	}
 	
-	public void add (IModule nb, int conToNb, int conFromNb, IRole moduleRole, int metaID, int regionID) { 
-		if (getConnectorNrTo(nb) != conToNb || getConnectorNrFrom(nb) != conFromNb || getModuleRole(nb) != moduleRole.index() || getMetaId(nb) != metaID || getRegionId(nb) != regionID) {
-			ctrl.getVisual().print(".addNeighbor " + nb + " [" + conToNb + "," + conFromNb + "," + moduleRole + "," + metaID + "," + regionID + "] (" + nb + "=" + conToNb + "!= " +getConnectorNrTo(nb)+")");
-			assoc (nb,conToNb,conFromNb, moduleRole.index(),metaID,regionID);
+	public void add (IModule nb, int conToNb, int conFromNb, IMetaPart metaPart, int metaID, int regionID) { 
+		if (getConnectorNrTo(nb) != conToNb || getConnectorNrFrom(nb) != conFromNb || getModuleMetaPart(nb) != metaPart.index() || getMetaId(nb) != metaID || getRegionId(nb) != regionID) {
+			ctrl.getVisual().print(".addNeighbor " + nb + " [" + conToNb + "," + conFromNb + "," + metaPart + "," + metaID + "," + regionID + "] (" + nb + "=" + conToNb + "!= " +getConnectorNrTo(nb)+")");
+			assoc (nb,conToNb,conFromNb, metaPart.index(),metaID,regionID);
 		}
 	}
 	
-	private void assoc (IModule nb, int conToNb, int conFromNb, int moduleRole, int metaId, int regionId) {
+	private void assoc (IModule nb, int conToNb, int conFromNb, int metaPart, int metaId, int regionId) {
 		if (!getModuleByConnector(conToNb).equals(nb)) {
 			delete(nb);
 			delete(conToNb);
 		}
-		connectors.put(nb, new Byte[]{(byte)conToNb,(byte)conFromNb, (byte)moduleRole, (byte)metaId, (byte)regionId});
+		connectors.put(nb, new Byte[]{(byte)conToNb,(byte)conFromNb, (byte)metaPart, (byte)metaId, (byte)regionId});
 		modules.put((byte)conToNb, nb);
 	}
 	
@@ -80,8 +80,8 @@ public class NeighborSet  {
 		return getModuleInfo(mod)[CON_DEST];
 	}
 	
-	public byte getModuleRole (IModule mod) {
-		return getModuleInfo(mod)[NR_ROLE];
+	public byte getModuleMetaPart (IModule mod) {
+		return getModuleInfo(mod)[NR_META_PART];
 	}
 	
 	public byte getMetaId (IModule mod) {
@@ -138,7 +138,7 @@ public class NeighborSet  {
 	public String toString() {
 		String r = "neighbors:  \n";
 		for (Map.Entry<IModule, Byte[]> e : connectors.entrySet()) {
-			String m = String.format("%7s (%5s,%2d,%2d) [%2d,%2d]", (ctrl.getContext().isConnConnected(e.getValue()[CON_SRC])?e.getKey().toString().toUpperCase(): e.getKey().toString().toLowerCase()), ctrl.getInstRole().fromByte(e.getValue()[NR_ROLE]), e.getValue()[ID_META], e.getValue()[ID_REGION], e.getValue()[CON_SRC] ,e.getValue()[CON_DEST]);
+			String m = String.format("%7s (%5s,%2d,%2d) [%2d,%2d]", (ctrl.getContext().isConnConnected(e.getValue()[CON_SRC])?e.getKey().toString().toUpperCase(): e.getKey().toString().toLowerCase()), ctrl.getMetaPart().fromByte(e.getValue()[NR_META_PART]), e.getValue()[ID_META], e.getValue()[ID_REGION], e.getValue()[CON_SRC] ,e.getValue()[CON_DEST]);
 			r += m + "\n";
 		}
 		r =  r.substring(0, r.length() - 2) + "\n";
@@ -179,10 +179,10 @@ public class NeighborSet  {
 		return ret;
 	}
 	
-	public NeighborSet nbsIsModRole(IRole p) {
+	public NeighborSet nbsIsMetaPart(IMetaPart p) {
 		NeighborSet ret = new NeighborSet(this.ctrl);
 		for (Map.Entry<IModule, Byte []> e : entrySet()) {
-			if (e.getValue()[NR_ROLE] == p.index()) {
+			if (e.getValue()[NR_META_PART] == p.index()) {
 				ret.assoc(e);
 			}
 		}
@@ -228,12 +228,19 @@ public class NeighborSet  {
 				delete(c);
 			}
 		}
-		
+	}
+	
+	public void deleteFemaleOnes() {
+		for (byte c : modules.keySet()) {
+			if (MfApi.isFEMALE(c)) {				
+				delete(c);
+			}
+		}
 	}
 	
 	public void updateSymmetryNS () {
 		for (Map.Entry<IModule, Byte[]> entry : nbs().entrySet()) {
-			assoc(entry.getKey(), (entry.getValue()[CON_SRC] + 4) % 8, entry.getValue()[CON_DEST],entry.getValue()[NR_ROLE],entry.getValue()[ID_META],entry.getValue()[ID_REGION]);
+			assoc(entry.getKey(), (entry.getValue()[CON_SRC] + 4) % 8, entry.getValue()[CON_DEST],entry.getValue()[NR_META_PART],entry.getValue()[ID_META],entry.getValue()[ID_REGION]);
 		}
 //		deleteAll();	//TODO: Remove
 	}
@@ -248,10 +255,10 @@ public class NeighborSet  {
 	public void updateSymmetryEW (boolean south) {
 		for (Map.Entry<IModule, Byte[]> entry : nbs().entrySet()) {
 			if (entry.getValue()[CON_SRC] < 4 && !south) {
-				assoc(entry.getKey(), (entry.getValue()[CON_SRC] + 2) % 4, entry.getValue()[CON_DEST],entry.getValue()[NR_ROLE],entry.getValue()[ID_META],entry.getValue()[ID_REGION]);
+				assoc(entry.getKey(), (entry.getValue()[CON_SRC] + 2) % 4, entry.getValue()[CON_DEST],entry.getValue()[NR_META_PART],entry.getValue()[ID_META],entry.getValue()[ID_REGION]);
 			}
 			else if (entry.getValue()[CON_SRC] >= 4 && south) { 
-				assoc(entry.getKey(), ((entry.getValue()[CON_SRC] + 2) % 4) + 4, entry.getValue()[CON_DEST],entry.getValue()[NR_ROLE],entry.getValue()[ID_META],entry.getValue()[ID_REGION]);
+				assoc(entry.getKey(), ((entry.getValue()[CON_SRC] + 2) % 4) + 4, entry.getValue()[CON_DEST],entry.getValue()[NR_META_PART],entry.getValue()[ID_META],entry.getValue()[ID_REGION]);
 			}
 		}
 		

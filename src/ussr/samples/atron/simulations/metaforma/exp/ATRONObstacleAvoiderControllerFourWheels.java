@@ -128,11 +128,9 @@ public class ATRONObstacleAvoiderControllerFourWheels extends ATRONController {
 	}
 	
 	public void handleMessage(byte[] message, int messageLength, int connector) {
-        if (state == State.values()[message[1]])
-        {
+        if (state == State.values()[message[1]]) {
         	printStateSwitch(State.values()[message[0]].toString());
         	state = State.values()[message[0]];
-        	
         }
         else
         	System.err.println("State mismatch in " + name + "! " + state.toString() + " != " + State.values()[message[1]]);

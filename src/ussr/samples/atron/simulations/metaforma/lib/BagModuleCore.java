@@ -7,20 +7,21 @@ import ussr.samples.atron.simulations.metaforma.lib.Packet.PacketConsensus;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.PacketDiscover;
 
 public abstract class BagModuleCore extends Bag {
-	public IRole role;
+	public IMetaPart part;
 	public byte metaID;
+	public byte continueWalk;
 	private Module idPrevious;
 	
 	public Module getID () {
 		return ctrl.getID();
 	}
 
-	public void setRole(IRole r) {
-		role = r;
+	public void setPart(IMetaPart r) {
+		part = r;
 	}
 	
-	public IRole getRole() {
-		return role;
+	public IMetaPart getPart() {
+		return part;
 	}
 	
 	
@@ -44,6 +45,7 @@ public abstract class BagModuleCore extends Bag {
 	}
 	
 	public void storeID () {
+		ctrl.visual.print("$$$ store name " + getID());
 		idPrevious = getID();
 	}
 	
@@ -88,6 +90,8 @@ public abstract class BagModuleCore extends Bag {
 	public boolean atL(){return false;}
 	public boolean atR(){return false;}
 
+	
+	
 	
 	
 }

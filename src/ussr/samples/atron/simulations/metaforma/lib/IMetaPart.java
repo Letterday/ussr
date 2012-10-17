@@ -1,10 +1,10 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
 
-public interface IRole {
+public interface IMetaPart {
 	public byte index();
 	
-	public IRole fromByte(byte b);
+	public IMetaPart fromByte(byte b);
 	
 	public byte size();
 }

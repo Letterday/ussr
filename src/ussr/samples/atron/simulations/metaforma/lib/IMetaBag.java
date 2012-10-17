@@ -26,5 +26,8 @@ public interface IMetaBag extends IBag {
 
 	public void setCountInRegion(byte c);
 
+	public void releaseRegion();
+	public void resetVars();
+	public void disable();
 	
 }

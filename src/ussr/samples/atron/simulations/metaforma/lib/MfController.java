@@ -7,8 +7,6 @@ import java.util.Map;
 
 import ussr.model.debugging.ControllerInformationProvider;
 import ussr.model.debugging.DebugInformationProvider;
-import ussr.samples.atron.simulations.metaforma.gen.BrandtController;
-import ussr.samples.atron.simulations.metaforma.gen.BrandtController.StateOperation;
 import ussr.samples.atron.simulations.metaforma.lib.NeighborSet;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 import ussr.util.Pair;
@@ -23,6 +21,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	public final static byte MALE = (byte) (pow2(0) + pow2(2) + pow2(4) + pow2(6));
 	public final static byte FEMALE = (byte) (pow2(1) + pow2(3) + pow2(5) + pow2(7));
 	
+	public int EIGHT = 45;
 	public int QUART = 90;
 	public int HALF = 180;
 	
@@ -61,8 +60,21 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		actuation = new MfActuation(this);
 	}
 
+	public void finish () {
+		meta().disable();
+		meta().releaseRegion();
+		meta().resetVars();
+		module().setMetaID(0);
+		module().setPart(getMetaPart());
+		stateMngr.goToInit();
+	}
 	
-		
+	
+	
+	public boolean freqLimit (String key) {
+		return freqLimit(key, settings.get(key));
+	}
+	
 	public boolean freqLimit (String key,float interval) {
 		if (!doRepeat.containsKey(key) || time() - doRepeat.get(key)  > interval) {
 			doRepeat.put(key, time()); 
@@ -133,7 +145,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 				visual.colorize();
 			}
 			if (freqLimit("active",3f)) {		
-				System.out.println(getID() + ".active at " + time());
+//				System.out.println(getID() + ".active at " + time());
 			}
 			
 		}
@@ -159,12 +171,18 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		if (MfApi.isFEMALE(p.connDest)) {
 			getContext().setFemaleConnected(p.connDest,p.getConnectorConnected());
 		}
-		getContext().addNeighbor(p.getSource(), p.connDest, p.getSourceConnector(),p.getModRole(),p.getMetaID(),p.getRegionID());
+		getContext().addNeighbor(p.getSource(), p.connDest, p.getSourceConnector(),p.getMetaPart(),p.getMetaID(),p.getRegionID());
 	
 		if ((p.regionID == meta().regionID() && meta().regionID() != 0) || (p.metaID == module().metaID && module().metaID != 0) ) {//|| (p.metaID == 0 && module().metaID == 0) 
 			// If packet is in region or in meta-module, then update state!
+			if (stateMngr.at(getStateInit()) && !p.getState().match(getStateInit())) {				
+				if (!freqLimit("stateTreshold")) {
+					visual.print("state transition refused from " + stateMngr.getState() + " to " + p.getState());
+					return false;
+				}
+			}
 			if (getStateMngr().update(BigInteger.ZERO, p.getState())) {
-				visual.print("state update from " + p.getSource() + " : " + p.getState());
+				visual.print("STATE UPDATE FROM " + p.getSource() + " : " + p.getState());
 			}
 			visual.print(p,".receive: " + p);
 			return true;
@@ -213,7 +231,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		else if (typeNr == PacketMetaVarSync.getTypeNr()) {
 			PacketMetaVarSync p = (PacketMetaVarSync)new PacketMetaVarSync(this).deserialize(msg,connector);
 			// Meta var sync only within meta module
-			if (preprocessPacket(p) && module().metaID == p.metaID) {
+			if (preprocessPacket(p) && p.metaID == module().metaID && module().metaID != 0) {// we need the last part of the condition!!
 				receivePacket(p);
 			}
 			receivePacket((Packet)p);
@@ -240,16 +258,18 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	public abstract boolean receivePacket (PacketSetMetaId p);
 	
 	public boolean receivePacket (PacketMetaVarSync p) {
+		
 		for (Map.Entry<String,Pair<Byte,Byte>> e:p.vars.entrySet()) {
 			String var = e.getKey();
 
 			meta().setVar(var, e.getValue().fst(),e.getValue().snd());
 			
 			
-			//TODO: BrandtController.StateOperation.CHOOSE needs to be converted to independent state
+			
 			if (var.equals("regionID")) {
 				// The new region ID is not allowed to be zero!
-				if (stateMngr.at(BrandtController.StateOperation.CHOOSE) && e.getValue().fst() != 0) {
+				//TODO: CHOOSE state is represented by 1
+				if (stateMngr.at(getStateChoose()) && e.getValue().fst() != 0) {
 					getStateMngr().commit("BOSS ID received through meta sync");
 //					visual.print("COMMMMIIITT");
 				}
@@ -288,8 +308,8 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		return context.nbs().nbsOnGroup(g);
 	}
 	
-	public NeighborSet nbs(int connectors, IRole r) {
-		return context.nbs().nbsFilterConn(connectors).nbsIsModRole(r);
+	public NeighborSet nbs(int connectors, IMetaPart r) {
+		return context.nbs().nbsFilterConn(connectors).nbsIsMetaPart(r);
 	}
 	
 	public NeighborSet nbs(int connectors, IGroupEnum g) {
@@ -350,7 +370,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 //			p.setMetaSourceId(-1);
 //		}
 		p.setSource(getID());
-		p.setModRole(module().role);
+		p.setMetaPart(module().part);
 	}
 	
 	public void broadcast (Packet p) {	
@@ -457,20 +477,24 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	
 	public void receivePacket (PacketRegion p) {					
 		// the origin will become the boss
-		if (stateMngr.check(p,StateOperation.CHOOSE) && (p.getState().getInstruction() == 2 || (meta().regionID() == 0 || meta().regionID() == p.getRegionID()))) {
+		//stateMngr.check(p,getStateChoose())
+		if (stateMngr.at(getStateChoose()) && ( meta().regionID() == 0 || meta().regionID() == p.getRegionID())) { // p.getState().getInstruction() == 1 ||
 			visual.print(p.toString());
 			meta().setRegionID(p.getRegionID());
 			meta().setCountInRegion (p.sizeMeta);
 			if (p.indirectNb != 0) {
 				unicast(new PacketRegion(this),nbs().nbsWithMetaId(p.indirectNb).connectors());
-			}	
+			}
+			stateMngr.nextState(p.getState());
 			stateMngr.commit("BOSS ID received");
 		}
 		else {
-			visual.print("REJECTED " + p.toString());
+			visual.print("REJECTED " + p );
 		}
 	}
 	
+	
+	public abstract IStateOperation getStateChoose();
 //////////////////////////////////////////////////////////////
 	// Generated shared functions
 	
@@ -520,8 +544,8 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		
 	}
 
-	public abstract IRole getInstRole();
-	public abstract IStateOperation getInstOperation();
+	public abstract IMetaPart getMetaPart();
+	public abstract IStateOperation getStateInit();
 	
 
 	public void setAngle(int a) {
