@@ -1,8 +1,6 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
 
-
-
 public class MfContext  {
 	
 	
@@ -27,9 +25,11 @@ public class MfContext  {
 
 	public void deleteUnconnectedNeighbors() {
 		neighbors.deleteUnconnectedOnes();
+
 		// Because connected cache from females might be out of date!
-		neighbors.deleteFemaleOnes();
-		
+//		neighbors.deleteFemaleOnes();
+		// NO, this is not the way to go! The new state might need this information, for gradients etc.
+		// We have to send a discover when disconnecting a female to inform its disconnection
 	}
 	
 	public byte abs2rel (int nr) {

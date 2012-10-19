@@ -16,8 +16,9 @@ public abstract class BagModuleCore extends Bag {
 		return ctrl.getID();
 	}
 
-	public void setPart(IMetaPart r) {
-		part = r;
+	public void setPart(IMetaPart p) {
+		ctrl.visual.print(".setPart " + p);
+		part = p;
 	}
 	
 	public IMetaPart getPart() {
@@ -59,6 +60,7 @@ public abstract class BagModuleCore extends Bag {
 	}
 
 	public void setMetaID(int i) {
+		ctrl.visual.print("setMetaID " + i);
 		setVar("metaID", (byte)i);
 	}
 	
@@ -85,10 +87,10 @@ public abstract class BagModuleCore extends Bag {
 		return ret;
 	}
 	
-	public boolean atT(){return false;}
-	public boolean atB(){return false;}
-	public boolean atL(){return false;}
-	public boolean atR(){return false;}
+	public boolean atTop(){return false;}
+	public boolean atBottom(){return false;}
+	public boolean atLeft(){return false;}
+	public boolean atRight(){return false;}
 
 	
 	

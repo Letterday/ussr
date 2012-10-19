@@ -98,7 +98,7 @@ public class MfActuation  {
 			}
 			
 			if ( // Am I done?
-//				ctrl.nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(!connect).isEmpty() &&  NO, 1 connection is enough!!
+				ctrl.nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(!connect).isEmpty() && // WHY????: NO, 1 connection is enough!!
 				
 				// At least one of the modules must take action, in case of a group and a module
 				!ctrl.nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(connect).isEmpty() 
@@ -143,6 +143,7 @@ public class MfActuation  {
 			 ctrl.connect(ctrl.context.rel2abs(c)); 
 		 }
 		 else if (!connect && ctrl.context.isConnConnected(c)) {
+			 ctrl.module().discover();
 			 ctrl.disconnect(ctrl.context.rel2abs(c));
 		 }
 	}

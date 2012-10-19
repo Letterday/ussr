@@ -37,7 +37,7 @@ class ChristensenSimulation extends MfSimulation {
 	}
 
 	protected ArrayList<ModulePosition> buildRobot() {
-		return new MfBuilder().buildRectangle(3,7, ChristensenController.Mod.Floor);
+		return new MfBuilder().buildRectangle(3,9, ChristensenController.Mod.Floor);
 	}
 
 }
@@ -97,21 +97,21 @@ public class ChristensenController extends MfController implements ControllerInf
 		}
 		
 		public void gradientInit() {
-			if (stateMngr.getState().getOrientation() == Orientation.BOTTOMLEFT) {
-				sourceV = module().atB();
-				sourceH = module().atL();
+			if (stateMngr.getState().getOrientation() == Orientation.BOTTOM_LEFT) {
+				sourceV = module().atBottom();
+				sourceH = module().atLeft();
 			}
-			if (stateMngr.getState().getOrientation() == Orientation.TOPLEFT) {
-				sourceV = module().atT();
-				sourceH = module().atL();
+			if (stateMngr.getState().getOrientation() == Orientation.TOP_LEFT) {
+				sourceV = module().atTop();
+				sourceH = module().atLeft();
 			}
-			if (stateMngr.getState().getOrientation() == Orientation.BOTTOMRIGHT) {
-				sourceV = module().atB();
-				sourceH = module().atR();
+			if (stateMngr.getState().getOrientation() == Orientation.BOTTOM_RIGHT) {
+				sourceV = module().atBottom();
+				sourceH = module().atRight();
 			}
-			if (stateMngr.getState().getOrientation() == Orientation.TOPRIGHT) {
-				sourceV = module().atT();
-				sourceH = module().atR();
+			if (stateMngr.getState().getOrientation() == Orientation.TOP_RIGHT) {
+				sourceV = module().atTop();
+				sourceH = module().atRight();
 			}
 			
 			visual.print("gradientInit()");
@@ -119,10 +119,10 @@ public class ChristensenController extends MfController implements ControllerInf
 			setVar("gradV",(byte)MAX_BYTE);			
 		}
 		
-		public boolean atT() {return !nbs(WEST&FEMALE).nbsInRegion(true).isEmpty() && nbs(EAST&FEMALE).nbsInRegion(true).isEmpty() ;}
-		public boolean atL() {return !nbs(EAST&MALE).nbsInRegion(true).isEmpty() && nbs(WEST&MALE).nbsInRegion(true).isEmpty()  ;}
-		public boolean atB() {return !nbs(EAST&FEMALE).nbsInRegion(true).isEmpty() && nbs(WEST&FEMALE).nbsInRegion(true).isEmpty() || !nbs(NORTH&MALE).nbsInRegion(true).isEmpty() && nbs(SOUTH&MALE).nbsInRegion(true).isEmpty();}
-		public boolean atR() {return !nbs(WEST&MALE).nbsInRegion(true).isEmpty() && nbs(EAST&MALE).nbsInRegion(true).isEmpty() ;}
+		public boolean atTop() {return !nbs(WEST&FEMALE).nbsInRegion(true).isEmpty() && nbs(EAST&FEMALE).nbsInRegion(true).isEmpty() ;}
+		public boolean atLeft() {return !nbs(EAST&MALE).nbsInRegion(true).isEmpty() && nbs(WEST&MALE).nbsInRegion(true).isEmpty()  ;}
+		public boolean atBottom() {return !nbs(EAST&FEMALE).nbsInRegion(true).isEmpty() && nbs(WEST&FEMALE).nbsInRegion(true).isEmpty() || !nbs(NORTH&MALE).nbsInRegion(true).isEmpty() && nbs(SOUTH&MALE).nbsInRegion(true).isEmpty();}
+		public boolean atRight() {return !nbs(WEST&MALE).nbsInRegion(true).isEmpty() && nbs(EAST&MALE).nbsInRegion(true).isEmpty() ;}
 	}
 	
 	class BagMeta extends BagMetaCore implements IMetaBag {
@@ -176,17 +176,14 @@ public class ChristensenController extends MfController implements ControllerInf
 		}
 
 
-		public void absorb(byte newSize) {
+		public void absorb() {
 			visual.print("Absorbing lonely module!");
 			broadcast(new PacketAbsorb(ctrl));
-			meta().setSize(newSize);
+			setVar("absorbed",1);
 		}
 
 
-		public void setSize(int i) {
-			setVar("size",(byte)i);
-			
-		}
+	
 	}
 	
 	enum MetaPart implements IMetaPart {
@@ -377,8 +374,7 @@ public class ChristensenController extends MfController implements ControllerInf
 			if (stateMngr.doUntil(1)) {
 //				if (meta().Top == 0 && meta().Left != 0 && meta().Right == 0 && meta().Bottom != 0) {
 				if (meta().Top == 0 && meta().Left == 0 && meta().Right == 0 && meta().Bottom != 0) {
-					meta().createRegion(new byte[]{meta().Bottom});
-					stateMngr.setAfterConsensus(StateOperation.GET_UP,Orientation.BOTTOMLEFT);
+					meta().createRegion(new byte[]{meta().Bottom},StateOperation.GET_UP,Orientation.BOTTOM_LEFT);
 					stateMngr.commit();
 				}
 			}
@@ -489,8 +485,7 @@ public class ChristensenController extends MfController implements ControllerInf
 				meta().releaseRegion();
 				
 				if (meta().continueWalk == 0) {
-//					meta().resetVars();
-					stateMngr.goToInit();
+					finish();
 				}
 				
 				stateMngr.commitMyselfIfNotUsed();
@@ -525,7 +520,7 @@ public class ChristensenController extends MfController implements ControllerInf
 			}
 			
 			if (stateMngr.doWait(3)) {
-				actuation.rotate(Mod.Walker_Right,HALF);
+				actuation.rotate(Mod.Walker_Right,-HALF);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
@@ -554,80 +549,81 @@ public class ChristensenController extends MfController implements ControllerInf
 		
 		if (stateMngr.at(StateOperation.GET_DOWN)) {
 			if (stateMngr.doWait(0)) {
-				meta().setVar("Bottom", 0);
+				stateMngr.spend(settings.get("assignTime"));
+			}
+			
+			if (stateMngr.doWait(1)) {
 				actuation.rotate(Mod.Walker_Left,QUART);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doUntil(1)) {
-				meta().absorb((byte) 4);
+			if (stateMngr.doUntil(2)) {
+				meta().absorb();
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doUntil(2)) {
+			if (stateMngr.doUntil(3)) {
 				if (Group.Walker.contains(module.getID())) {
 					meta().createRegion(new byte[]{meta().Bottom});
 				}
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(3)) {
-				stateMngr.commitMyselfIfNotUsed();
-			}
-			
 			if (stateMngr.doWait(4)) {
-				actuation.disconnectPart(Mod.Uplifter_Left, SOUTH);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
 			if (stateMngr.doWait(5)) {
+				actuation.disconnectPart(Mod.Uplifter_Left, SOUTH);
+				stateMngr.commitMyselfIfNotUsed();
+			}
+			
+			if (stateMngr.doWait(6)) {
 				actuation.connect(Mod.Walker_Left,Mod.Uplifter_Left);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			
-			
-			if (stateMngr.doWait(6)) {
+			if (stateMngr.doWait(7)) {
 				actuation.disconnect(Mod.Walker_Left,Group.Floor);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(7)) {
+			if (stateMngr.doWait(8)) {
 				actuation.rotate(Mod.Uplifter_Left,-QUART);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(8)) {
+			if (stateMngr.doWait(9)) {
 				actuation.connect(Mod.Walker_Right,Mod.Uplifter_Left);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(9)) {
+			if (stateMngr.doWait(10)) {
 				actuation.disconnect(Mod.Walker_Left,Mod.Uplifter_Left);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
 			
-			if (stateMngr.doWait(10)) {
+			if (stateMngr.doWait(11)) {
 				actuation.rotate(Mod.Uplifter_Left,-QUART);
 				actuation.rotate(Mod.Walker_Left,-QUART);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doWait(11)) {
+			if (stateMngr.doWait(12)) {
 				actuation.connect(Mod.Walker_Left,Mod.Uplifter_Left);
 				actuation.connect(Group.Floor,Mod.Uplifter_Left);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
-			if (stateMngr.doUntil(12)) {
-				if (module().metaID != meta().regionID && module().atT()) {
+			if (stateMngr.doUntil(13)) {
+				if (module().metaID != meta().regionID && module().atTop()) {
 					broadcast(new PacketSymmetry(this));
 					stateMngr.commit("symmetry initiated");
 				}
 			}
 			
-			if (stateMngr.doUntil(13)) {
+			if (stateMngr.doUntil(14)) {
 				if (!module().getGroup().equals(Group.Floor)) {
 					module().restoreID();
 				}
@@ -756,7 +752,7 @@ public class ChristensenController extends MfController implements ControllerInf
 	public boolean receivePacket (PacketSymmetry p) {
 		boolean handled = false;
 		
-		if (stateMngr.check(p,new State(StateOperation.GET_DOWN,12))) {	
+		if (stateMngr.check(p,new State(StateOperation.GET_DOWN,13))) {	
 			symmetryFix(p);
 			handled = true;
 		}
@@ -816,8 +812,7 @@ public class ChristensenController extends MfController implements ControllerInf
 		return meta;
 	}
 	
-public void receiveCustomPacket(byte typeNr, byte[] msg, byte connector) {
-		
+	public void receiveCustomPacket(byte typeNr, byte[] msg, byte connector) {	
 		visual.print("RECEIVE " + typeNr);
 		if (typeNr == PacketGradient.getTypeNr()) {
 			PacketGradient p = (PacketGradient)new PacketGradient(this).deserialize(msg,connector);

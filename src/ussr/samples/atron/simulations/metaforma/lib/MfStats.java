@@ -3,22 +3,36 @@ package ussr.samples.atron.simulations.metaforma.lib;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.print.attribute.standard.Finishings;
+
 class StatEntry {
 	
-	private float time;
+	private float startTime;
+	private float endTime;
 	public byte metaID;
-	public String msg;
 	public IStateOperation stateOperation;
+	public Orientation orient;
+	private boolean finished;
 	
-	public StatEntry(byte meta, IStateOperation s, String m,float t) {
+	public StatEntry(byte meta, IStateOperation s, Orientation o, float t) {
 		metaID = meta;
-		time = t;
+		startTime = t;
 		stateOperation = s;
-		msg = m;
+		orient = o;
+		finished = false;
+	}
+	
+	public float getStartTime() {
+		return startTime;
+	}
+	
+	public void setFinished (float time) {
+		finished = true;
+		endTime = time;
 	}
 	
 	public String toString () {
-		return msg + ": " + metaID + " " +  stateOperation + " " + MfApi.round(time,1);
+		return (finished? "finished": "working") + ": " + metaID + " " +  stateOperation + " - " + orient + " start: " + MfApi.round(startTime,1) + " end: " + MfApi.round(endTime,1);
 	}
 	
 	
@@ -32,7 +46,7 @@ public class MfStats {
 	
 	private ArrayList<StatEntry> stat = new ArrayList<StatEntry>();
 
-	private ConcurrentHashMap<IStateOperation,Float> incoming = new ConcurrentHashMap<IStateOperation,Float>();
+	private ConcurrentHashMap<Byte,StatEntry> incoming = new ConcurrentHashMap<Byte,StatEntry>();
 	
 
 	public static MfStats getInst () {
@@ -48,19 +62,22 @@ public class MfStats {
 	
 	
 
-	public void addStart(IStateOperation op, byte metaID, float time) {
-		// If the previous start of a sequence is not ended succesfully
-		if (!incoming.containsKey(op) || time - incoming.get(op) > 10) {
-			stat.add(new StatEntry(metaID,op,"Start",time));
-		}
-		incoming.put(op,time);
+	public void addStart(IStateOperation op, Orientation or, byte metaID, float time, MfController c) {
+		// If the previous start of a sequence is not ended successfully
+		
+		StatEntry e = new StatEntry(metaID,op,or,time);
+//		if (!incoming.containsKey(metaID) || time - incoming.get(metaID).getStartTime() > 10) {
+//			
+//		}
+		incoming.put(metaID,e);
 	}
 	
 	
-	public void addEnd(IStateOperation op, byte metaID, float time) {
-		if (incoming.containsKey(op)){
-			incoming.remove(op);
-			stat.add(new StatEntry(metaID,op,"End",time));
+	public void addEnd(IStateOperation op, Orientation or, byte metaID, float time) {
+		if (incoming.containsKey(metaID)){
+			incoming.get(metaID).setFinished(time);
+			stat.add(incoming.get(metaID));
+			incoming.remove(metaID);
 		}
 	}
 	

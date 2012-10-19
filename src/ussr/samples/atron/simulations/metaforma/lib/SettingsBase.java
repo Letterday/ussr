@@ -10,6 +10,7 @@ public class SettingsBase {
 	public HashMap<String,Float> settings = new HashMap<String,Float>();
 	private float propagationRate;
 	private float withdrawTime;
+	private double randomRange = 6;
 
 	
 	
@@ -18,17 +19,20 @@ public class SettingsBase {
 		intervals.put("module.gradientPropagate", new Pair<Float,Float>(0.3f,5f));
 		intervals.put("module.broadcastConsensus", new Pair<Float,Float>(6f,5f));
 		intervals.put("meta.broadcastVars", new Pair<Float,Float>(4f,0f));
-		intervals.put("meta.broadcastNeighbors", new Pair<Float,Float>(4f,15f));
+		intervals.put("meta.broadcastNeighbors", new Pair<Float,Float>(4f,20f));
 		
 
 		settings.put("stateTreshold", 4f);
+		
+		settings.put("assignTime", 6f);
+		
+		
 		settings.put("turnAroundTime", 2f);
 		settings.put("backwardTime", 10f);
-		settings.put("assignTime", 4f);
-		settings.put("proximity", 0.20f);
+		settings.put("proximity", 0.15f);
 		
 		propagationRate = 0.3f;
-		withdrawTime = 20f;
+		withdrawTime = 30f;
 	}
 	
 	public float getPropagationRate() {
@@ -36,18 +40,22 @@ public class SettingsBase {
 	}
 	
 	public float getWithdrawTime() {
-		return withdrawTime;	
+		return withdrawTime + rand();	
 	}
 	
 	public float getInterval (String name) {
 		return intervals.get(name).fst();
 	}
 	
-	public float getDuration (String name) {
-		return intervals.get(name).snd();
+	private float rand () {
+		return (float) (Math.random() * randomRange);
 	}
 	
-	private int ladderLength = 3;
+	public float getDuration (String name) {
+		return intervals.get(name).snd() + rand();
+	}
+	
+	private int ladderLength = 4;
 	private int ladderWidth = 1;
 	private boolean ladderBegin = true;
 //	

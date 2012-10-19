@@ -10,7 +10,6 @@ import ussr.description.setup.ModulePosition;
 import ussr.model.Controller;
 import ussr.model.debugging.ControllerInformationProvider;
 import ussr.samples.atron.ATRON;
-import ussr.samples.atron.simulations.metaforma.gen.ChristensenController.StateOperation;
 import ussr.samples.atron.simulations.metaforma.lib.*;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 
@@ -114,52 +113,51 @@ public class BrandtController extends MfController implements ControllerInformat
 		public IStateOperation fromByte(byte b) {return values()[b];}
 	}
 	class BagModule extends BagModuleCore {
-		public byte gradH;
-		public byte gradV;
+		public byte gradPri;
+		public byte gradSec;
 		public boolean isRef;
-		public boolean sourceH;
-		public boolean sourceV;
+		public boolean sourcePri;
+		public boolean sourceSec;
 		
 		
 		public void gradientPropagate () { 
-			if (sourceH){
+			if (sourcePri){
 				visual.print("I am source for H");
-				setVar("gradH",(byte)0);
+				setVar("gradPri",(byte)0);
 			}
 			
-			if (sourceV) {
+			if (sourceSec) {
 				visual.print("I am source for V");
-				setVar("gradV",(byte)0);
+				setVar("gradSec",(byte)0);
 			}
-			broadcast((PacketGradient)new PacketGradient(ctrl).setVar("h", gradH).setVar("v", gradV));
+			broadcast((PacketGradient)new PacketGradient(ctrl).setVar("h", gradPri).setVar("v", gradSec));
 		}
 		
-		public boolean atL() {return nbs(EAST&MALE).nbsInRegion(true).size() == 2 && nbs(WEST&NORTH&MALE).nbsInRegion(true).isEmpty() || nbs(WEST&FEMALE).nbsInRegion(true).size() == 2 && nbs(EAST&NORTH&FEMALE).nbsInRegion(true).isEmpty();}
-		public boolean atR() {return nbs(WEST&MALE).nbsInRegion(true).size() == 2 && nbs(EAST&SOUTH&MALE).nbsInRegion(true).isEmpty() || nbs(EAST&FEMALE).nbsInRegion(true).size() == 2 && nbs(WEST&SOUTH&FEMALE).nbsInRegion(true).isEmpty();}
-		public boolean atT() {return nbs(WEST&MALE).nbsInRegion(true).size() == 2 && nbs(EAST&NORTH&MALE).nbsInRegion(true).isEmpty() || nbs(WEST&FEMALE).nbsInRegion(true).size() == 2 && nbs(EAST&SOUTH&FEMALE).nbsInRegion(true).isEmpty();}
-		public boolean atB() {return nbs(EAST&MALE).nbsInRegion(true).size() == 2 && nbs(WEST&SOUTH&MALE).nbsInRegion(true).isEmpty() || nbs(EAST&FEMALE).nbsInRegion(true).size() == 2 && nbs(WEST&NORTH&FEMALE).nbsInRegion(true).isEmpty();}
+		public boolean at(Direction d) {
+			boolean ret = false;
+			
+			if (d.equals(Direction.LEFT)) {
+				ret = nbs(EAST&MALE).nbsInRegion(true).size() == 2 && nbs(WEST&NORTH&MALE).nbsInRegion(true).isEmpty() || nbs(WEST&FEMALE).nbsInRegion(true).size() == 2 && nbs(EAST&NORTH&FEMALE).nbsInRegion(true).isEmpty();
+			}
+			if (d.equals(Direction.RIGHT)) {
+				ret = nbs(WEST&MALE).nbsInRegion(true).size() == 2 && nbs(EAST&SOUTH&MALE).nbsInRegion(true).isEmpty() || nbs(EAST&FEMALE).nbsInRegion(true).size() == 2 && nbs(WEST&SOUTH&FEMALE).nbsInRegion(true).isEmpty();
+			}
+			if (d.equals(Direction.TOP)) {
+				ret = nbs(WEST&MALE).nbsInRegion(true).size() == 2 && nbs(EAST&NORTH&MALE).nbsInRegion(true).isEmpty() || nbs(WEST&FEMALE).nbsInRegion(true).size() == 2 && nbs(EAST&SOUTH&FEMALE).nbsInRegion(true).isEmpty();
+			}
+			if (d.equals(Direction.BOTTOM)) {
+				ret = nbs(EAST&MALE).nbsInRegion(true).size() == 2 && nbs(WEST&SOUTH&MALE).nbsInRegion(true).isEmpty() || nbs(EAST&FEMALE).nbsInRegion(true).size() == 2 && nbs(WEST&NORTH&FEMALE).nbsInRegion(true).isEmpty();
+			}
+			return ret;
+		}
 
 		public void gradientInit() {
-			if (stateMngr.getState().getOrientation() == Orientation.BOTTOMLEFT) {
-				sourceV = module().atB();
-				sourceH = module().atL();
-			}
-			if (stateMngr.getState().getOrientation() == Orientation.TOPLEFT) {
-				sourceV = module().atT();
-				sourceH = module().atL();
-			}
-			if (stateMngr.getState().getOrientation() == Orientation.BOTTOMRIGHT) {
-				sourceV = module().atB();
-				sourceH = module().atR();
-			}
-			if (stateMngr.getState().getOrientation() == Orientation.TOPRIGHT) {
-				sourceV = module().atT();
-				sourceH = module().atR();
-			}
+			sourcePri = at(stateMngr.getState().getOrientation().getPrimaryBorder());
+			sourceSec = at(stateMngr.getState().getOrientation().getSecondaryBorder());
 			
 			visual.print("gradientInit()");
-			setVar("gradH",(byte)MAX_BYTE);
-			setVar("gradV",(byte)MAX_BYTE);			
+			setVar("gradPri",(byte)MAX_BYTE);
+			setVar("gradSec",(byte)MAX_BYTE);			
 		}
 		
 	}
@@ -235,7 +233,7 @@ public class BrandtController extends MfController implements ControllerInformat
 		NONE,
 		Dummy_Left,
 		Dummy_Right,
-		F(32),
+		F(64),
 		Clover_North, Clover_South, Clover_West, Clover_East, 
 		Outside(32),
 		Inside(32),
@@ -293,13 +291,16 @@ public class BrandtController extends MfController implements ControllerInformat
 
 		@Override
 		public byte ord() {
-			byte ret = 0;
+			int ret = 0;
 			for (Mod m:values()) {
 				if (m.ordinal() != ordinal()) {
 					ret+=m.count;
 				}
 				else {
-					return ret;
+					if (ret > 255) {
+						throw new Error("Enum overflow: 255<" + ret + "  " + this);
+					}
+					return (byte)ret;
 				}
 			}
 			throw new Error ("Enum value not found!");
@@ -400,6 +401,7 @@ public class BrandtController extends MfController implements ControllerInformat
 	public void handleStates() {
 		
 		if (stateMngr.at(StateOperation.INIT)) {
+			
 			// Make groupings of 4
 			if (stateMngr.doUntil(0)) {
 				if (nbs(EAST&MALE, MetaPart.NONE).size() == 2 && !nbs(WEST, MetaPart.NONE).exists()) {
@@ -430,42 +432,39 @@ public class BrandtController extends MfController implements ControllerInformat
 //					stateMngr.setAfterConsensus(StateOperation.FLIPOVER,Orientation.BOTTOMRIGHT);
 //					stateMngr.commit();
 //				}
-				
+				// TOP or MIDDLE LEFT
 				if (meta().Top == 0 && meta().Bottom == 0 && meta().Right != 0 && meta().Left == 0) {
 					if (meta().TopRight == 0) {
-						meta().createRegion(new byte[]{meta().Right});
-						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH,Orientation.TOPLEFT);
+						meta().createRegion(new byte[]{meta().Right},StateOperation.FLIPTHROUGH,Orientation.LEFT_BOTTOM);
 						stateMngr.commit();
 					}
 					else {
-						meta().createRegion(new byte[]{meta().TopRight,meta().Right});
-						stateMngr.setAfterConsensus(StateOperation.FLIPALONG,Orientation.BOTTOMRIGHT);
+						meta().createRegion(new byte[]{meta().TopRight,meta().Right},StateOperation.FLIPALONG,Orientation.BOTTOM_RIGHT);
 						stateMngr.commit();
 					}
 				}
 				
+				// TOP or MIDDLE RIGHT
 				if (meta().Top == 0  && meta().Bottom == 0 && meta().Left != 0  && meta().Right == 0) {
 					if (meta().TopLeft == 0) {
-						meta().createRegion(new byte[]{meta().Left});
-						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH,Orientation.TOPRIGHT);
+						meta().createRegion(new byte[]{meta().Left},StateOperation.FLIPTHROUGH,Orientation.RIGHT_BOTTOM);
 						stateMngr.commit();
 					}
 					else {
-						meta().createRegion(new byte[]{meta().TopLeft,meta().Left});
-						stateMngr.setAfterConsensus(StateOperation.FLIPALONG,Orientation.BOTTOMLEFT);
+						meta().createRegion(new byte[]{meta().TopLeft,meta().Left},StateOperation.FLIPALONG,Orientation.BOTTOM_LEFT);
 						stateMngr.commit();
 					}
 				}
 				
+				
+				// BOTTOM OF STRUCT
 				if (meta().Bottom == 0  && meta().Top != 0 && meta().Left == 0  && meta().Right == 0 ) {
 //					if (meta().TopLeft == 0) { 
-//						meta().createRegion(new byte[]{meta().Top},(byte)0);
-//						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH,Orientation.BOTTOMLEFT);
+//						meta().createRegion(new byte[]{meta().Top},StateOperation.FLIPTHROUGH,Orientation.BOTTOM_RIGHT);
 //						stateMngr.commit();
 //					}
 					if (meta().TopRight == 0) {
-						meta().createRegion(new byte[]{meta().Top});
-						stateMngr.setAfterConsensus(StateOperation.FLIPTHROUGH,Orientation.BOTTOMRIGHT);
+						meta().createRegion(new byte[]{meta().Top},StateOperation.FLIPTHROUGH,Orientation.BOTTOM_LEFT);
 						stateMngr.commit();
 					}
 				}
@@ -476,25 +475,23 @@ public class BrandtController extends MfController implements ControllerInformat
 		if (stateMngr.at(StateOperation.FLIPTHROUGH)) {
 			if (stateMngr.doWait(0)) {
 								
-				if (stateMngr.getState().getOrientation() == Orientation.TOPLEFT) {
+				if (stateMngr.getState().getOrientation().is(Direction.RIGHT)) {
 					QUART = 90;
 					HALF = 180;
 				}
 				
-				if (stateMngr.getState().getOrientation() == Orientation.TOPRIGHT) {
+				if (stateMngr.getState().getOrientation().equals(Orientation.BOTTOM_RIGHT)) {
+					QUART = -90;
+					HALF = -180;
+				}
+				
+				if (stateMngr.getState().getOrientation().equals(Orientation.BOTTOM_LEFT)) {
 					QUART = 90;
 					HALF = 180;
 				}
 				
-				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMLEFT) {
-					QUART = -90;
-					HALF = -180;
-				}
 				
-				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMRIGHT) {
-					QUART = -90;
-					HALF = -180;
-				}
+				
 				
 				module().gradientInit();
 				stateMngr.commitMyselfIfNotUsed();
@@ -514,10 +511,10 @@ public class BrandtController extends MfController implements ControllerInformat
 				assign (1,1,Mod.Uplifter_Left);
 				assign (0,2,Mod.Uplifter_Right);
 				assign (0,1,Mod.Dummy_Left);
-				assign (0,0,Mod.Uplifter_Top);
+				assign (1,3,Mod.Uplifter_Top);
 				assign (1,2,Mod.Dummy_Right);
-				assign (1,3,Mod.Uplifter_Bottom);
-				if (module().gradH == 0 && module().gradV == 3) {
+				assign (0,0,Mod.Uplifter_Bottom);
+				if (module().gradPri == 0 && module().gradSec == 3) {
 					module().setVar("isRef",true);
 				}
 				else {
@@ -548,7 +545,7 @@ public class BrandtController extends MfController implements ControllerInformat
 			}
 			
 			if (stateMngr.doWait(7)) {
-				actuation.rotate(Mod.Uplifter_Bottom,HALF);
+				actuation.rotate(Mod.Uplifter_Top,HALF);
 	//			actuation.rotate(new ModuleSet().add(Mod.Uplifter_Left).add(Mod.Uplifter_Right),-90);
 				stateMngr.commitMyselfIfNotUsed();
 			}
@@ -561,12 +558,12 @@ public class BrandtController extends MfController implements ControllerInformat
 			
 			
 			if (stateMngr.doWait(9)) {
-				actuation.rotate(Mod.Uplifter_Top,HALF);
+				actuation.rotate(Mod.Uplifter_Bottom,HALF);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
 			if (stateMngr.doWait(10)) {
-				actuation.connect(Mod.Uplifter_Right,Mod.Uplifter_Top);
+//				actuation.connect(Mod.Uplifter_Right,Mod.Uplifter_Top);
 				stateMngr.commitMyselfIfNotUsed();
 			}
 			
@@ -612,26 +609,15 @@ public class BrandtController extends MfController implements ControllerInformat
 		if (stateMngr.at(StateOperation.FLIPOVER)) {
 			if (stateMngr.doWait(0)) {
 								
-				if (stateMngr.getState().getOrientation() == Orientation.TOPLEFT) {
+				if (stateMngr.getState().getOrientation().is(Direction.TOP)) {
 					QUART = -90;
 					HALF = -180;
 				}
-				
-				if (stateMngr.getState().getOrientation() == Orientation.TOPRIGHT) {
+				else {
 					QUART = 90;
 					HALF = 180;
 				}
-				
-				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMLEFT) {
-					QUART = -90;
-					HALF = -180;
-				}
-				
-				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMRIGHT) {
-					QUART = 90;
-					HALF = 180;
-				}
-				
+								
 				module().gradientInit();
 				stateMngr.commitMyselfIfNotUsed();
 			}
@@ -648,7 +634,7 @@ public class BrandtController extends MfController implements ControllerInformat
 			if (stateMngr.doWait(3)) {
 				scheduler.disable("module.gradientPropagate");
 				
-				if (module().gradH == 0 && module().gradV == 3) {
+				if (module().gradPri == 0 && module().gradSec == 3) {
 					module().setVar("isRef",true);
 				}
 				else {
@@ -659,22 +645,22 @@ public class BrandtController extends MfController implements ControllerInformat
 			
 			if (stateMngr.doWait(4)) {
 				module().storeID();
-				if (module().getVar("gradH") == 0 && module().getVar("gradV") < 3 || module().getVar("gradV") == 0 && module().getVar("gradH") < 3) {
+				if (module().getVar("gradPri") == 0 && module().getVar("gradSec") < 3 || module().getVar("gradSec") == 0 && module().getVar("gradPri") < 3) {
 					module().swapGroup(Group.Outside);
 				}
-				if (module().getVar("gradH") > 0 && module().getVar("gradV") > 0 ) {
+				if (module().getVar("gradPri") > 0 && module().getVar("gradSec") > 0 ) {
 					module().swapGroup(Group.Inside);
 				}	
-				if (module().getVar("gradH") == 3 && module().getVar("gradV") == 1 ) {
+				if (module().getVar("gradPri") == 3 && module().getVar("gradSec") == 1 ) {
 					module().setID(Mod.InsideLifter_Top);
 				}
-				if (module().getVar("gradH") == 1 && module().getVar("gradV") == 3 ) {
+				if (module().getVar("gradPri") == 1 && module().getVar("gradSec") == 3 ) {
 					module().setID(Mod.InsideLifter_Bottom);
 				}
-				if (module().getVar("gradH") == 2 && module().getVar("gradV") == 0 ) {
+				if (module().getVar("gradPri") == 2 && module().getVar("gradSec") == 0 ) {
 					module().setID(Mod.OutsideLifter_Top);
 				}
-				if (module().getVar("gradH") == 0 && module().getVar("gradV") == 2 ) {
+				if (module().getVar("gradPri") == 0 && module().getVar("gradSec") == 2 ) {
 					module().setID(Mod.OutsideLifter_Bottom);
 				}
 				stateMngr.commitMyselfIfNotUsed();
@@ -739,12 +725,12 @@ public class BrandtController extends MfController implements ControllerInformat
 		if (stateMngr.at(StateOperation.FLIPALONG)) {
 			if (stateMngr.doWait(0)) {
 				
-				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMLEFT) {
+				if (stateMngr.getState().getOrientation() == Orientation.BOTTOM_LEFT) {
 					QUART = 90;
 					HALF = 180;
 				}
 				
-				if (stateMngr.getState().getOrientation() == Orientation.BOTTOMRIGHT) {
+				if (stateMngr.getState().getOrientation() == Orientation.BOTTOM_RIGHT) {
 					QUART = -90;
 					HALF = -180;
 				}
@@ -770,7 +756,7 @@ public class BrandtController extends MfController implements ControllerInformat
 				assign (2,0,Mod.Clover_South);
 				assign (3,1,Mod.Clover_North);
 				assign (2,1,Mod.Clover_East);
-				if (module().gradH == 0 && module().gradV == 3) {
+				if (module().gradPri == 0 && module().gradSec == 3) {
 					module().setVar("isRef",true);
 				}
 				else {
@@ -905,12 +891,12 @@ public class BrandtController extends MfController implements ControllerInformat
 	}
 
 	private void assign(int h, int v, Mod m) {
-		if (module().gradH == h && module().gradV == v) {
+		if (module().gradPri == h && module().gradSec == v) {
 			module().storeID();
 			module().setID(m);
 		}
 		else {
-			visual.print("Coordinate dismatch for " + m + " - " + h + "," + v + " ! = " + module().gradH + "," + module().gradV);
+			visual.print("Coordinate dismatch for " + m + " - " + h + "," + v + " ! = " + module().gradPri + "," + module().gradSec);
 		}
 	}
 
@@ -932,12 +918,12 @@ public class BrandtController extends MfController implements ControllerInformat
 	
 	public boolean receivePacket (PacketGradient p) {
 		boolean updated = false;
-		if (module().gradH > p.h + 1) {
-			module().setVar("gradH",(byte)(p.h + 1));
+		if (module().gradPri > p.h + 1) {
+			module().setVar("gradPri",(byte)(p.h + 1));
 			updated = true;
 		}
-		if (module().gradV > p.v + 1) {
-			module().setVar("gradV",(byte)(p.v + 1));
+		if (module().gradSec > p.v + 1) {
+			module().setVar("gradSec",(byte)(p.v + 1));
 			updated = true;
 		}
 		if (updated) {
@@ -971,7 +957,7 @@ public class BrandtController extends MfController implements ControllerInformat
 		if (stateMngr.check(p,new State(StateOperation.INIT,0))) {
 			handled = true;
 			if (module().metaID == 0) {
-				module().metaID = p.newMetaID;
+				module().setMetaID(p.newMetaID);
 				
 				if (isMALE(p.connDest)) {
 					module().setPart(MetaPart.Right);

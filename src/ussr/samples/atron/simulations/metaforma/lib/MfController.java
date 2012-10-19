@@ -7,6 +7,7 @@ import java.util.Map;
 
 import ussr.model.debugging.ControllerInformationProvider;
 import ussr.model.debugging.DebugInformationProvider;
+import ussr.samples.atron.simulations.metaforma.gen.BrandtController.Mod;
 import ussr.samples.atron.simulations.metaforma.lib.NeighborSet;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 import ussr.util.Pair;
@@ -43,6 +44,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	private HashMap<String,Float> doRepeat = new HashMap<String,Float>();
 	
 	protected SettingsBase settings;
+	private StatEntry currentStat;
 
 //	protected BagRegionCore regionBag;
 	
@@ -64,6 +66,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		meta().disable();
 		meta().releaseRegion();
 		meta().resetVars();
+		stateMngr.cleanConsensus();
 		module().setMetaID(0);
 		module().setPart(getMetaPart());
 		stateMngr.goToInit();
@@ -81,6 +84,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 			return true;
 		}
 		else {
+			if (key.equals("stateTreshold"))visual.print("freq disallowed " + key + " " + interval);
 			return false;
 		}
 	}
@@ -105,6 +109,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		setCommFailureRisk(0.25f,0.25f,0.98f,0.125f);	
 		
 		init();
+		checkModBoundary();
 		
 //		module().setID(getID());
 		
@@ -153,6 +158,13 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	
 
 	
+	private void checkModBoundary() {
+		for (IModEnum v: Module.Mod.getValues()) {
+			v.ord();
+		}
+		
+	}
+
 	public void handleMessage(byte[] message, int messageLength, int connectorNr) {
 		// Translate absolute connector to relative connector (symmetry feature)
 		byte connector = context.abs2rel(connectorNr);
@@ -175,12 +187,8 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	
 		if ((p.regionID == meta().regionID() && meta().regionID() != 0) || (p.metaID == module().metaID && module().metaID != 0) ) {//|| (p.metaID == 0 && module().metaID == 0) 
 			// If packet is in region or in meta-module, then update state!
-			if (stateMngr.at(getStateInit()) && !p.getState().match(getStateInit())) {				
-				if (!freqLimit("stateTreshold")) {
-					visual.print("state transition refused from " + stateMngr.getState() + " to " + p.getState());
-					return false;
-				}
-			}
+		
+			
 			if (getStateMngr().update(BigInteger.ZERO, p.getState())) {
 				visual.print("STATE UPDATE FROM " + p.getSource() + " : " + p.getState());
 			}
@@ -485,7 +493,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 			if (p.indirectNb != 0) {
 				unicast(new PacketRegion(this),nbs().nbsWithMetaId(p.indirectNb).connectors());
 			}
-			stateMngr.nextState(p.getState());
+			stateMngr.update(BigInteger.ZERO,p.getState()); // OR .nextState ???
 			stateMngr.commit("BOSS ID received");
 		}
 		else {
@@ -554,7 +562,11 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 
 	public abstract BagModuleCore module();
 	
-	public abstract IMetaBag meta();
+	public abstract BagMetaCore meta();
+
+	public void setCurrentStat(StatEntry e) {
+		currentStat = e;
+	}
 
 
 

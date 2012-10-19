@@ -80,7 +80,7 @@ public class MfVisualizer {
 		
 		
 		
-//		out.append(MfStats.getInst() + "\n");
+		out.append(MfStats.getInst() + "\n");
 		
 		out.append("ID: " + getIdString() + (ctrl.getStateMngr().committed() ? " // fnshd" : "") + " rcvd: " + ctrl.getStateMngr().getStateRcvd() + " " + ctrl.getStateMngr().getConsensusRcvd().bitCount() );
 		out.append("\n");
@@ -94,7 +94,7 @@ public class MfVisualizer {
 		out.append("prevs: " + ctrl.getScheduler().previousAction);
 		out.append("\n");
 		
-		out.append("time: in state:" + ctrl.getStateMngr().timeSpentInState() + "  total:" + ctrl.time() + "\n");
+		out.append("time: in state:" + ctrl.getStateMngr().timeSpentInState() + "  total:" + ctrl.time() + "  create region: " + ctrl.meta().getTimeInitRegion() + "\n");
 		
 //		out.append("female conns: " + ctrl.getContext().getFemaleConnsAsString());
 //		out.append("\n");
@@ -105,12 +105,12 @@ public class MfVisualizer {
 		
 		out.append("===  meta  ===\n" + ctrl.meta() + "\n");
 	
-		out.append("do repeat: " + ctrl.getDoRepeat());
+		out.append("do repeat: " + ctrl.getDoRepeat().toString());
 		out.append("\n"); 
 		
-		out.append("    " + ctrl.module().atT() + "\n");
-		out.append(ctrl.module().atL() + "   " + ctrl.module().atR() + "\n");
-		out.append("    " + ctrl.module().atB() + "\n");
+		out.append("    " + ctrl.module().atTop() + "\n");
+		out.append(ctrl.module().atLeft() + "   " + ctrl.module().atRight() + "\n");
+		out.append("    " + ctrl.module().atBottom() + "\n");
 
 		out.append(ctrl.getContext().nbs());
 

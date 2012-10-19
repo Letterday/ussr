@@ -4,8 +4,7 @@ import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 
-import ussr.model.Sensor;
-import ussr.samples.atron.simulations.metaforma.gen.ObstacleAvoidanceController.Group;
+
 
 public class Module implements IModuleHolder,IModule {
 
@@ -62,7 +61,7 @@ public class Module implements IModuleHolder,IModule {
 	}
 	
 	public byte ord() {
-		return (byte) (mod.ord() + number);
+		return (byte) ((mod.ord() + number)&255);	// To convert -1 to 255 etc..
 	}
 		 
 	

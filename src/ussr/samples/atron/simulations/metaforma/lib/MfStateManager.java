@@ -26,8 +26,7 @@ public class MfStateManager {
 	private int commitCountToReach;
 	
 	float stateTimeToSpend;
-	private float prevUpdate; 
-
+	private float stateLastUpdate = -10f;
 	
 	public MfStateManager (MfController c) {
 		ctrl = c;
@@ -143,8 +142,9 @@ public class MfStateManager {
 		stateStartTime = ctrl.time();
 		commitCountToReach = 0;
 		stateOperationNext = null;
-		orientationNext = Orientation.BOTTOMLEFT;
+		orientationNext = Orientation.BOTTOM_LEFT;
 		commitAutoAfterState = true;
+		ctrl.meta().clearTimeInitRegion();
 		
 		cleanConsensus();
 		
@@ -169,13 +169,17 @@ public class MfStateManager {
 				count = commitCountToReach;
 			}
 			else if (ctrl.meta().getVar("size") != 0) {
+				count = ctrl.meta().getVar("size");
+				reason = "size var is set to " + ctrl.meta().getVar("size");
+			}
+			else if (ctrl.meta().getVar("absorbed") != 0) {
 				if (ctrl.meta().regionID() == 0) {
-					reason = "size var is set to " + ctrl.meta().getVar("size");
-					count = ctrl.meta().getVar("size");
+					reason = "absorbed var is set to " + ctrl.meta().getVar("absorbed");
+					count = ctrl.meta().getVar("absorbed");
 				}
 				else {
-					reason = "i am leader and size var is set to " + ctrl.meta().getVar("size");
-					count = (ctrl.meta().getCountInRegion() - 1) * ctrl.getMetaPart().size() + ctrl.meta().getVar("size");
+					reason = "i am leader and absorbed var is set to " + ctrl.meta().getVar("absorbed");
+					count = ctrl.meta().getCountInRegion() * ctrl.getMetaPart().size() + ctrl.meta().getVar("absorbed");
 				}
 			}
 			else if (ctrl.meta().regionID() == 0 && !at(ctrl.getStateChoose())){ 
@@ -222,7 +226,6 @@ public class MfStateManager {
 	}
 	
 	
-	
 	public void commit (String reason) {
 		ctrl.debugForceMetaId();
 		boolean modified = false;
@@ -232,8 +235,6 @@ public class MfStateManager {
 			modified = true;
 			ctrl.visual.print(".commit("+reason+") count:" + consensus.bitCount() + " modified:" + modified + " " + Module.fromBits(consensus));
 		}
-		
-		
 	}
 	
 	public boolean committed () {
@@ -260,7 +261,8 @@ public class MfStateManager {
 	}
 	
 	public void nextOperation (IStateOperation op) {
-		nextOperation(op,Orientation.BOTTOMLEFT);
+		ctrl.visual.print(".nextOperation " + op);
+		nextOperation(op,Orientation.BOTTOM_LEFT);
 	}
 	
 	public void nextOperation (IStateOperation op,Orientation orient) {
@@ -321,10 +323,10 @@ public class MfStateManager {
 
 	public void setAfterConsensus(IStateOperation op,Orientation orient) {
 		if (!op.equals(stateOperationNext)) {
-			ctrl.visual.print(".setAfterConsensus " + op);
+			ctrl.visual.print(".setAfterConsensus " + op + " " + orient);
 			stateOperationNext = op;
 			orientationNext = orient;
-			MfStats.getInst().addStart(op,ctrl.module().metaID,ctrl.time());
+			MfStats.getInst().addStart(op,orient,ctrl.module().metaID,ctrl.time(),ctrl);
 		}
 	}
 	
@@ -338,12 +340,20 @@ public class MfStateManager {
 
 	public boolean update(BigInteger consensusUpd, State stateUpd) {
 		boolean ret = false;
+
+		if (at(ctrl.getStateInit()) && !stateUpd.match(ctrl.getStateInit())) {				
+			if (ctrl.time() - ctrl.settings.get("stateTreshold") <= stateLastUpdate) {			
+				ctrl.visual.print("@@@ state transition refused from " + getState() + " to " + stateUpd + " - treshold = " + stateLastUpdate);
+				return false;
+			}
+		}
+		
 		
 		if (stateReceived.isNewer(stateUpd)) {
-			prevUpdate = ctrl.time();
 //			ctrl.getVisual().print("STATE UPDATE "  + stateUpd + " " + stateReceived);
 			consensusReceived = consensusUpd; 
 			stateReceived = stateUpd;
+			stateLastUpdate = ctrl.time();
 			ret = true;
 		}
 		if (stateReceived.equals(stateUpd)) {
@@ -367,7 +377,11 @@ public class MfStateManager {
 	}
 
 	public void goToInit() {
+		ctrl.getVisual().printStatePost();
+		cleanForNew();
+		ctrl.meta().resetSeqNrs();
 		init(ctrl.getStateInit());
+		ctrl.getVisual().printStatePre();
 	}
 
 	

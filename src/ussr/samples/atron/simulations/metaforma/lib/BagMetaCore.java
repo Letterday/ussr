@@ -5,10 +5,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
+import ussr.samples.atron.simulations.metaforma.gen.BrandtController.StateOperation;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 
 public abstract class BagMetaCore extends Bag implements IMetaBag {
 	public byte completed;
+	public byte absorbed;
 	public byte size;
 	public byte regionID;
 	public byte metaModulesInRegion = 1;
@@ -47,7 +49,7 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	//			ctrl.visual.print(ctrl.hashCode() +" - "+ ctrl.meta().hashCode() + name + ":::" + ctrl.meta().getVarSeqNr(name));
 				broadcastVars(l);
 
-				if (name.equals("regionID")) {
+				if (name.equals("regionID") && val != 0) {
 					ctrl.getStateMngr().cleanConsensus();
 					ctrl.getStateMngr().commit("Reset my bit after cleaning");
 				}
@@ -91,13 +93,14 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	public void disable () {
 		ctrl.visual.print("DISABLE META!");
 		setVar("completed",0);
+		timeInitRegion = 0;
 		ctrl.module().setMetaID(0);
 		// TODO: WHAT TO DO HERE?
 	}
 		
 	public void releaseRegion () {
 		ctrl.visual.print(".releaseRegion ");
-		MfStats.getInst().addEnd(ctrl.stateMngr.getState().getOperation(),regionID(),ctrl.stateMngr.timeSpentInSequence());
+		MfStats.getInst().addEnd(ctrl.stateMngr.getState().getOperation(),ctrl.stateMngr.getState().getOrientation(),regionID(),ctrl.stateMngr.timeSpentInSequence());
 		setRegionID((byte)0);		
 		
 		setCountInRegion((byte) 1);
@@ -109,20 +112,45 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 		}
 	}
 	
+	public void resetSeqNrs () {
+		seqNrs.clear();
+	}
+	
+	
+	public float getTimeInitRegion () {
+		return timeInitRegion;
+	}
+	
+	public void clearTimeInitRegion () {
+		timeInitRegion = 0;
+	}
+	
+	
 	public boolean regionTakesTooLong() {
-		if (regionID() != 0 && regionID() == ctrl.module().metaID && ctrl.time() - timeInitRegion > ctrl.settings.getWithdrawTime()) {
-			ctrl.visual.print("Region takes too long!!");
+		if (regionID() != 0 && regionID() == ctrl.module().metaID && timeInitRegion > 0 && ctrl.time() - timeInitRegion > ctrl.settings.getWithdrawTime()) {
+			ctrl.visual.print("@@@ Region takes too long!! started at " + timeInitRegion + " and now " + ctrl.settings.getWithdrawTime() + "passed");
 			return true;
 		}
 		return false;
 	}
+	
 
+	public void createRegion(byte[] metaIDs,IStateOperation state, Orientation orient) {
+		ctrl.visual.print(".createRegion " + ctrl.module().metaID + " " + state + " " + orient);
+		createRegion(metaIDs);
+		ctrl.stateMngr.setAfterConsensus(state, orient);
+		
+	}
+	
 	public void createRegion(byte[] metaIDs) {
 		ctrl.visual.print(".createRegion " + ctrl.module().metaID);
 		
 		setRegionID(ctrl.module().metaID);	
 		
-		timeInitRegion = ctrl.time();
+		if (timeInitRegion == 0) {
+			timeInitRegion = ctrl.time();
+		}
+		
 		metaModulesInRegion = (byte) (metaIDs.length+1);
 		
 		for (byte metaID : metaIDs) {

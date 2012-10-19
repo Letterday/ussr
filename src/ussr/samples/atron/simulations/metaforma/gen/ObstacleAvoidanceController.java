@@ -12,7 +12,6 @@ import ussr.model.debugging.ControllerInformationProvider;
 import ussr.samples.ObstacleGenerator;
 import ussr.samples.atron.ATRON;
 
-import ussr.samples.atron.simulations.metaforma.gen.ChristensenController.StateOperation;
 import ussr.samples.atron.simulations.metaforma.lib.*;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 
@@ -43,7 +42,7 @@ class ObstacleAvoidanceSimulation extends MfSimulation {
     }
 	
 	protected ArrayList<ModulePosition> buildRobot() {
-		return new MfBuilder().buildCar(4,ObstacleAvoidanceController.Mod.F);
+		return new MfBuilder().buildCar(2,ObstacleAvoidanceController.Mod.F);
 	}
 	
 	protected void changeWorldHook(WorldDescription world) {
@@ -261,13 +260,13 @@ public class ObstacleAvoidanceController extends MfController implements Control
 		int BACKWARD = -1;
 		
 		if (stateMngr.at(StateOperation.DRIVE)) {
-			if (module().getGroup() == Group.AXIS && module().proximitySensor() > settings.get("proximity")) {
-				if (module().getGroup() == Group.AXIS && nbs().size() == 3) {
-					meta().setVar("size", 7);
+			if (module().getGroup().equals(Group.AXIS) && module().proximitySensor() > settings.get("proximity")) {
+				visual.print("event!!!!!" + nbs().size());
+				
+				if (module().getID().equals(Mod.AXIS_FRONT) && nbs().size() == 3) {
 					stateMngr.nextOperation(StateOperation.TurnFourWheeler);
 				}	
-				if (module().getGroup() == Group.AXIS && nbs().size() == 2) {
-					meta().setVar("size", 3);
+				if (module().getID().equals(Mod.AXIS_FRONT) && nbs().size() == 2) {
 					stateMngr.nextOperation(StateOperation.TurnTwoWheeler);
 				}
 			}
@@ -280,6 +279,7 @@ public class ObstacleAvoidanceController extends MfController implements Control
 		
 		if (stateMngr.at(StateOperation.TurnTwoWheeler)) {
 			if (stateMngr.doWait(0)) {
+				meta().setVar("size", 3);
 				stateMngr.spend(settings.get("backwardTime"));
 				drive(BACKWARD,BACKWARD);
 			}
@@ -297,6 +297,7 @@ public class ObstacleAvoidanceController extends MfController implements Control
 			
 			if (stateMngr.doWait(0)) {
 				steer(10);
+				meta().setVar("size", 7);
 			}
 			
 			if (stateMngr.doWait(1)) {

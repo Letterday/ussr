@@ -16,7 +16,7 @@ public class State implements IState,Cloneable {
 	}
 	
 	public State () {
-		this(null,0,0,Orientation.TOPLEFT);
+		this(null,0,0,Orientation.TOP_LEFT);
 	}
 	
 	public State (IStateOperation op, int opCounter,int instr, Orientation o) {
@@ -27,11 +27,11 @@ public class State implements IState,Cloneable {
 	}
 	
 	public State (IStateOperation op,int instr) {
-		this(op,-1,instr,Orientation.BOTTOMLEFT);
+		this(op,-1,instr,Orientation.BOTTOM_LEFT);
 	}
 	
 	public State(IStateOperation op) {
-		this(op,0,0,Orientation.BOTTOMLEFT);
+		this(op,0,0,Orientation.BOTTOM_LEFT);
 	}
 
 	public boolean merge (State s) {
@@ -120,7 +120,12 @@ public class State implements IState,Cloneable {
 	}
 	
 	public String toString () {
-		return "[" + operation + " " + orient + " (" + operationCounter + ") #" + instruction + "]";
+		if (operation.ord() > 1) {
+			return "[" + operation + " " + orient + " (" + operationCounter + ") #" + instruction + "]";
+		}
+		else {
+			return "[" + operation + " " + "(" + operationCounter + ") #" + instruction + "]";
+		}
 	}
 	
 	public boolean equals (State s) {
