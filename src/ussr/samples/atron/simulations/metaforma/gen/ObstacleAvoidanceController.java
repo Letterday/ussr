@@ -130,7 +130,7 @@ public class ObstacleAvoidanceController extends MfController implements Control
 		}
 
 		@Override
-		public byte ord() {
+		public int ord() {
 			byte ret = 0;
 			for (Mod m:values()) {
 				if (m.ordinal() != ordinal()) {

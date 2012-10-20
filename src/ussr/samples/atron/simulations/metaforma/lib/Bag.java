@@ -46,11 +46,11 @@ public class Bag implements IBag {
 		return f.getName().startsWith("_");
 	}
 	
-	public String toString () {
+	public String toString (boolean noMetaNBs) {
 		String ret = "";
 		try {
 			for (Field f:this.getClass().getFields()) {
-				if (!isOwnField(f) && !f.getName().contains("Left") && !f.getName().contains("Right") && !f.getName().contains("Top") && !f.getName().contains("Bottom")) {
+				if (noMetaNBs && !isOwnField(f) && !f.getName().contains("Left") && !f.getName().contains("Right") && !f.getName().contains("Top") && !f.getName().contains("Bottom")) {
 					f.setAccessible(true);
 					ret += f.getName() + ":" + f.get(this) + "  ";
 				}
@@ -62,5 +62,7 @@ public class Bag implements IBag {
 		}
 		return ret;
 	}
+	
+	
 	
 }

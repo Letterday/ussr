@@ -87,11 +87,8 @@ public abstract class BagModuleCore extends Bag {
 		return ret;
 	}
 	
-	public boolean atTop(){return false;}
-	public boolean atBottom(){return false;}
-	public boolean atLeft(){return false;}
-	public boolean atRight(){return false;}
-
+	public boolean at(Direction d){return false;}
+	
 	
 	
 	

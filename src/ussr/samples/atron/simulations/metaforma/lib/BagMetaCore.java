@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
-import ussr.samples.atron.simulations.metaforma.gen.BrandtController.StateOperation;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 
 public abstract class BagMetaCore extends Bag implements IMetaBag {
@@ -97,11 +96,16 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 		ctrl.module().setMetaID(0);
 		// TODO: WHAT TO DO HERE?
 	}
-		
+	
+	public void retractRegion () {
+		MfStats.getInst().addEnd(ctrl.stateMngr.getState().getOperation(),ctrl.stateMngr.getState().getOrientation(),regionID(),ctrl.stateMngr.timeSpentInSequence(),Finish.RETRACTED);
+	}
+	
 	public void releaseRegion () {
 		ctrl.visual.print(".releaseRegion ");
-		MfStats.getInst().addEnd(ctrl.stateMngr.getState().getOperation(),ctrl.stateMngr.getState().getOrientation(),regionID(),ctrl.stateMngr.timeSpentInSequence());
 		setRegionID((byte)0);		
+		
+		MfStats.getInst().addEnd(ctrl.stateMngr.getState().getOperation(),ctrl.stateMngr.getState().getOrientation(),regionID(),ctrl.stateMngr.timeSpentInSequence(),Finish.SUCCESS);
 		
 		setCountInRegion((byte) 1);
 	}
@@ -224,10 +228,12 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 		return ret;
 	}
 	
-	
+	public String getVarsString() {
+		return super.toString(false) + "\n" + seqNrs;
+	}
 
 	public String toString() {
-		return super.toString() + "\n" + seqNrs;
+		return super.toString(true) + "\n" + seqNrs;
 	}
 
 	@Override

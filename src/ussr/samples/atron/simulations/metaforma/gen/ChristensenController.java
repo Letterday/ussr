@@ -250,7 +250,7 @@ public class ChristensenController extends MfController implements ControllerInf
 		}
 
 		@Override
-		public byte ord() {
+		public int ord() {
 			byte ret = 0;
 			for (Mod m:values()) {
 				if (m.ordinal() != ordinal()) {

@@ -4,7 +4,7 @@ package ussr.samples.atron.simulations.metaforma.lib;
 public interface IModEnum {
 	int ordinal();
 	IModEnum getNone();
-	byte ord();
+	int ord();
 	
 	String name();
 	

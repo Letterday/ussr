@@ -233,10 +233,10 @@ public class BrandtController extends MfController implements ControllerInformat
 		NONE,
 		Dummy_Left,
 		Dummy_Right,
-		F(64),
+		F(48),
 		Clover_North, Clover_South, Clover_West, Clover_East, 
-		Outside(32),
-		Inside(32),
+		Outside(48),
+		Inside(48),
 		OutsideLifter_Top,
 		OutsideLifter_Bottom,
 		InsideLifter_Top,
@@ -290,7 +290,7 @@ public class BrandtController extends MfController implements ControllerInformat
 		}
 
 		@Override
-		public byte ord() {
+		public int ord() {
 			int ret = 0;
 			for (Mod m:values()) {
 				if (m.ordinal() != ordinal()) {
@@ -422,11 +422,15 @@ public class BrandtController extends MfController implements ControllerInformat
 				
 			if (stateMngr.doUntil(1)) {
 				if (meta().regionTakesTooLong()) {
-					meta().releaseRegion();
+					meta().retractRegion();
 					stateMngr.nextOperation(StateOperation.CHOOSE);
 					return;
 				}
 				
+				
+				if (freqLimit("printMetaNB",1f)){
+					visual.print(meta().getVarsString());
+				}
 //				if (meta().Top != 0 && meta().Left != 0) {
 //					meta().createRegion(new byte[]{meta().Top,meta().Left});
 //					stateMngr.setAfterConsensus(StateOperation.FLIPOVER,Orientation.BOTTOMRIGHT);

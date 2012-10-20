@@ -12,27 +12,26 @@ class StatEntry {
 	public byte metaID;
 	public IStateOperation stateOperation;
 	public Orientation orient;
-	private boolean finished;
+	private Finish finished = Finish.RUNNING;
 	
 	public StatEntry(byte meta, IStateOperation s, Orientation o, float t) {
 		metaID = meta;
 		startTime = t;
 		stateOperation = s;
 		orient = o;
-		finished = false;
 	}
 	
 	public float getStartTime() {
 		return startTime;
 	}
 	
-	public void setFinished (float time) {
-		finished = true;
+	public void setFinished (float time, Finish f) {
+		finished = f;
 		endTime = time;
 	}
 	
 	public String toString () {
-		return (finished? "finished": "working") + ": " + metaID + " " +  stateOperation + " - " + orient + " start: " + MfApi.round(startTime,1) + " end: " + MfApi.round(endTime,1);
+		return finished + " " + metaID + " " +  stateOperation + " - " + orient + " start: " + MfApi.round(startTime,1) + " end: " + MfApi.round(endTime,1);
 	}
 	
 	
@@ -73,9 +72,9 @@ public class MfStats {
 	}
 	
 	
-	public void addEnd(IStateOperation op, Orientation or, byte metaID, float time) {
+	public void addEnd(IStateOperation op, Orientation or, byte metaID, float time, Finish f) {
 		if (incoming.containsKey(metaID)){
-			incoming.get(metaID).setFinished(time);
+			incoming.get(metaID).setFinished(time,f);
 			stat.add(incoming.get(metaID));
 			incoming.remove(metaID);
 		}
@@ -84,6 +83,7 @@ public class MfStats {
 	public String toString () {
 		return stat.toString().replace(",", "\n") + "\n" + incoming + "\n";
 	}
+
 	
 
 }

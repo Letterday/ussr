@@ -79,8 +79,7 @@ public class MfVisualizer {
 		StringBuffer out = new StringBuffer();
 		
 		
-		
-		out.append(MfStats.getInst() + "\n");
+
 		
 		out.append("ID: " + getIdString() + (ctrl.getStateMngr().committed() ? " // fnshd" : "") + " rcvd: " + ctrl.getStateMngr().getStateRcvd() + " " + ctrl.getStateMngr().getConsensusRcvd().bitCount() );
 		out.append("\n");
@@ -108,9 +107,9 @@ public class MfVisualizer {
 		out.append("do repeat: " + ctrl.getDoRepeat().toString());
 		out.append("\n"); 
 		
-		out.append("    " + ctrl.module().atTop() + "\n");
-		out.append(ctrl.module().atLeft() + "   " + ctrl.module().atRight() + "\n");
-		out.append("    " + ctrl.module().atBottom() + "\n");
+		out.append("    " + ctrl.module().at(Direction.TOP) + "\n");
+		out.append(ctrl.module().at(Direction.LEFT) + "   " + ctrl.module().at(Direction.RIGHT) + "\n");
+		out.append("    " + ctrl.module().at(Direction.BOTTOM) + "\n");
 
 		out.append(ctrl.getContext().nbs());
 
@@ -118,6 +117,10 @@ public class MfVisualizer {
 		out.append("\n");
 		
 		addMetaNeighborhood(out);
+		
+		
+		out.append(MfStats.getInst() + "\n");
+		
 		return out.toString();
 	}
 

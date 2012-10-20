@@ -63,8 +63,8 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	}
 
 	public void finish () {
-		meta().disable();
 		meta().releaseRegion();
+		meta().disable();
 		meta().resetVars();
 		stateMngr.cleanConsensus();
 		module().setMetaID(0);

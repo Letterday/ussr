@@ -60,8 +60,8 @@ public class Module implements IModuleHolder,IModule {
 		number = (byte) nr;
 	}
 	
-	public byte ord() {
-		return (byte) ((mod.ord() + number)&255);	// To convert -1 to 255 etc..
+	public int ord() {
+		return ((mod.ord() + number)&255);	// To convert -1 to 255 etc..
 	}
 		 
 	
