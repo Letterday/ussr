@@ -153,10 +153,10 @@ public class MfActuation  {
 		ctrl.stateMngr.commitNotAutomatic(g);
 			
 		if (g.contains(ctrl.module().getID())) {
-			for (IModule m:ctrl.nbs(MfController.MALE).nbsIsConnected(!connect).nbsFilterConn(part).modules()){
+			for (IModule m:ctrl.nbs(MfController.MALE).nbsIsConnected(!connect).nbsFilterConnSource(part).modules()){
 				connection(m,connect);
 			}
-			if (ctrl.nbs().nbsIsConnected(!connect).nbsFilterConn(part).isEmpty()){
+			if (ctrl.nbs().nbsIsConnected(!connect).nbsFilterConnSource(part).isEmpty()){
 				ctrl.stateMngr.commit("My part " + part + " is processed");
 			}
 		}

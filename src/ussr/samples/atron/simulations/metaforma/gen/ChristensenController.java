@@ -17,7 +17,7 @@ import ussr.samples.atron.simulations.metaforma.lib.Packet.PacketSetMetaId;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.PacketSymmetry;
 
 class ChristensenSimulation extends MfSimulation {
-	class Settings extends SettingsBase {
+	class Settings extends ConfigurationParams {
 		
 	}
 	public Settings set = new Settings();
@@ -30,7 +30,7 @@ class ChristensenSimulation extends MfSimulation {
 	protected Robot getRobot() {
 		ATRON a = new ATRON() {
 			public Controller createController() {
-				return new ChristensenController(set);
+				return new ChristensenController();
 			}
 		};
 		return a;
@@ -67,7 +67,7 @@ class PacketAbsorb extends Packet {
 public class ChristensenController extends MfController implements ControllerInformationProvider {
 		
 	enum StateOperation implements IStateOperation {
-		INIT, CHOOSE, GET_UP, GET_DOWN,WALK_STEP;
+		NONE, GET_UP, GET_DOWN,WALK_STEP;
 
 		public byte ord() {return (byte) ordinal();	}
 
@@ -318,9 +318,7 @@ public class ChristensenController extends MfController implements ControllerInf
 	
 	
 
-	public ChristensenController(SettingsBase set) {
-		super(set); 
-	}
+	
 	
 	public void init() {
 		module = new BagModule();
@@ -330,7 +328,6 @@ public class ChristensenController extends MfController implements ControllerInf
 		
 		Module.Mod = Mod.NONE;
 		Module.Group = Group.NONE;
-		stateMngr.init(StateOperation.INIT);
 	
 		module().setPart(MetaPart.NONE);
 		
@@ -343,7 +340,7 @@ public class ChristensenController extends MfController implements ControllerInf
 		visual.setColor(StateOperation.WALK_STEP,Color.YELLOW);
 		visual.setColor(StateOperation.GET_DOWN,Color.MAGENTA);
 		visual.setColor(StateOperation.GET_UP,Color.GREEN);
-		visual.setColor(StateOperation.INIT,Color.WHITE);
+		visual.setColor(GenState.INIT,Color.WHITE);
 		
 		visual.setMessageFilter(255^ pow2(PacketDiscover.getTypeNr()));
 						
@@ -353,7 +350,7 @@ public class ChristensenController extends MfController implements ControllerInf
 	
 	public void handleStates() {
 				
-		if (stateMngr.at(StateOperation.INIT)) {
+		if (stateMngr.at(GenState.INIT)) {
 			// Make groupings of 4
 			if (stateMngr.doUntil(0)) {
 				if (module().metaID == 0 && nbs(EAST&MALE&NORTH, MetaPart.NONE).exists() && !nbs(WEST&MALE&NORTH).nbsWithMetaId((byte) 0).exists()) {
@@ -366,7 +363,7 @@ public class ChristensenController extends MfController implements ControllerInf
 			}
 		}
 		
-		if (stateMngr.at(StateOperation.CHOOSE)) {
+		if (stateMngr.at(GenState.CHOOSE)) {
 			if (stateMngr.doUntil(0)) {
 				stateMngr.spend("meta.broadcastNeighbors");		
 			}
@@ -385,12 +382,12 @@ public class ChristensenController extends MfController implements ControllerInf
 			
 			if (stateMngr.doWait(0))  {
 				module().gradientInit();
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 		
 			if (stateMngr.doWait(1))  {
 				scheduler.enable("module.gradientPropagate");
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doUntil(2)) {
@@ -410,59 +407,59 @@ public class ChristensenController extends MfController implements ControllerInf
 //				assign (0,2,Mod.Uplifter_DR);
 //				assign (4,0,Mod.Uplifter_DT);
 				
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(4)) {
 				actuation.disconnectPart(Group.Uplifter, (NORTH&EAST&FEMALE)|(SOUTH&WEST)&FEMALE);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(5)) {
 				actuation.rotate(Mod.Walker_Right,-QUART);
 //				actuation.rotate(Mod.Uplifter_Right,-QUART);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(6)) {
 				actuation.rotate(Mod.Uplifter_Left,-QUART);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			
 			
 			if (stateMngr.doWait(7)) {
 				actuation.connect(Mod.Walker_Left,Group.Floor,true);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 					
 			
 			if (stateMngr.doWait(8)) {
 				actuation.disconnect(Mod.Walker_Right,Group.Uplifter,true);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(9)) {
 				actuation.rotate(Mod.Uplifter_Left,QUART);
 				actuation.rotate(Mod.Walker_Right,QUART);
 //				actuation.rotate(Mod.Uplifter_Right,QUART);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}			
 			
 			if (stateMngr.doWait(10)) {
 				actuation.connect(Mod.Uplifter_Left,Group.Floor);
 				actuation.rotate(Mod.Walker_Top,-EIGHT);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(11)) {
 				actuation.rotate(Mod.Walker_Left,HALF);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(12)) {
 				actuation.rotate(Mod.Walker_Top,EIGHT);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(13)) {
@@ -473,7 +470,7 @@ public class ChristensenController extends MfController implements ControllerInf
 					meta().setVar("continueWalk", 1);
 				}
 				
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doUntil(14)) {
@@ -488,7 +485,7 @@ public class ChristensenController extends MfController implements ControllerInf
 					finish();
 				}
 				
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(16)) {
@@ -506,27 +503,27 @@ public class ChristensenController extends MfController implements ControllerInf
 					return;
 				}
 				actuation.connect(Mod.Walker_Right,Group.Floor,false);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(1)) {
 				actuation.disconnectPart(Mod.Walker_Left,SOUTH);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(2)) {
 				actuation.rotate(Mod.Walker_Top,-EIGHT);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(3)) {
 				actuation.rotate(Mod.Walker_Right,-HALF);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(4)) {
 				actuation.rotate(Mod.Walker_Top,EIGHT);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 						
 			if (stateMngr.doWait(5)) {
@@ -538,7 +535,7 @@ public class ChristensenController extends MfController implements ControllerInf
 					module().setID(Mod.Walker_Left);
 					stateMngr.commit();
 				}
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(6)) {
@@ -554,66 +551,66 @@ public class ChristensenController extends MfController implements ControllerInf
 			
 			if (stateMngr.doWait(1)) {
 				actuation.rotate(Mod.Walker_Left,QUART);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doUntil(2)) {
 				meta().absorb();
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doUntil(3)) {
 				if (Group.Walker.contains(module.getID())) {
 					meta().createRegion(new byte[]{meta().Bottom});
 				}
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(4)) {
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(5)) {
 				actuation.disconnectPart(Mod.Uplifter_Left, SOUTH);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(6)) {
 				actuation.connect(Mod.Walker_Left,Mod.Uplifter_Left);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(7)) {
 				actuation.disconnect(Mod.Walker_Left,Group.Floor);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(8)) {
 				actuation.rotate(Mod.Uplifter_Left,-QUART);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(9)) {
 				actuation.connect(Mod.Walker_Right,Mod.Uplifter_Left);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(10)) {
 				actuation.disconnect(Mod.Walker_Left,Mod.Uplifter_Left);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			
 			if (stateMngr.doWait(11)) {
 				actuation.rotate(Mod.Uplifter_Left,-QUART);
 				actuation.rotate(Mod.Walker_Left,-QUART);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(12)) {
 				actuation.connect(Mod.Walker_Left,Mod.Uplifter_Left);
 				actuation.connect(Group.Floor,Mod.Uplifter_Left);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doUntil(13)) {
@@ -655,7 +652,7 @@ public class ChristensenController extends MfController implements ControllerInf
 	
 	
 	public boolean receivePacket (PacketAbsorb p) {
-		if (stateMngr.at(StateOperation.INIT)) {
+		if (stateMngr.at(GenState.INIT)) {
 			if (module().metaID == 0) {
 				module().setMetaID(p.metaID);
 				module().storeID();
@@ -667,12 +664,12 @@ public class ChristensenController extends MfController implements ControllerInf
 	
 	public boolean receivePacket (PacketGradient p) {
 		boolean updated = false;
-		if (module().gradH > p.h + 1) {
-			module().setVar("gradH",(byte)(p.h + 1));
+		if (module().gradH > p.pri + 1) {
+			module().setVar("gradH",(byte)(p.pri + 1));
 			updated = true;
 		}
-		if (module().gradV > p.v + 1) {
-			module().setVar("gradV",(byte)(p.v + 1));
+		if (module().gradV > p.sec + 1) {
+			module().setVar("gradV",(byte)(p.sec + 1));
 			updated = true;
 		}
 		if (updated) {
@@ -687,7 +684,7 @@ public class ChristensenController extends MfController implements ControllerInf
 	public boolean receivePacket (Packet p) {
 		boolean handled = false;
 
-		if (stateMngr.at(StateOperation.INIT) || stateMngr.at(StateOperation.CHOOSE) || stateMngr.at(StateOperation.GET_DOWN)) {
+		if (stateMngr.at(GenState.INIT) || stateMngr.at(GenState.CHOOSE) || stateMngr.at(StateOperation.GET_DOWN)) {
 //			visual.print("RECEIVE YESSSS2 " + p);
 			meta().neighborHook(p);
 			handled = true;
@@ -701,7 +698,7 @@ public class ChristensenController extends MfController implements ControllerInf
 		byte dest;
 		byte index = 0;
 		
-		if (stateMngr.check(p,new State(StateOperation.INIT,0))) {
+		if (stateMngr.check(p,new State(GenState.INIT,0))) {
 			handled = true;
 			
 				module().metaID = p.newMetaID;
@@ -715,7 +712,7 @@ public class ChristensenController extends MfController implements ControllerInf
 					index = 2;
 					if (!nbs(NORTH&EAST&MALE).exists()) {
 						meta().enable(); 
-						stateMngr.nextOperation(StateOperation.CHOOSE);
+						stateMngr.nextOperation(GenState.CHOOSE);
 					}
 					else {
 						visual.print(nbs(NORTH&EAST&MALE).toString());
@@ -724,7 +721,7 @@ public class ChristensenController extends MfController implements ControllerInf
 				else if (p.index==2) {
 //					module().setPart(MetaPart.Dummy);
 					meta().enable(); 
-					stateMngr.nextOperation(StateOperation.CHOOSE);
+					stateMngr.nextOperation(GenState.CHOOSE);
 				} 				
 			
 			
@@ -753,7 +750,7 @@ public class ChristensenController extends MfController implements ControllerInf
 		boolean handled = false;
 		
 		if (stateMngr.check(p,new State(StateOperation.GET_DOWN,13))) {	
-			symmetryFix(p);
+			module().fixSymmetry(p.connSource, p.connDest);
 			handled = true;
 		}
 		return handled;
@@ -783,16 +780,6 @@ public class ChristensenController extends MfController implements ControllerInf
 		return true;
 	}
 	
-	@Override
-	public IStateOperation getStateChoose() {
-		return StateOperation.CHOOSE;
-	}
-	
-
-	@Override
-	public IStateOperation getStateInit() {
-		return StateOperation.INIT;
-	}
 
 	@Override
 	public IMetaPart getMetaPart() {
@@ -848,6 +835,13 @@ public class ChristensenController extends MfController implements ControllerInf
 		}
 			
 		
+	}
+
+
+
+	@Override
+	public IStateOperation getStateInst() {
+		return StateOperation.NONE;
 	}
 	
 }

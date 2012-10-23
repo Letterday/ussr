@@ -107,9 +107,9 @@ public class MfVisualizer {
 		out.append("do repeat: " + ctrl.getDoRepeat().toString());
 		out.append("\n"); 
 		
-		out.append("    " + ctrl.module().at(Direction.TOP) + "\n");
-		out.append(ctrl.module().at(Direction.LEFT) + "   " + ctrl.module().at(Direction.RIGHT) + "\n");
-		out.append("    " + ctrl.module().at(Direction.BOTTOM) + "\n");
+		out.append("    " + ctrl.module().at(BorderLine.TOP) + "\n");
+		out.append(ctrl.module().at(BorderLine.LEFT) + "   " + ctrl.module().at(BorderLine.RIGHT) + "\n");
+		out.append("    " + ctrl.module().at(BorderLine.BOTTOM) + "\n");
 
 		out.append(ctrl.getContext().nbs());
 

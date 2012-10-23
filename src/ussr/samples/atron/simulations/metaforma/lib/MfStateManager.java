@@ -30,14 +30,15 @@ public class MfStateManager {
 	
 	public MfStateManager (MfController c) {
 		ctrl = c;
+		init(GenState.INIT);
 	}
 	
-	public void init (IStateOperation op) {
+	private void init (IStateOperation op) {
 		stateCurrent = new State (op);
 		stateReceived = new State (op);
 	}
 	
-	public void commitMyselfIfNotUsed () {
+	public void commitEnd () {
 		if (commitAutoAfterState && commitCountToReach == 0) {
 			commit("AUTO commit at the end of state " + stateCurrent + "!");
 		}
@@ -182,7 +183,7 @@ public class MfStateManager {
 					count = ctrl.meta().getCountInRegion() * ctrl.getMetaPart().size() + ctrl.meta().getVar("absorbed");
 				}
 			}
-			else if (ctrl.meta().regionID() == 0 && !at(ctrl.getStateChoose())){ 
+			else if (ctrl.meta().regionID() == 0 && !at(GenState.CHOOSE)){ 
 				reason = "meta part size";
 				count = ctrl.getMetaPart().size();
 			}
@@ -341,7 +342,7 @@ public class MfStateManager {
 	public boolean update(BigInteger consensusUpd, State stateUpd) {
 		boolean ret = false;
 
-		if (at(ctrl.getStateInit()) && !stateUpd.match(ctrl.getStateInit())) {				
+		if (at(GenState.INIT) && !stateUpd.match(GenState.INIT)) {				
 			if (ctrl.time() - ctrl.settings.get("stateTreshold") <= stateLastUpdate) {			
 				ctrl.visual.print("@@@ state transition refused from " + getState() + " to " + stateUpd + " - treshold = " + stateLastUpdate);
 				return false;
@@ -380,7 +381,7 @@ public class MfStateManager {
 		ctrl.getVisual().printStatePost();
 		cleanForNew();
 		ctrl.meta().resetSeqNrs();
-		init(ctrl.getStateInit());
+		init(GenState.INIT);
 		ctrl.getVisual().printStatePre();
 	}
 

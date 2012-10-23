@@ -2,15 +2,15 @@ package ussr.samples.atron.simulations.metaforma.lib;
 
 import java.util.ArrayList;
 
-import com.jme.math.Quaternion;
-import com.jme.math.Vector3f;
-
 import ussr.description.geometry.RotationDescription;
 import ussr.description.geometry.VectorDescription;
 import ussr.description.setup.ModulePosition;
 import ussr.samples.atron.ATRON;
 
 public class MfBuilder {
+	ConfigurationParams set = ConfigurationParams.getInst();
+	
+	
 	public ArrayList<ModulePosition> buildRectangle (int width, int height, IModEnum mod) {
     	ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
     	
@@ -68,7 +68,7 @@ public class MfBuilder {
         return mPos;
     }
     
-	public ArrayList<ModulePosition> buildGrid(SettingsBase set, IModEnum mod) {
+	public ArrayList<ModulePosition> buildGrid(IModEnum mod) {
 		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
 		int height = -5;
 		

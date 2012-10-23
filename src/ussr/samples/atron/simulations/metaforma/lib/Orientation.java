@@ -8,15 +8,15 @@ public enum Orientation {
 	RIGHT_BOTTOM,
 	RIGHT_TOP;
 
-	public Direction getPrimaryBorder() {
-		return Direction.valueOf(this.name().split("_")[1]);
+	public BorderLine getPrimaryBorder() {
+		return BorderLine.valueOf(this.name().split("_")[1]);
 	}
 	
-	public Direction getSecondaryBorder() {
-		return Direction.valueOf(this.name().split("_")[0]);
+	public BorderLine getSecondaryBorder() {
+		return BorderLine.valueOf(this.name().split("_")[0]);
 	}
 
-	public boolean is(Direction d) {
+	public boolean is(BorderLine d) {
 		return this.name().contains(d.name());
 	}
 	

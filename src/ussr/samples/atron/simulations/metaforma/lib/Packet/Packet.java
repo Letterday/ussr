@@ -101,7 +101,7 @@ public abstract class Packet extends PacketBase {
 		
 		regionID = msg[4];
 		metaID = msg[5];
-		state = new State(ctrl.getStateInit().fromByte((byte) ((msg[6]&255)%8)),(byte) (((msg[6]&255)>>3)%32),(byte) ((msg[3]&255)%32),Orientation.values()[(msg[0]&255)%8]);
+		state = new State(ctrl.getState((byte) ((msg[6]&255)%8)),(byte) (((msg[6]&255)>>3)%32),(byte) ((msg[3]&255)%32),Orientation.values()[(msg[0]&255)%8]);
 		
 		byte[] payload = new byte[ msg.length-HEADER_LENGTH ];		
 		

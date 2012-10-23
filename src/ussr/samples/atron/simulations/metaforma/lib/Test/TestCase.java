@@ -3,11 +3,11 @@ package ussr.samples.atron.simulations.metaforma.lib.Test;
 
 import ussr.samples.atron.simulations.metaforma.gen.BrandtController;
 import ussr.samples.atron.simulations.metaforma.lib.MfContext;
-import ussr.samples.atron.simulations.metaforma.lib.SettingsBase;
+import ussr.samples.atron.simulations.metaforma.lib.ConfigurationParams;
 
 
 public class TestCase {
-	public MfContext context = new MfContext(new BrandtController(new SettingsBase()));
+	public MfContext context = new MfContext(new BrandtController());
 	
 	public static void main(String[] args) {
 		new TestCase();

@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import ussr.model.Sensor;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.PacketConsensus;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.PacketDiscover;
+import ussr.samples.atron.simulations.metaforma.lib.Packet.PacketSymmetry;
 
 public abstract class BagModuleCore extends Bag {
 	public IMetaPart part;
@@ -51,8 +52,13 @@ public abstract class BagModuleCore extends Bag {
 	}
 	
 	public void restoreID () {
-		ctrl.visual.print("$$$ restore name " + getID() + " to " + idPrevious);
-		setID(idPrevious);
+		if (idPrevious != null) {
+			ctrl.visual.print("$$$ restore name " + getID() + " to " + idPrevious);
+			setID(idPrevious);
+		}
+		else {
+			ctrl.visual.print("$$$ no name to restore");
+		}
 	}
 	
 	public void discover () {
@@ -87,9 +93,42 @@ public abstract class BagModuleCore extends Bag {
 		return ret;
 	}
 	
-	public boolean at(Direction d){return false;}
+	public boolean at(BorderLine d){return false;}
 	
-	
+	public void fixSymmetry(byte connSource, byte connDest) {		
+		ctrl.visual.print("orig: " + connSource + " " + MfController.isNORTH(connSource) + " == " + MfController.isWEST(connDest) + " " + connDest);
+		if (MfController.isFEMALE(connDest)) {
+			if (!ctrl.stateMngr.committed()) {
+				if (MfController.isWEST(connSource) != MfController.isSOUTH(connDest)) {
+					ctrl.context.switchNorthSouth();
+					connDest = (byte) ((connDest + 4) % 8);
+				}
+				ctrl.visual.print(connSource + " " + MfController.isNORTH(connSource) + " == " + MfController.isWEST(connDest) + " " + connDest);
+				ctrl.context.switchEastWestHemisphere(MfController.isNORTH(connSource) == MfController.isWEST(connDest), MfController.isSOUTH(connDest));
+					
+				
+			}				
+		}
+		else if (MfController.isMALE(connDest)) {
+			if (!ctrl.stateMngr.committed()) {
+				if (MfController.isWEST(connSource) != MfController.isNORTH(connDest)) {
+					ctrl.context.switchNorthSouth();
+					connDest = (byte) ((connDest + 4) % 8);
+				}
+			
+				// sure!!
+				ctrl.context.switchEastWestHemisphere(MfController.isNORTH(connSource) == MfController.isEAST(connDest), MfController.isSOUTH(connDest));
+				
+				
+			}
+		}
+		if (ctrl.freqLimit("SYMM passthrough", ctrl.settings.getPropagationRate())) {
+			discover();
+			ctrl.broadcast(new PacketSymmetry(ctrl));
+		}
+		ctrl.stateMngr.commit("Symmetry fix done");
+		
+	}
 	
 	
 	

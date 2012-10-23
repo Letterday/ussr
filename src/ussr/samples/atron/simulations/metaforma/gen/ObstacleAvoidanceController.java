@@ -19,11 +19,7 @@ import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 
 class ObstacleAvoidanceSimulation extends MfSimulation {
 
-	class Settings extends SettingsBase {
 		
-	}
-	public Settings set = new Settings();
-	
 	public static void main( String[] args ) {
 		ObstacleAvoidanceSimulation.initSimulator();
         new ObstacleAvoidanceSimulation().main();
@@ -33,7 +29,7 @@ class ObstacleAvoidanceSimulation extends MfSimulation {
 	protected Robot getRobot() {
         ATRON a = new ATRON() {
             public Controller createController() {
-            	return new ObstacleAvoidanceController(set);
+            	return new ObstacleAvoidanceController();
             }
         };
         a.setRubberRing();
@@ -50,15 +46,13 @@ class ObstacleAvoidanceSimulation extends MfSimulation {
         generator.obstacalize(ObstacleGenerator.ObstacleType.LINE, world);
         world.setPlaneTexture(WorldDescription.GREY_GRID_TEXTURE);
     }
-	
 }
 
 
 public class ObstacleAvoidanceController extends MfController implements ControllerInformationProvider {
-
 	
 	public enum StateOperation implements IStateOperation {
-		INIT, CHOOSE, DRIVE, TurnFourWheeler,TurnTwoWheeler;
+		NONE, DRIVE, TurnFourWheeler,TurnTwoWheeler;
 		public byte ord() {return (byte) ordinal();	}
 		public IStateOperation fromByte(byte b) {return values()[b];}
 	}
@@ -202,10 +196,7 @@ public class ObstacleAvoidanceController extends MfController implements Control
 	private BagModule module;
 	private BagMeta meta;
 
-	public ObstacleAvoidanceController(SettingsBase set) {
-		super(set); 
-	}
-		
+			
 
 	public void init() {		
 		module = new BagModule();
@@ -215,25 +206,24 @@ public class ObstacleAvoidanceController extends MfController implements Control
 		
 		Module.Mod = Mod.NONE;
 		Module.Group = Group.NONE;
-		stateMngr.init(StateOperation.INIT);
 		module().part = MetaPart.NONE;
 
-		visual.setColor(StateOperation.INIT,Color.WHITE);
+		visual.setColor(GenState.INIT,Color.WHITE);
 		
 		visual.setMessageFilter(255);//^ pow2(PacketDiscover.getTypeNr()));			
 	}
 
 	
 	public void handleStates () {
-		if (stateMngr.at(StateOperation.INIT)) {
+		if (stateMngr.at(GenState.INIT)) {
 			if (stateMngr.doUntil(0)) {
 				meta.enable();
 				stateMngr.spend(settings.get("assignTime"));
-				if (!nbs(SOUTH&EAST&FEMALE).nbsFilterConnDest(EAST).isEmpty()) {
+				if (!nbs(SOUTH&EAST&FEMALE, EAST).isEmpty()) {
 					visual.print("I will swap leftwheel!");
 					module().swapGroup(Group.LEFTWHEEL);
 				}
-				if (!nbs(SOUTH&EAST&FEMALE).nbsFilterConnDest(WEST).isEmpty()) {
+				if (!nbs(SOUTH&EAST&FEMALE,WEST).isEmpty()) {
 					visual.print("I will swap RIGHTWHEEL!");
 					module().swapGroup(Group.RIGHTWHEEL);
 				}
@@ -273,7 +263,7 @@ public class ObstacleAvoidanceController extends MfController implements Control
 			
 			if (stateMngr.doWait(0)) {
 				drive(FORWARD,FORWARD);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			} 
 		}
 		
@@ -307,7 +297,7 @@ public class ObstacleAvoidanceController extends MfController implements Control
 			
 			if (stateMngr.doWait(2)) {
 				steer(-20);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(3)) {
@@ -317,7 +307,7 @@ public class ObstacleAvoidanceController extends MfController implements Control
 			
 			if (stateMngr.doWait(4)) {
 				steer(10);
-				stateMngr.commitMyselfIfNotUsed();
+				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(5)) {
@@ -333,22 +323,13 @@ public class ObstacleAvoidanceController extends MfController implements Control
 	private void steer (int degrees) {
 		actuation.rotate(Mod.AXIS_FRONT,degrees);
 		actuation.rotate(Mod.AXIS_BACK,-degrees);
-		stateMngr.commitMyselfIfNotUsed();
+		stateMngr.commitEnd();
 	}
  
 	private void drive(int left, int right) {
 		actuation.rotate_continuous(Group.LEFTWHEEL,-left);
 		actuation.rotate_continuous(Group.RIGHTWHEEL,right);
 	}
-
-
-	@Override
-	public IStateOperation getStateInit() {
-		return StateOperation.INIT;
-	}
-
-
-
 
 	@Override
 	public IMetaPart getMetaPart() {
@@ -374,11 +355,7 @@ public class ObstacleAvoidanceController extends MfController implements Control
 		// TODO Auto-generated method stub
 		
 	}
-	@Override
-	public IStateOperation getStateChoose() {
-		return StateOperation.CHOOSE;
-	}
-
+	
 
 
 	@Override
@@ -403,6 +380,12 @@ public class ObstacleAvoidanceController extends MfController implements Control
 	public boolean receivePacket(PacketSetMetaId p) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+
+	@Override
+	public IStateOperation getStateInst() {
+		return StateOperation.NONE;
 	}
 
 

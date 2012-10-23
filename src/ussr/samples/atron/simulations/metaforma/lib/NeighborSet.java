@@ -161,55 +161,6 @@ public class NeighborSet  {
 	}
 	
 	
-	public NeighborSet nbsConnected() {
-		return nbsIsConnected(true);
-	}
-
-	public NeighborSet nbsDisconnected() {
-		return nbsIsConnected(false);
-	}
-
-	public NeighborSet nbsIsConnected(boolean connected) {
-		NeighborSet ret = new NeighborSet(this.ctrl);
-		for (Map.Entry<IModule, Byte []> e : entrySet()) {
-			if (ctrl.getContext().isConnConnected(e.getValue()[CON_SRC]) == connected) {
-				ret.assoc(e);
-			}
-		}
-		return ret;
-	}
-	
-	public NeighborSet nbsIsMetaPart(IMetaPart p) {
-		NeighborSet ret = new NeighborSet(this.ctrl);
-		for (Map.Entry<IModule, Byte []> e : entrySet()) {
-			if (e.getValue()[NR_META_PART] == p.index()) {
-				ret.assoc(e);
-			}
-		}
-		return ret;
-	}
-	
-	public NeighborSet nbsInRegion(boolean inRegion) {
-		NeighborSet ret = new NeighborSet(this.ctrl);
-		for (Map.Entry<IModule, Byte []> e : entrySet()) {
-			if (!inRegion || e.getValue()[ID_REGION] == ctrl.meta().regionID()) {
-				ret.assoc(e);
-			}
-		}
-		return ret;
-	}
-	
-	public NeighborSet nbsOnGroup (IGroupEnum g) {
-		NeighborSet ret = new NeighborSet(this.ctrl);
-		for (Map.Entry<IModule, Byte []> e : entrySet()) {
-			if (e.getKey().getGroup().equals(g)) {
-				ret.assoc(e);
-			}
-		}
-		return ret;
-	}
-	
-	
 	public Set<IModule> modules() {
 		return connectors.keySet();
 	}
@@ -242,15 +193,8 @@ public class NeighborSet  {
 		for (Map.Entry<IModule, Byte[]> entry : nbs().entrySet()) {
 			assoc(entry.getKey(), (entry.getValue()[CON_SRC] + 4) % 8, entry.getValue()[CON_DEST],entry.getValue()[NR_META_PART],entry.getValue()[ID_META],entry.getValue()[ID_REGION]);
 		}
-//		deleteAll();	//TODO: Remove
 	}
 	
-	
-//	private void deleteAll() {
-//		modules.clear();
-//		connectors.clear();
-//		
-//	}
 
 	public void updateSymmetryEW (boolean south) {
 		for (Map.Entry<IModule, Byte[]> entry : nbs().entrySet()) {
@@ -261,11 +205,41 @@ public class NeighborSet  {
 				assoc(entry.getKey(), ((entry.getValue()[CON_SRC] + 2) % 4) + 4, entry.getValue()[CON_DEST],entry.getValue()[NR_META_PART],entry.getValue()[ID_META],entry.getValue()[ID_REGION]);
 			}
 		}
-		
-		
-		
-//		deleteAll();	//TODO: Remove
 	}
+	
+	
+	
+
+	
+	public NeighborSet nbsIsConnected(boolean connected) {
+		NeighborSet ret = new NeighborSet(this.ctrl);
+		for (Map.Entry<IModule, Byte []> e : entrySet()) {
+			if (ctrl.getContext().isConnConnected(e.getValue()[CON_SRC]) == connected) {
+				ret.assoc(e);
+			}
+		}
+		return ret;
+	}
+	
+	public NeighborSet nbsIsMetaPart(IMetaPart p) {
+		NeighborSet ret = new NeighborSet(this.ctrl);
+		for (Map.Entry<IModule, Byte []> e : entrySet()) {
+			if (e.getValue()[NR_META_PART] == p.index()) {
+				ret.assoc(e);
+			}
+		}
+		return ret;
+	}
+	
+	public NeighborSet nbsInRegion(boolean inRegion) {
+		NeighborSet ret = new NeighborSet(this.ctrl);
+		for (Map.Entry<IModule, Byte []> e : entrySet()) {
+			if (!inRegion || e.getValue()[ID_REGION] == ctrl.meta().regionID()) {
+				ret.assoc(e);
+			}
+		}
+		return ret;
+	}	
 
 	public NeighborSet nbsIn(IModuleHolder g) {
 		NeighborSet ret = new NeighborSet(this.ctrl);
@@ -277,17 +251,7 @@ public class NeighborSet  {
 		return ret;
 	}
 	
-	public NeighborSet nbsUsingConnector(int connector) {
-		NeighborSet ret = new NeighborSet(this.ctrl);
-		for (Map.Entry<IModule, Byte []> e : entrySet()) {
-			if (e.getValue()[CON_DEST] == connector) {
-				ret.assoc(e);
-			}
-		}
-		return ret;
-	}
-
-	public NeighborSet nbsFilterConn(int part) {
+	public NeighborSet nbsFilterConnSource(int part) {
 		NeighborSet ret = new NeighborSet(this.ctrl);
 		for (Map.Entry<IModule, Byte []> e : entrySet()) {
 			for (int i=0; i<8; i++) {

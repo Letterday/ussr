@@ -7,7 +7,6 @@ import java.util.Map;
 
 import ussr.model.debugging.ControllerInformationProvider;
 import ussr.model.debugging.DebugInformationProvider;
-import ussr.samples.atron.simulations.metaforma.gen.BrandtController.Mod;
 import ussr.samples.atron.simulations.metaforma.lib.NeighborSet;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 import ussr.util.Pair;
@@ -43,16 +42,11 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		
 	private HashMap<String,Float> doRepeat = new HashMap<String,Float>();
 	
-	protected SettingsBase settings;
-	private StatEntry currentStat;
+	protected ConfigurationParams settings;
 
 //	protected BagRegionCore regionBag;
 	
 	
-	public MfController(SettingsBase s) {
-		this();
-		settings = s;
-	}
 	
 	public MfController() {
 		visual = new MfVisualizer(this);
@@ -60,6 +54,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		scheduler = new MfScheduler(this);	
 		stateMngr = new MfStateManager(this);
 		actuation = new MfActuation(this);
+		settings = ConfigurationParams.getInst();
 	}
 
 	public void finish () {
@@ -277,7 +272,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 			if (var.equals("regionID")) {
 				// The new region ID is not allowed to be zero!
 				//TODO: CHOOSE state is represented by 1
-				if (stateMngr.at(getStateChoose()) && e.getValue().fst() != 0) {
+				if (stateMngr.at(GenState.CHOOSE) && e.getValue().fst() != 0) {
 					getStateMngr().commit("BOSS ID received through meta sync");
 //					visual.print("COMMMMIIITT");
 				}
@@ -309,20 +304,22 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	
 
 	public NeighborSet nbs(int connectors) {
-		return context.nbs().nbsFilterConn(connectors);
+		return context.nbs().nbsFilterConnSource(connectors);
 	}
 	
-	public NeighborSet nbs(IGroupEnum g) {
-		return context.nbs().nbsOnGroup(g);
+	public NeighborSet nbs(IModuleHolder g) {
+		return context.nbs().nbsIn(g);
+	}
+	
+	public NeighborSet nbs(int connectorsSource, int connectorsDest) {
+		return context.nbs().nbsFilterConnSource(connectorsSource).nbsFilterConnDest(connectorsDest);
 	}
 	
 	public NeighborSet nbs(int connectors, IMetaPart r) {
-		return context.nbs().nbsFilterConn(connectors).nbsIsMetaPart(r);
+		return context.nbs().nbsFilterConnSource(connectors).nbsIsMetaPart(r);
 	}
 	
-	public NeighborSet nbs(int connectors, IGroupEnum g) {
-		return context.nbs().nbsFilterConn(connectors).nbsOnGroup(g);
-	}
+
 	
 	public NeighborSet nbs() {
 		return context.nbs();
@@ -445,7 +442,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		return stateMngr;
 	}
 	
-	public SettingsBase getSettings () {
+	public ConfigurationParams getSettings () {
 		return settings;
 	}
 	
@@ -486,7 +483,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	public void receivePacket (PacketRegion p) {					
 		// the origin will become the boss
 		//stateMngr.check(p,getStateChoose())
-		if (stateMngr.at(getStateChoose()) && ( meta().regionID() == 0 || meta().regionID() == p.getRegionID())) { // p.getState().getInstruction() == 1 ||
+		if (stateMngr.at(GenState.CHOOSE) && ( meta().regionID() == 0 || meta().regionID() == p.getRegionID())) { // p.getState().getInstruction() == 1 ||
 			visual.print(p.toString());
 			meta().setRegionID(p.getRegionID());
 			meta().setCountInRegion (p.sizeMeta);
@@ -502,58 +499,12 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	}
 	
 	
-	public abstract IStateOperation getStateChoose();
-//////////////////////////////////////////////////////////////
-	// Generated shared functions
 	
 	
 
-	protected void symmetryFix(PacketSymmetry p) {
-		byte connDest = p.connDest;
-		
-//		if ((isNORTH(p.connSource) == isNORTH(connDest) && isWEST(p.connSource) == isNORTH(connDest)) || (isNORTH(p.connSource) != isNORTH(connDest) && isWEST(p.connSource) != isSOUTH(connDest))) {
-//			if (!stateMngr.committed()) {
-//				context.switchNorthSouth();
-//				connDest = (byte) ((connDest + 4) % 8);
-//			}
-//		}
 	
-		visual.print("orig: " + p.connSource + " " + isNORTH(p.connSource) + " == " + isWEST(connDest) + " " + connDest);
-		if (isFEMALE(p.connDest)) {
-			if (!stateMngr.committed()) {
-				if (isWEST(p.connSource) != isSOUTH(connDest)) {
-					context.switchNorthSouth();
-					connDest = (byte) ((connDest + 4) % 8);
-				}
-				visual.print(p.connSource + " " + isNORTH(p.connSource) + " == " + isWEST(connDest) + " " + connDest);
-				context.switchEastWestHemisphere(isNORTH(p.connSource) == isWEST(connDest), isSOUTH(connDest));
-					
-				
-			}				
-		}
-		else if (isMALE(p.connDest)) {
-			if (!stateMngr.committed()) {
-				if (isWEST(p.connSource) != isNORTH(connDest)) {
-					context.switchNorthSouth();
-					connDest = (byte) ((connDest + 4) % 8);
-				}
-			
-				// sure!!
-				context.switchEastWestHemisphere(isNORTH(p.connSource) == isEAST(connDest), isSOUTH(connDest));
-				
-				
-			}
-		}
-		if (freqLimit("SYMM passthrough", settings.getPropagationRate())) {
-			module().discover();
-			broadcast(new PacketSymmetry(this));
-		}
-		stateMngr.commit("Symmetry fix done");
-		
-	}
 
 	public abstract IMetaPart getMetaPart();
-	public abstract IStateOperation getStateInit();
 	
 
 	public void setAngle(int a) {
@@ -564,11 +515,16 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	
 	public abstract BagMetaCore meta();
 
-	public void setCurrentStat(StatEntry e) {
-		currentStat = e;
+	public abstract IStateOperation getStateInst();
+	
+	public IStateOperation getState(byte b) {
+		if (b<GenState.values().length) {
+			return GenState.values()[b];
+		}
+		else {
+			return getStateInst().fromByte(b);
+		}
 	}
-
-
 
 	
 	
