@@ -38,7 +38,7 @@ class ObstacleAvoidanceSimulation extends MfSimulation {
     }
 	
 	protected ArrayList<ModulePosition> buildRobot() {
-		return new MfBuilder().buildCar(2,ObstacleAvoidanceController.Mod.F);
+		return new MfBuilder().buildCar(4,ObstacleAvoidanceController.Mod.F);
 	}
 	
 	protected void changeWorldHook(WorldDescription world) {
@@ -53,8 +53,8 @@ public class ObstacleAvoidanceController extends MfController implements Control
 	
 	public enum StateOperation implements IStateOperation {
 		NONE, DRIVE, TurnFourWheeler,TurnTwoWheeler;
-		public byte ord() {return (byte) ordinal();	}
-		public IStateOperation fromByte(byte b) {return values()[b];}
+		public byte ord() {return (byte) (ordinal() - 1 + GenState.values().length);	}
+		public IStateOperation fromByte(byte b) {return values()[b+1 - GenState.values().length];}
 	}
 	class BagModule extends BagModuleCore {
 
@@ -119,8 +119,8 @@ public class ObstacleAvoidanceController extends MfController implements Control
 		}
 
 		@Override
-		public Group getGroup () {
-			return Group.valueOf(name().split("_")[0]);
+		public Collection getGroup () {
+			return Collection.valueOf(name().split("_")[0]);
 		}
 
 		@Override
@@ -159,7 +159,7 @@ public class ObstacleAvoidanceController extends MfController implements Control
 
 	}
 	
-	public enum Group implements IGroupEnum,IModuleHolder{ALL, NONE, F,AXIS, LEFTWHEEL, RIGHTWHEEL;
+	public enum Collection implements ICollectionEnum,IModuleHolder{ALL, NONE, F,AXIS, LEFTWHEEL, RIGHTWHEEL;
 		public boolean contains(IModule m) {
 			return equals(m.getGroup());
 		}
@@ -175,7 +175,7 @@ public class ObstacleAvoidanceController extends MfController implements Control
 		}
 
 		@Override
-		public IGroupEnum valueFrom(String string) {
+		public ICollectionEnum valueFrom(String string) {
 			return valueOf(string);
 		}
 	}	
@@ -205,7 +205,7 @@ public class ObstacleAvoidanceController extends MfController implements Control
 		meta.setController(this);
 		
 		Module.Mod = Mod.NONE;
-		Module.Group = Group.NONE;
+		Module.Group = Collection.NONE;
 		module().part = MetaPart.NONE;
 
 		visual.setColor(GenState.INIT,Color.WHITE);
@@ -215,27 +215,32 @@ public class ObstacleAvoidanceController extends MfController implements Control
 
 	
 	public void handleStates () {
+		
+		if (getID().equals(Mod.AXIS_DRIVER) && freqLimit("PC",1f)){
+			printPacketStats();
+		}
+		
 		if (stateMngr.at(GenState.INIT)) {
 			if (stateMngr.doUntil(0)) {
 				meta.enable();
-				stateMngr.spend(settings.get("assignTime"));
+				stateMngr.spend("module.assignID");
 				if (!nbs(SOUTH&EAST&FEMALE, EAST).isEmpty()) {
 					visual.print("I will swap leftwheel!");
-					module().swapGroup(Group.LEFTWHEEL);
+					module().swapGroup(Collection.LEFTWHEEL);
 				}
 				if (!nbs(SOUTH&EAST&FEMALE,WEST).isEmpty()) {
 					visual.print("I will swap RIGHTWHEEL!");
-					module().swapGroup(Group.RIGHTWHEEL);
+					module().swapGroup(Collection.RIGHTWHEEL);
 				}
-				if (!nbs(Group.RIGHTWHEEL).isEmpty() && !nbs(Group.LEFTWHEEL).isEmpty() && nbs(NORTH&EAST&FEMALE).isEmpty()) {
+				if (!nbs(Collection.RIGHTWHEEL).isEmpty() && !nbs(Collection.LEFTWHEEL).isEmpty() && nbs(NORTH&EAST&FEMALE).isEmpty()) {
 					visual.print("I will swap AXIS_FRONT!");
 					module().setID(Mod.AXIS_FRONT);
 				}
-				if (!nbs(Group.RIGHTWHEEL).isEmpty() && !nbs(Group.LEFTWHEEL).isEmpty() && nbs(NORTH&EAST&FEMALE).size() == 1) {
+				if (!nbs(Collection.RIGHTWHEEL).isEmpty() && !nbs(Collection.LEFTWHEEL).isEmpty() && nbs(NORTH&EAST&FEMALE).size() == 1) {
 					visual.print("I will swap AXIS_BACK!");
 					module().setID(Mod.AXIS_BACK);
 				}
-				if (nbs(Group.AXIS).size() == 2) {
+				if (nbs(Collection.AXIS).size() == 2) {
 					visual.print("I will swap DRIVER!");
 					module().setID(Mod.AXIS_DRIVER);
 				}
@@ -250,7 +255,7 @@ public class ObstacleAvoidanceController extends MfController implements Control
 		int BACKWARD = -1;
 		
 		if (stateMngr.at(StateOperation.DRIVE)) {
-			if (module().getGroup().equals(Group.AXIS) && module().proximitySensor() > settings.get("proximity")) {
+			if (module().getGroup().equals(Collection.AXIS) && module().proximitySensor() > settings.get("proximity")) {
 				visual.print("event!!!!!" + nbs().size());
 				
 				if (module().getID().equals(Mod.AXIS_FRONT) && nbs().size() == 3) {
@@ -327,8 +332,8 @@ public class ObstacleAvoidanceController extends MfController implements Control
 	}
  
 	private void drive(int left, int right) {
-		actuation.rotate_continuous(Group.LEFTWHEEL,-left);
-		actuation.rotate_continuous(Group.RIGHTWHEEL,right);
+		actuation.rotate_continuous(Collection.LEFTWHEEL,-left);
+		actuation.rotate_continuous(Collection.RIGHTWHEEL,right);
 	}
 
 	@Override

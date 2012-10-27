@@ -1,6 +1,6 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
-import ussr.samples.atron.simulations.metaforma.gen.ObstacleAvoidanceController.Group;
+import ussr.samples.atron.simulations.metaforma.gen.ObstacleAvoidanceController.Collection;
 
 
 
@@ -106,7 +106,7 @@ public class MfActuation  {
 				// Commit 
 				ctrl.stateMngr.commit("Member of ME and did my action to " + g2 + " " + (insideRegionOnly? " only in region!" : ""));
 			}
-			if (g1 instanceof IGroupEnum && ctrl.nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).isEmpty()) {
+			if (g1 instanceof ICollectionEnum && ctrl.nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).isEmpty()) {
 				// We need to to this because the whole grouping is excluded from automatic commit, also non-nb's!
 				ctrl.stateMngr.commit("Member of ME but not connected to " + g2);
 			}
@@ -187,7 +187,7 @@ public class MfActuation  {
 		connectionPart(g, part, false);
 	}
 
-	public void rotate_continuous(Group g, float velocity) {
+	public void rotate_continuous(Collection g, float velocity) {
 		ctrl.visual.print("# " + g + " rotate_continuous " + velocity);
 		if (g.contains(ctrl.module().getID())) {
 			ctrl.visual.print("# rotateContinuous " + velocity);

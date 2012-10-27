@@ -103,9 +103,9 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	
 	public void releaseRegion () {
 		ctrl.visual.print(".releaseRegion ");
-		setRegionID((byte)0);		
 		
 		MfStats.getInst().addEnd(ctrl.stateMngr.getState().getOperation(),ctrl.stateMngr.getState().getOrientation(),regionID(),ctrl.stateMngr.timeSpentInSequence(),Finish.SUCCESS);
+		setRegionID((byte)0);
 		
 		setCountInRegion((byte) 1);
 	}

@@ -9,7 +9,7 @@ import java.util.Set;
 public class Module implements IModuleHolder,IModule {
 
 	public static IModEnum Mod;
-	public static IGroupEnum Group;
+	public static ICollectionEnum Group;
 	public IModEnum mod;
 	public byte number;
 	
@@ -91,7 +91,7 @@ public class Module implements IModuleHolder,IModule {
 	}
 	
 	public static Module value(int index) {
-		byte s = 0;
+		int s = 0; // must be int instead of byte due to negative nrs!
 		for (IModEnum m:Mod.getValues()) {
 			if (s + m.getCount() <= index) {
 				s += m.getCount();
@@ -106,9 +106,12 @@ public class Module implements IModuleHolder,IModule {
 	public static Set<Module> fromBits(BigInteger consensus) {
 		Set<Module> ret = new HashSet<Module>();
 		
-		
+		if (consensus.testBit(0) || consensus.testBit(1)){
+			System.err.println("Consensus bit 0 or 1 set (this is NONE,ALL)!");
+		}
 		for (int i=0; i<consensus.bitLength(); i++) {
 			if (consensus.testBit(i)) {
+				
 				ret.add(Module.value(i));
 			}
 		}
@@ -119,7 +122,7 @@ public class Module implements IModuleHolder,IModule {
 		return mod.toString() + ((mod.getCount()!=1) ? "_" + number : "");
 	}
 	
-	public Module swapGroup (IGroupEnum to) {
+	public Module swapGroup (ICollectionEnum to) {
 		String parts[] = mod.toString().split("_");
 		
 		if (parts.length == 2){
@@ -133,7 +136,7 @@ public class Module implements IModuleHolder,IModule {
 		
 	}
 	
-	public IGroupEnum getGroup () {
+	public ICollectionEnum getGroup () {
 		return Group.valueFrom(mod.name().split("_")[0]);
 	}
 
@@ -150,7 +153,7 @@ public class Module implements IModuleHolder,IModule {
 		return mod;
 	}
 
-	public void setGroup(IGroupEnum g) {
+	public void setGroup(ICollectionEnum g) {
 		mod = Mod.valueFrom(g.name()); 
 	}
 	

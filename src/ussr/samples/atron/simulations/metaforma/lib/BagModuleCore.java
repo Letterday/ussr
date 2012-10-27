@@ -16,6 +16,10 @@ public abstract class BagModuleCore extends Bag {
 	public Module getID () {
 		return ctrl.getID();
 	}
+	
+	public String toString () { 
+		return super.toString(false);
+	}
 
 	public void setPart(IMetaPart p) {
 		ctrl.visual.print(".setPart " + p);
@@ -27,7 +31,7 @@ public abstract class BagModuleCore extends Bag {
 	}
 	
 	
-	public IGroupEnum getGroup() {
+	public ICollectionEnum getGroup() {
 //		ctrl.visual.print(".getGroup() = " + ctrl.getID().getGroup());
 		return ctrl.getID().getGroup();
 	}
@@ -41,7 +45,7 @@ public abstract class BagModuleCore extends Bag {
 		}
 	}
 	
-	public void swapGroup(IGroupEnum to) {
+	public void swapGroup(ICollectionEnum to) {
 		ctrl.visual.print("swap group from " + getGroup() + " to " + to + " result:" + getID().swapGroup(to));
 		setID(getID().swapGroup(to));
 	}
@@ -61,7 +65,12 @@ public abstract class BagModuleCore extends Bag {
 		}
 	}
 	
+	public void lastStateDiffuse () {
+		discover();
+	}
+	
 	public void discover () {
+		// this has to be done multiple times at a specific interval
 		ctrl.broadcast(new PacketDiscover(ctrl).setSource(getID()));
 	}
 

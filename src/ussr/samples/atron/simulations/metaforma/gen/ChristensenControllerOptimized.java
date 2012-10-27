@@ -61,16 +61,15 @@
 //	enum StateOperation implements IStateOperation {
 //		INIT, CHOOSE, GET_UP;
 //
-//		public byte ord() {return (byte) ordinal();	}
-//
-//		public IStateOperation fromByte(byte b) {return values()[b];}
+//		public byte ord() {return (byte) (ordinal() - 1 + GenState.values().length);	}
+//		public IStateOperation fromByte(byte b) {return values()[b+1 - GenState.values().length];}
 //	}
 //	
-//	enum ModuleRole implements IRole {
+//	enum ModuleRole implements IMetaPart {
 //		NONE,Left,Top,Right,Dummy;
 //
 //
-//		public IRole fromByte(byte b) {
+//		public IMetaPart fromByte(byte b) {
 //			return values()[b];
 //		}
 //

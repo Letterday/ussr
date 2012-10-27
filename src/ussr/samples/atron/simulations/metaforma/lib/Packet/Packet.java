@@ -1,5 +1,7 @@
 package ussr.samples.atron.simulations.metaforma.lib.Packet;
 
+import java.lang.reflect.Field;
+
 import ussr.samples.atron.simulations.metaforma.lib.Dir;
 import ussr.samples.atron.simulations.metaforma.lib.IModule;
 import ussr.samples.atron.simulations.metaforma.lib.IMetaPart;
@@ -12,10 +14,13 @@ import ussr.samples.atron.simulations.metaforma.lib.State;
 // Chosen to use manual serialization instead of Java's built in serialization
 // Reason: Much fewer bytes needed to transport on infra-red!
 
-public abstract class Packet extends PacketBase {
+public abstract class Packet  {
+
+	protected MfController ctrl;
+
 
 	public Packet(MfController c) {
-		super(c);
+		ctrl = c;
 	}
 
 	private static final int HEADER_LENGTH = 7;
@@ -36,6 +41,9 @@ public abstract class Packet extends PacketBase {
 	public byte metaID = 0;
 
 	private State state; // operation: 3 bits, counter: 5 bits, // instruction 5bits
+
+
+	public byte type;
 	
 	
 	public final Packet deserialize (byte[] b,byte connector) {
@@ -88,9 +96,7 @@ public abstract class Packet extends PacketBase {
 		
 		source = 					Module.value(msg[1]&255);
 		
-		
 		type = 						getType(msg);
-		
 		
 		connSource = 		(byte) 	(((msg[2]&255)>>3)%8);
 		dir = Dir.values()			[((msg[2]&255)>>6)%2];
@@ -185,8 +191,6 @@ public abstract class Packet extends PacketBase {
 		regionID = id;
 	}
 	
-	
-
 
 	public Packet setSource(IModule id) {
 		source = id;
@@ -218,6 +222,34 @@ public abstract class Packet extends PacketBase {
 
 	public State getState() {
 		return state;
+	}
+
+	public byte getType() {
+		return type;
+	}
+
+	public Packet setVar(String name, Object value) {
+		try {
+			Field field = this.getClass().getField(name);
+			field.setAccessible(true);
+			field.set(this, value);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		return this;
+	}
+
+	public Object getVar(String name) {
+		try {
+			Field field = this.getClass().getField(name);
+			field.setAccessible(true);
+			return field.get(this);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	public static byte getType(byte[] msg) {

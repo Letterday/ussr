@@ -32,7 +32,7 @@ class BrandtSimulation extends MfSimulation {
 	}
 
 	protected ArrayList<ModulePosition> buildRobot() {
-		return new MfBuilder().buildGrid(BrandtController.Mod.F);
+		return new MfBuilder().buildGroupsOfThree(BrandtController.Mod.F);
 	}
 }
 
@@ -215,8 +215,8 @@ public class BrandtController extends MfController implements ControllerInformat
 
 	
 	public enum Mod  implements IModule,IModEnum{
-		ALL,
 		NONE,
+		ALL,
 		Dummy_Left,
 		Dummy_Right,
 		F(48),
@@ -271,8 +271,8 @@ public class BrandtController extends MfController implements ControllerInformat
 		}
 
 		@Override
-		public Group getGroup () {
-			return Group.valueOf(name().split("_")[0]);
+		public Coll getGroup () {
+			return Coll.valueOf(name().split("_")[0]);
 		}
 
 		@Override
@@ -314,7 +314,7 @@ public class BrandtController extends MfController implements ControllerInformat
 
 	}
 	
-	public enum Group implements IGroupEnum,IModuleHolder{ALL, NONE, F, Clover, Outside, Inside, InsideLifter,OutsideLifter,Uplifter,Dummy;
+	public enum Coll implements ICollectionEnum,IModuleHolder{ALL, NONE, F, Clover, Outside, Inside, InsideLifter,OutsideLifter,Uplifter,Dummy;
 		public boolean contains(IModule m) {
 			return equals(m.getGroup());
 		}
@@ -330,7 +330,7 @@ public class BrandtController extends MfController implements ControllerInformat
 		}
 
 		@Override
-		public IGroupEnum valueFrom(String string) {
+		public ICollectionEnum valueFrom(String string) {
 			return valueOf(string);
 		}
 	}	
@@ -350,7 +350,7 @@ public class BrandtController extends MfController implements ControllerInformat
 		meta.setController(this);
 		
 		Module.Mod = Mod.NONE;
-		Module.Group = Group.NONE;
+		Module.Group = Coll.NONE;
 		
 		module().part = MetaPart.NONE;
 		
@@ -360,10 +360,10 @@ public class BrandtController extends MfController implements ControllerInformat
 		visual.setColor(Mod.Clover_West, Color.YELLOW);
 		visual.setColor(Mod.Clover_East, Color.GREEN);
 		
-		visual.setColor(Group.Outside, Color.CYAN);
-		visual.setColor(Group.Inside, Color.MAGENTA);
-		visual.setColor(Group.OutsideLifter, Color.CYAN.darker().darker().darker());
-		visual.setColor(Group.InsideLifter, Color.MAGENTA.darker().darker().darker());
+		visual.setColor(Coll.Outside, Color.CYAN);
+		visual.setColor(Coll.Inside, Color.MAGENTA);
+		visual.setColor(Coll.OutsideLifter, Color.CYAN.darker().darker().darker());
+		visual.setColor(Coll.InsideLifter, Color.MAGENTA.darker().darker().darker());
 
 		visual.setColor(Mod.Uplifter_Top, Color.YELLOW);
 		visual.setColor(Mod.Uplifter_Bottom, Color.MAGENTA);
@@ -413,47 +413,114 @@ public class BrandtController extends MfController implements ControllerInformat
 				if (freqLimit("printMetaNB",1f)){
 					visual.print(meta().getVarsString());
 				}
+				
 //				if (meta().Top != 0 && meta().Left != 0) {
-//					meta().createRegion(new byte[]{meta().Top,meta().Left});
-//					stateMngr.setAfterConsensus(StateOperation.FLIPOVER,Orientation.BOTTOMRIGHT);
+//					meta().createRegion(new byte[]{meta().Top,meta().Left},StateOperation.FLIPOVER,Orientation.BOTTOM_RIGHT);
 //					stateMngr.commit();
 //				}
-				// TOP or MIDDLE LEFT
-				if (meta().Top == 0 && meta().Bottom == 0 && meta().Right != 0 && meta().Left == 0) {
-					if (meta().TopRight == 0) {
-						meta().createRegion(new byte[]{meta().Right},StateOperation.FLIPTHROUGH,Orientation.LEFT_BOTTOM);
-						stateMngr.commit();
-					}
-					else {
-						meta().createRegion(new byte[]{meta().TopRight,meta().Right},StateOperation.FLIPALONG,Orientation.BOTTOM_RIGHT);
-						stateMngr.commit();
-					}
-				}
-				
-				// TOP or MIDDLE RIGHT
-				if (meta().Top == 0  && meta().Bottom == 0 && meta().Left != 0  && meta().Right == 0) {
-					if (meta().TopLeft == 0) {
-						meta().createRegion(new byte[]{meta().Left},StateOperation.FLIPTHROUGH,Orientation.RIGHT_BOTTOM);
-						stateMngr.commit();
-					}
-					else {
-						meta().createRegion(new byte[]{meta().TopLeft,meta().Left},StateOperation.FLIPALONG,Orientation.BOTTOM_LEFT);
-						stateMngr.commit();
-					}
-				}
+//				
+//				if (meta().Top != 0 && meta().Right != 0) {
+//					meta().createRegion(new byte[]{meta().Top,meta().Right},StateOperation.FLIPOVER,Orientation.BOTTOM_LEFT);
+//					stateMngr.commit();
+//				}
+//				
+//				if (meta().Bottom != 0 && meta().Left != 0) {
+//					meta().createRegion(new byte[]{meta().Bottom,meta().Left},StateOperation.FLIPOVER,Orientation.TOP_RIGHT);
+//					stateMngr.commit();
+//				}
+//				
+//				if (meta().Bottom != 0 && meta().Right != 0) {
+//					meta().createRegion(new byte[]{meta().Bottom,meta().Right},StateOperation.FLIPOVER,Orientation.TOP_LEFT);
+//					stateMngr.commit();
+//				}
 				
 				
-				// BOTTOM OF STRUCT
-				if (meta().Bottom == 0  && meta().Top != 0 && meta().Left == 0  && meta().Right == 0 ) {
-//					if (meta().TopLeft == 0) { 
-//						meta().createRegion(new byte[]{meta().Top},StateOperation.FLIPTHROUGH,Orientation.BOTTOM_RIGHT);
+				///////////////////////////////////////////////////////////////////////////////////////////////////////
+				
+//				
+//				if (meta().Left != 0 && meta().TopLeft != 0) {
+//					meta().createRegion(new byte[]{meta().Left,meta().TopLeft},StateOperation.FLIPALONG,Orientation.BOTTOM_LEFT);
+//					stateMngr.commit();
+//				}
+//				
+//				if (meta().Left != 0 && meta().BottomLeft != 0) {
+//					meta().createRegion(new byte[]{meta().Left,meta().BottomLeft},StateOperation.FLIPALONG,Orientation.TOP_LEFT);
+//					stateMngr.commit();
+//				}
+//				
+//				
+//				if (meta().Right != 0 && meta().TopRight != 0) {
+//					meta().createRegion(new byte[]{meta().Right,meta().TopRight},StateOperation.FLIPALONG,Orientation.BOTTOM_RIGHT);
+//					stateMngr.commit();
+//				}
+//				
+//				if (meta().Right != 0 && meta().BottomRight != 0) {
+//					meta().createRegion(new byte[]{meta().Right,meta().BottomRight},StateOperation.FLIPALONG,Orientation.TOP_RIGHT);
+//					stateMngr.commit();
+//				}
+				
+				
+				
+				/////////////////////////////////////////////////////////////////////////////////////////////////////
+				
+			if (meta().Top != 0 && meta().TopLeft != 0) {
+				meta().createRegion(new byte[]{meta().Top,meta().TopLeft},StateOperation.FLIPALONG,Orientation.RIGHT_TOP);
+				stateMngr.commit();
+			}
+			
+			if (meta().Top != 0 && meta().TopRight != 0) {
+				meta().createRegion(new byte[]{meta().Top,meta().TopRight},StateOperation.FLIPALONG,Orientation.LEFT_TOP);
+				stateMngr.commit();
+			}
+			
+			if (meta().Bottom != 0 && meta().BottomLeft != 0) {
+				meta().createRegion(new byte[]{meta().Bottom,meta().BottomLeft},StateOperation.FLIPALONG,Orientation.RIGHT_BOTTOM);
+				stateMngr.commit();
+			}
+			
+			if (meta().Bottom != 0 && meta().BottomRight != 0) {
+				meta().createRegion(new byte[]{meta().Bottom,meta().BottomRight},StateOperation.FLIPALONG,Orientation.LEFT_BOTTOM);
+				stateMngr.commit();
+			}
+				
+			///////////////////////////////////////////////////////////////////////
+				
+//				// TOP or MIDDLE LEFT
+//				if (meta().Top == 0 && meta().Bottom == 0 && meta().Right != 0 && meta().Left == 0) {
+//					if (meta().TopRight == 0) {
+//						meta().createRegion(new byte[]{meta().Right},StateOperation.FLIPTHROUGH,Orientation.LEFT_BOTTOM);
 //						stateMngr.commit();
 //					}
-					if (meta().TopRight == 0) {
-						meta().createRegion(new byte[]{meta().Top},StateOperation.FLIPTHROUGH,Orientation.BOTTOM_LEFT);
-						stateMngr.commit();
-					}
-				}
+//					else {
+//						meta().createRegion(new byte[]{meta().TopRight,meta().Right},StateOperation.FLIPALONG,Orientation.BOTTOM_RIGHT);
+//						stateMngr.commit();
+//					}
+//				}
+//				
+//				// TOP or MIDDLE RIGHT
+//				if (meta().Top == 0  && meta().Bottom == 0 && meta().Left != 0  && meta().Right == 0) {
+//					if (meta().TopLeft == 0) {
+//						meta().createRegion(new byte[]{meta().Left},StateOperation.FLIPTHROUGH,Orientation.RIGHT_BOTTOM);
+//						stateMngr.commit();
+//					}
+//					else {
+//						meta().createRegion(new byte[]{meta().TopLeft,meta().Left},StateOperation.FLIPALONG,Orientation.BOTTOM_LEFT);
+//						stateMngr.commit();
+//					}
+//				}
+//				
+//				
+//				// BOTTOM OF STRUCT
+//				if (meta().Bottom == 0  && meta().Top != 0 && meta().Left == 0  && meta().Right == 0 ) {
+////					if (meta().TopLeft == 0) { 
+////						meta().createRegion(new byte[]{meta().Top},StateOperation.FLIPTHROUGH,Orientation.BOTTOM_RIGHT);
+////						stateMngr.commit();
+////					}
+//					if (meta().TopRight == 0) {
+//						meta().createRegion(new byte[]{meta().Top},StateOperation.FLIPTHROUGH,Orientation.BOTTOM_LEFT);
+//						stateMngr.commit();
+//					}
+//				}
 			}
 		}
 
@@ -561,7 +628,7 @@ public class BrandtController extends MfController implements ControllerInformat
 			
 			
 			if (stateMngr.doWait(12)) {
-				actuation.connect(Group.F,Group.F);
+				actuation.connect(Coll.F,Coll.F);
 				stateMngr.commitEnd();
 			}
 		
@@ -593,13 +660,13 @@ public class BrandtController extends MfController implements ControllerInformat
 		if (stateMngr.at(StateOperation.FLIPOVER)) {
 			if (stateMngr.doWait(0)) {
 								
-				if (stateMngr.getState().getOrientation().is(BorderLine.TOP)) {
-					QUART = -90;
-					HALF = -180;
-				}
-				else {
+				if (stateMngr.getState().getOrientation().is(BorderLine.TOP) == stateMngr.getState().getOrientation().is(BorderLine.LEFT)) {
 					QUART = 90;
 					HALF = 180;
+				}
+				else {
+					QUART = -90;
+					HALF = -180;
 				}
 								
 				module().gradientInit();
@@ -630,10 +697,10 @@ public class BrandtController extends MfController implements ControllerInformat
 			if (stateMngr.doWait(4)) {
 				module().storeID();
 				if (module().getVar("gradPri") == 0 && module().getVar("gradSec") < 3 || module().getVar("gradSec") == 0 && module().getVar("gradPri") < 3) {
-					module().swapGroup(Group.Outside);
+					module().swapGroup(Coll.Outside);
 				}
 				if (module().getVar("gradPri") > 0 && module().getVar("gradSec") > 0 ) {
-					module().swapGroup(Group.Inside);
+					module().swapGroup(Coll.Inside);
 				}	
 				if (module().getVar("gradPri") == 3 && module().getVar("gradSec") == 1 ) {
 					module().setID(Mod.InsideLifter_Top);
@@ -652,12 +719,12 @@ public class BrandtController extends MfController implements ControllerInformat
 			}	
 			
 			if (stateMngr.doWait(5)) {
-				actuation.disconnect(Group.Outside, Group.Inside);
+				actuation.disconnect(Coll.Outside, Coll.Inside);
 				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(6)) {
-				actuation.disconnect(Group.OutsideLifter, Group.Inside);
+				actuation.disconnect(Coll.OutsideLifter, Coll.Inside);
 				stateMngr.commitEnd();
 			}
 		
@@ -674,12 +741,12 @@ public class BrandtController extends MfController implements ControllerInformat
 			}
 
 			if (stateMngr.doWait(9)) {
-				actuation.connect(Group.Outside,Group.Inside);
+				actuation.connect(Coll.Outside,Coll.Inside);
 				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(10)) {
-				actuation.connect(Group.InsideLifter,Group.Outside);
+				actuation.connect(Coll.InsideLifter,Coll.Outside);
 				stateMngr.commitEnd();
 			}
 			
@@ -693,13 +760,12 @@ public class BrandtController extends MfController implements ControllerInformat
 			
 			if (stateMngr.doWait (12)) {
 				module().restoreID();
-				stateMngr.commitEnd();
+				stateMngr.commit();
 			}
 			
 			
 			if (stateMngr.doWait (13)) {
 				finish();
-				
 			}
 
 
@@ -712,6 +778,21 @@ public class BrandtController extends MfController implements ControllerInformat
 				if (stateMngr.getState().getOrientation() == Orientation.BOTTOM_LEFT) {
 					QUART = 90;
 					HALF = 180;
+				}
+				
+				if (stateMngr.getState().getOrientation() == Orientation.TOP_LEFT) {
+					QUART = -90;
+					HALF = -180;
+				}
+				
+				if (stateMngr.getState().getOrientation() == Orientation.LEFT_TOP) {
+					QUART = 90;
+					HALF = 180;
+				}
+				
+				if (stateMngr.getState().getOrientation() == Orientation.RIGHT_TOP) {
+					QUART = -90;
+					HALF = -180;
 				}
 				
 				if (stateMngr.getState().getOrientation() == Orientation.BOTTOM_RIGHT) {
@@ -771,17 +852,17 @@ public class BrandtController extends MfController implements ControllerInformat
 			}
 			
 			if (stateMngr.doWait(8)) {
-				actuation.connect(Mod.Clover_North,Group.F);
+				actuation.connect(Mod.Clover_North,Coll.F);
 				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(9)) {
-				actuation.connect(Mod.Clover_West,Group.F);
+				actuation.connect(Mod.Clover_West,Coll.F);
 				stateMngr.commitEnd();
 			}
 			
 			if (stateMngr.doWait(10)) {
-				actuation.disconnect(new ModuleSet().add(Mod.Clover_South).add(Mod.Clover_East),Group.F);
+				actuation.disconnect(new ModuleSet().add(Mod.Clover_South).add(Mod.Clover_East),Coll.F);
 				stateMngr.commitEnd();
 			}
 			

@@ -7,7 +7,10 @@
 package ussr.samples.atron;
 
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.sun.media.rtsp.protocol.PauseMessage;
 
@@ -228,6 +231,7 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	 * @see ussr.samples.atron.IATRONAPI#rotate(int)
 	 */
     public void rotate(int dir) {
+    	System.out.println(this.getModuleID() + ".rotate(" +dir+")");
     	int goal = 0;
     	if(getJointPosition()==0) 		goal = ((dir<0)?90:270);
     	else if(getJointPosition()==1) 	goal = ((dir<0)?180:0);
@@ -354,7 +358,7 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	 * @see ussr.samples.atron.IATRONAPI#connect(int)
 	 */
     public void connect(int i) {
-    	System.out.println("connectT " + i);
+    	System.out.println(this.getModuleID() + ".connect(" +i+")");
     	module.getConnectors().get(i).connect();
     }
 
@@ -362,6 +366,7 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	 * @see ussr.samples.atron.IATRONAPI#disconnect(int)
 	 */
     public void disconnect(int i) {
+    	System.out.println(this.getModuleID() + ".disconnect(" +i+")");
     	module.getConnectors().get(i).disconnect();
     }
 
@@ -371,7 +376,7 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
     public boolean isConnected(int i) {
     	if (i%2 ==1) {
     		try {
-				throw new Exception("isConnected() NOT ALLOWED ON FEMALE CONNECTOR!!");
+//				throw new Error("isConnected() NOT ALLOWED ON FEMALE CONNECTOR!!");
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -448,15 +453,24 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
     /**
 	 * @see ussr.samples.atron.IATRONAPI#sendMessage(byte[], byte, byte)
 	 */
-    public byte sendMessage(byte[] message, byte messageSize, byte connector) 
-	{
+    public byte sendMessage(byte[] message, byte messageSize, byte connector) {
+    	return sendMessage(message,messageSize,connector,"");
+    }
+    
+    /**
+	 * @see ussr.samples.atron.IATRONAPI#sendMessage(byte[], byte, byte)
+	 */
+	public byte sendMessage(byte[] message, byte messageSize, byte connector, String packetName) {
     	if (message.length < 4) {
     		throw new Error("message too small " + message.length);
     	}
     	if(connector<8 /*&& (isOtherConnectorNearby(connector) ) */) {
     		//System.out.println("-- send from " + sourceModule + " to " + destModule + " over " + connector );
 			module.getTransmitters().get(connector).send(new Packet(message));
-			if(packetCountingActive) incPacketsSentCount();
+			if(packetCountingActive)  {
+				incPacketsSentCount(packetName);
+				incPacketsSentBytes(packetName,message.length);
+			}
 			return 1;
 		}
     	else if(connector==8) { //radio
@@ -532,17 +546,56 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	 */
     public byte getTiltZ() { return read("TiltSensor:z"); }
     
-    private static long packetsSentCount;
+    private static ConcurrentHashMap<String,Long> packetsSentCount = new ConcurrentHashMap<String,Long>();
+    private static ConcurrentHashMap<String,Long> packetsSentBytes = new ConcurrentHashMap<String,Long>();
     private static boolean packetCountingActive = false;
-    private synchronized static void incPacketsSentCount() {
-        packetsSentCount++;
+    
+    private synchronized static void incPacketsSentCount(String packetName) {
+    	long count = 0;
+    	if (packetsSentCount.containsKey(packetName)) {
+    		count = packetsSentCount.get(packetName);
+    	}
+        packetsSentCount.put(packetName,count+1);
     }
+    private synchronized static void incPacketsSentBytes(String packetName,int length) {
+    	long size = 0;
+    	if (packetsSentBytes.containsKey(packetName)) {
+    		size = packetsSentBytes.get(packetName);
+    	}
+    	packetsSentBytes.put(packetName,size+length);
+    }
+    
     public static void activatePacketCounting() {
         packetCountingActive = true;
     }
     public static int getPacketsSentCount() {
-        if(packetsSentCount>Integer.MAX_VALUE) throw new Error("Count exceeds maxint");
-        return (int)packetsSentCount;
+    	long ret = 0;
+    	for (long c:packetsSentCount.values()) {
+    		ret += c;
+    	}
+        if(ret>Integer.MAX_VALUE) throw new Error("Count exceeds maxint");
+        return (int)ret;
+    }
+    
+    public static void printPacketStats() {
+    	System.out.println("##################################\nPacket counts:");
+    	for (Map.Entry<String,Long> e : packetsSentCount.entrySet()) {
+    		System.out.println(e.getKey() + ": " + e.getValue());
+    	}
+    	System.out.println("##################################\nPacket bytes:");
+    	for (Map.Entry<String,Long> e : packetsSentBytes.entrySet()) {
+    		System.out.println(e.getKey() + ": " + e.getValue());
+    	}
+    	System.out.println("##################################");
+    }
+    
+    public static int getPacketsSentBytes() {
+    	long ret = 0;
+    	for (long c:packetsSentBytes.values()) {
+    		ret += c;
+    	}
+        if(ret>Integer.MAX_VALUE) throw new Error("Bytes exceeds maxint");
+        return (int)ret;
     }
 
     public void sendMessageAll(byte[] msg, int length) {

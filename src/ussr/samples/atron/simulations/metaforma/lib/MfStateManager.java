@@ -1,7 +1,6 @@
 package ussr.samples.atron.simulations.metaforma.lib;
 
 import java.math.BigInteger;
-
 import ussr.samples.atron.simulations.metaforma.lib.Packet.Packet;
 
 public class MfStateManager {
@@ -203,20 +202,20 @@ public class MfStateManager {
 	}
 	
 	
-	private boolean consensusReached(int count) {
-		return consensusReached(count, 95);
-	}
 	
-	private boolean consensusReached(int count, int degradePerc) {
+	private boolean consensusReached(int count) {
 		if (ctrl.meta().completed() == 0) {
 			return false;
 		}
-		float consensusToReach = count - (timeSpentInState() / 100) * (100-degradePerc)/100 * count;
+		float consensusToReach = count - (timeSpentInState() / 100) * (1-ctrl.settings.getConsensusDowngrade()) * count;
 		boolean consensusReached = consensus.bitCount() >= consensusToReach;
 		if (!consensusReached) {
 			if (ctrl.freqLimit("consensusPrint",5)) {
 				ctrl.visual.print("Consensus waiting for " + consensus.bitCount() + " >= " + consensusToReach);
 			}
+		}
+		if (consensus.testBit(0) || consensus.testBit(1)){
+			ctrl.visual.error("Consensus bit 0 or 1 set (this is NONE,ALL)!");
 		}
 		
 		return consensusReached; 
@@ -232,6 +231,7 @@ public class MfStateManager {
 		boolean modified = false;
 		if (!consensus.setBit(ctrl.getID().ord()).equals(consensus)) {
 			consensus = consensus.setBit(ctrl.getID().ord());
+			
 			ctrl.scheduler.invokeNowConsensus();
 			modified = true;
 			ctrl.visual.print(".commit("+reason+") count:" + consensus.bitCount() + " modified:" + modified + " " + Module.fromBits(consensus));
@@ -246,11 +246,12 @@ public class MfStateManager {
 	
 	
 	public void nextState(State stateNew) {
-		ctrl.getVisual().printStatePost();
+		boolean operationTrans = !stateNew.match(stateCurrent.getOperation());
+		ctrl.getVisual().printStatePost(operationTrans);
 		cleanForNew();
 		stateCurrent.merge(stateNew);
 		stateReceived.merge(stateNew); // So we will not see a state update message for this state from another module
-		ctrl.getVisual().printStatePre();
+		ctrl.getVisual().printStatePre(operationTrans);
 //		ctrl.scheduler.invokeNowDiscover();
 	}
 	
@@ -285,7 +286,7 @@ public class MfStateManager {
 		if (stateCurrent.getInstruction() == stateInstr && ctrl.freqLimit("doRepeat" + stateInstr,interval)) {
 			if (!stateNeighborsDiscovered) {
 				stateNeighborsDiscovered = true;
-				ctrl.getScheduler().invokeNowDiscover();
+				discover();
 			}
 			return true;
 		}
@@ -295,16 +296,21 @@ public class MfStateManager {
 	
 	public boolean doWait(int state) {
 		checkForTimeSpent();
-		
-		
+	
 		if (getStateInstruction() == state && !committed()) {
-			ctrl.getScheduler().invokeNowDiscover();
-			ctrl.delay();
+			discover();
 			return true;
 		}
 		return false;
 	}
 			
+	
+	private void discover () {
+		for (int i=0; i<ctrl.settings.getStatePostTransitionDiscoverTime();i++) {
+			ctrl.getScheduler().invokeNowDiscover();
+			ctrl.delay();
+		}
+	}
 	
 	private void checkForTimeSpent() {
 		if (stateTimeToSpend != 0 && timeSpentInState() > stateTimeToSpend) {
@@ -343,7 +349,7 @@ public class MfStateManager {
 		boolean ret = false;
 
 		if (at(GenState.INIT) && !stateUpd.match(GenState.INIT)) {				
-			if (ctrl.time() - ctrl.settings.get("stateTreshold") <= stateLastUpdate) {			
+			if (ctrl.time() - ctrl.settings.getStateTakeoverTreshold() <= stateLastUpdate) {			
 				ctrl.visual.print("@@@ state transition refused from " + getState() + " to " + stateUpd + " - treshold = " + stateLastUpdate);
 				return false;
 			}
@@ -378,11 +384,11 @@ public class MfStateManager {
 	}
 
 	public void goToInit() {
-		ctrl.getVisual().printStatePost();
+		ctrl.getVisual().printStatePost(true);
 		cleanForNew();
 		ctrl.meta().resetSeqNrs();
 		init(GenState.INIT);
-		ctrl.getVisual().printStatePre();
+		ctrl.getVisual().printStatePre(true);
 	}
 
 	

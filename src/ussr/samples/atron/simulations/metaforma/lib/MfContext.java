@@ -2,8 +2,6 @@ package ussr.samples.atron.simulations.metaforma.lib;
 
 
 public class MfContext  {
-	
-	
 	private boolean switchNorthSouth;
 	private boolean switchEastWestN;
 	private boolean switchEastWestS;

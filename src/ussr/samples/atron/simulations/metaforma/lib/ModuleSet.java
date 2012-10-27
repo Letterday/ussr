@@ -28,7 +28,7 @@ public class ModuleSet implements IModuleHolder {
 	}
 	
 
-	public ModuleSet onGroup (IGroupEnum g) {
+	public ModuleSet onGroup (ICollectionEnum g) {
 		ModuleSet ret = new ModuleSet();
 		for (IModule m: modules) {
 			if (m.getGroup().equals(g)) {

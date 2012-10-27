@@ -58,6 +58,12 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	}
 
 	public void finish () {
+		float startTime = time();
+		
+		while (time() - startTime < settings.getStatePostTransitionDiscoverTime()) {
+			module().discover();
+			delay();
+		}
 		meta().releaseRegion();
 		meta().disable();
 		meta().resetVars();
@@ -93,7 +99,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 	}
 		
 	public void delay () {
-		delay(300);
+		delay((int) (settings.getDelay() * 1000));
 	}
 	
 
@@ -108,9 +114,9 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		
 //		module().setID(getID());
 		
-		System.out.println(getName() + ": " + getID());
+//		System.out.println(getName() + ": " + getID());
 		
-		System.out.println("my new id: " + module().getID());
+//		System.out.println("my new id: " + module().getID());
 		delay(500);
 		
 		 // All threads and controllers need to be ready before proceeding!
@@ -426,7 +432,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 //		visual.print(".send " + p);
 		
 		
-		sendMessage(p.serialize(), (byte) p.serialize().length, context.rel2abs(connector));
+		sendMessage(p.serialize(), (byte) p.serialize().length, context.rel2abs(connector),p.getClass().getSimpleName());
 	}
 	
 

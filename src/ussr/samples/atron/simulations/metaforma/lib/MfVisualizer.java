@@ -141,7 +141,7 @@ public class MfVisualizer {
 	}
 
 	public Color[] getColors() {
-		// Color[0] = Operation or blue, darkness = role
+		// Color[0] = Operation or blue, darkness = metapart
 		// Color[1] = Module or group
 		
 		Color[] ret = new Color[2];
@@ -173,7 +173,7 @@ public class MfVisualizer {
 	}
 	
 	
-	public void print (PacketBase p, String msg) {
+	public void print (Packet p, String msg) {
 		if ((MfController.pow2(p.getType()) & msgFilter) != 0) {
 			print(msg);
 		}
@@ -191,15 +191,25 @@ public class MfVisualizer {
 	}
 	
 	
-	public void printStatePost() {
-		print("\n\n===========  "+ ctrl.getID() + "  ==============\nLeft state, time spent: " + ctrl.getStateMngr().timeSpentInState() + "");
+	public void printStatePost(boolean operationTrans) {
+		if (operationTrans) {
+			print("\n\n###########################  "+ ctrl.getID() + "  ###########################\nLeft state, time spent: " + ctrl.getStateMngr().timeSpentInState() + "");
+		}
+		else {
+			print("\n\n===========  "+ ctrl.getID() + "  ==============\nLeft state, time spent: " + ctrl.getStateMngr().timeSpentInState() + "");
+		}
 	}
 	
 	
-	public void printStatePre() {
+	public void printStatePre(boolean operationTrans) {
 		StringBuffer metaNbs = new StringBuffer();
 		addMetaNeighborhood(metaNbs);
-		print("New state: " + ctrl.getStateMngr().getState() + "\n=================================\n" + ctrl.getContext().nbs()+"\n" + metaNbs +"\n");
+		if (operationTrans) {
+			print("New state: " + ctrl.getStateMngr().getState() + "\n############################################################\n" + ctrl.getContext().nbs()+"\n" + metaNbs +"\n");
+		}
+		else {
+			print("New state: " + ctrl.getStateMngr().getState() + "\n=================================\n" + ctrl.getContext().nbs()+"\n" + metaNbs +"\n");
+		}
 	}
 	
 

@@ -3,8 +3,6 @@ package ussr.samples.atron.simulations.metaforma.lib;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.print.attribute.standard.Finishings;
-
 class StatEntry {
 	
 	private float startTime;
@@ -61,7 +59,7 @@ public class MfStats {
 	
 	
 
-	public void addStart(IStateOperation op, Orientation or, byte metaID, float time, MfController c) {
+	public synchronized void addStart(IStateOperation op, Orientation or, byte metaID, float time, MfController c) {
 		// If the previous start of a sequence is not ended successfully
 		
 		StatEntry e = new StatEntry(metaID,op,or,time);
@@ -72,11 +70,14 @@ public class MfStats {
 	}
 	
 	
-	public void addEnd(IStateOperation op, Orientation or, byte metaID, float time, Finish f) {
+	public synchronized void addEnd(IStateOperation op, Orientation or, byte metaID, float time, Finish f) {
 		if (incoming.containsKey(metaID)){
 			incoming.get(metaID).setFinished(time,f);
 			stat.add(incoming.get(metaID));
 			incoming.remove(metaID);
+		}
+		else {
+//			throw new Error("Incoming " + metaID + " was not found! ");
 		}
 	}
 	
