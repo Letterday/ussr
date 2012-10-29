@@ -32,7 +32,7 @@ class BrandtSimulation extends MfSimulation {
 	}
 
 	protected ArrayList<ModulePosition> buildRobot() {
-		return new MfBuilder().buildGroupsOfThree(BrandtController.Mod.F);
+		return new MfBuilder().buildGrid(BrandtController.Mod.F);
 	}
 }
 
@@ -195,7 +195,8 @@ public class BrandtController extends MfController implements ControllerInformat
 					}
 				}
 			}
-		}		
+		}
+			
 	}
 
 	
@@ -405,7 +406,7 @@ public class BrandtController extends MfController implements ControllerInformat
 			if (stateMngr.doUntil(1)) {
 				if (meta().regionTakesTooLong()) {
 					meta().retractRegion();
-					stateMngr.nextOperation(GenState.CHOOSE);
+					stateMngr.goToInit();
 					return;
 				}
 				
@@ -437,7 +438,7 @@ public class BrandtController extends MfController implements ControllerInformat
 				
 				///////////////////////////////////////////////////////////////////////////////////////////////////////
 				
-//				
+				
 //				if (meta().Left != 0 && meta().TopLeft != 0) {
 //					meta().createRegion(new byte[]{meta().Left,meta().TopLeft},StateOperation.FLIPALONG,Orientation.BOTTOM_LEFT);
 //					stateMngr.commit();
@@ -463,28 +464,51 @@ public class BrandtController extends MfController implements ControllerInformat
 				
 				/////////////////////////////////////////////////////////////////////////////////////////////////////
 				
-			if (meta().Top != 0 && meta().TopLeft != 0) {
-				meta().createRegion(new byte[]{meta().Top,meta().TopLeft},StateOperation.FLIPALONG,Orientation.RIGHT_TOP);
-				stateMngr.commit();
-			}
-			
-			if (meta().Top != 0 && meta().TopRight != 0) {
-				meta().createRegion(new byte[]{meta().Top,meta().TopRight},StateOperation.FLIPALONG,Orientation.LEFT_TOP);
-				stateMngr.commit();
-			}
-			
-			if (meta().Bottom != 0 && meta().BottomLeft != 0) {
-				meta().createRegion(new byte[]{meta().Bottom,meta().BottomLeft},StateOperation.FLIPALONG,Orientation.RIGHT_BOTTOM);
-				stateMngr.commit();
-			}
-			
-			if (meta().Bottom != 0 && meta().BottomRight != 0) {
-				meta().createRegion(new byte[]{meta().Bottom,meta().BottomRight},StateOperation.FLIPALONG,Orientation.LEFT_BOTTOM);
-				stateMngr.commit();
-			}
+//			if (meta().Top != 0 && meta().TopLeft != 0) {
+//				meta().createRegion(new byte[]{meta().Top,meta().TopLeft},StateOperation.FLIPALONG,Orientation.RIGHT_TOP);
+//				stateMngr.commit();
+//			}
+//			
+//			if (meta().Top != 0 && meta().TopRight != 0) {
+//				meta().createRegion(new byte[]{meta().Top,meta().TopRight},StateOperation.FLIPALONG,Orientation.LEFT_TOP);
+//				stateMngr.commit();
+//			}
+//			
+//			if (meta().Bottom != 0 && meta().BottomLeft != 0) {
+//				meta().createRegion(new byte[]{meta().Bottom,meta().BottomLeft},StateOperation.FLIPALONG,Orientation.RIGHT_BOTTOM);
+//				stateMngr.commit();
+//			}
+//			
+//			if (meta().Bottom != 0 && meta().BottomRight != 0) {
+//				meta().createRegion(new byte[]{meta().Bottom,meta().BottomRight},StateOperation.FLIPALONG,Orientation.LEFT_BOTTOM);
+//				stateMngr.commit();
+//			}
 				
-			///////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////////////////////////////////	
 				
+//			if (meta().Top != 0 && meta().TopLeft == 0) {
+//				meta().createRegion(new byte[]{meta().Top},StateOperation.FLIPTHROUGH,Orientation.BOTTOM_LEFT);
+//				stateMngr.commit();
+//			}
+//			
+//			if (meta().Right != 0 && meta().TopRight == 0) {
+//				meta().createRegion(new byte[]{meta().Right},StateOperation.FLIPTHROUGH,Orientation.LEFT_BOTTOM);
+//				stateMngr.commit();
+//			}
+//			
+			
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+//			///////////////////////////////////////////////////////////////////////
+//				
 //				// TOP or MIDDLE LEFT
 //				if (meta().Top == 0 && meta().Bottom == 0 && meta().Right != 0 && meta().Left == 0) {
 //					if (meta().TopRight == 0) {
@@ -521,6 +545,17 @@ public class BrandtController extends MfController implements ControllerInformat
 //						stateMngr.commit();
 //					}
 //				}
+				
+				
+				// Diagonal movement DOWNLEFT
+//				meta().tryRegion(new byte[]{meta().Bottom,meta().Left},new byte[]{meta().Top},StateOperation.FLIPOVER,Orientation.TOP_RIGHT);
+//				meta().tryRegion(new byte[]{meta().Left},new byte[]{meta().Top},StateOperation.FLIPTHROUGH,Orientation.RIGHT_TOP);
+//				meta().tryRegion(new byte[]{meta().Bottom},new byte[]{meta().Left,meta().Top},StateOperation.FLIPTHROUGH,Orientation.TOP_RIGHT);
+				
+				// VERTICAL movement UP
+				meta().tryRegion(new byte[]{meta().Top},new byte[]{meta().TopLeft,meta().Left,meta().Bottom},StateOperation.FLIPTHROUGH,Orientation.BOTTOM_RIGHT);
+				meta().tryRegion(new byte[]{meta().Right,meta().TopRight},new byte[]{meta().Top},StateOperation.FLIPALONG,Orientation.BOTTOM_RIGHT);
+				meta().tryRegion(new byte[]{meta().Right},new byte[]{meta().TopRight,meta().Top},StateOperation.FLIPTHROUGH,Orientation.LEFT_BOTTOM);
 			}
 		}
 
@@ -528,22 +563,27 @@ public class BrandtController extends MfController implements ControllerInformat
 		if (stateMngr.at(StateOperation.FLIPTHROUGH)) {
 			if (stateMngr.doWait(0)) {
 								
-				if (stateMngr.getState().getOrientation().is(BorderLine.RIGHT)) {
-					QUART = 90;
-					HALF = 180;
-				}
+//				if (stateMngr.getState().getOrientation().is(BorderLine.RIGHT)) {
+//					QUART = 90;
+//					HALF = 180;
+//				}
 				
 				if (stateMngr.getState().getOrientation().equals(Orientation.BOTTOM_RIGHT)) {
 					QUART = -90;
 					HALF = -180;
 				}
-				
-				if (stateMngr.getState().getOrientation().equals(Orientation.BOTTOM_LEFT)) {
+				else if (stateMngr.getState().getOrientation().equals(Orientation.BOTTOM_LEFT)) {
 					QUART = 90;
 					HALF = 180;
 				}
-				
-				
+				else if (stateMngr.getState().getOrientation().equals(Orientation.LEFT_BOTTOM)) {
+					QUART = -90;
+					HALF = -180;
+				}
+				else {
+					QUART = 90;
+					HALF = 180;
+				}
 				
 				
 				module().gradientInit();
@@ -775,29 +815,25 @@ public class BrandtController extends MfController implements ControllerInformat
 		if (stateMngr.at(StateOperation.FLIPALONG)) {
 			if (stateMngr.doWait(0)) {
 				
-				if (stateMngr.getState().getOrientation() == Orientation.BOTTOM_LEFT) {
-					QUART = 90;
-					HALF = 180;
-				}
-				
 				if (stateMngr.getState().getOrientation() == Orientation.TOP_LEFT) {
 					QUART = -90;
 					HALF = -180;
 				}
-				
-				if (stateMngr.getState().getOrientation() == Orientation.LEFT_TOP) {
+				else if (stateMngr.getState().getOrientation() == Orientation.RIGHT_TOP) {
+					QUART = -90;
+					HALF = -180;
+				}
+				else if (stateMngr.getState().getOrientation() == Orientation.BOTTOM_RIGHT) {
+					QUART = -90;
+					HALF = -180;
+				}
+				else if (stateMngr.getState().getOrientation() == Orientation.RIGHT_BOTTOM) {
+					QUART = -90;
+					HALF = -180;
+				}
+				else {
 					QUART = 90;
 					HALF = 180;
-				}
-				
-				if (stateMngr.getState().getOrientation() == Orientation.RIGHT_TOP) {
-					QUART = -90;
-					HALF = -180;
-				}
-				
-				if (stateMngr.getState().getOrientation() == Orientation.BOTTOM_RIGHT) {
-					QUART = -90;
-					HALF = -180;
 				}
 				
 				module().gradientInit();

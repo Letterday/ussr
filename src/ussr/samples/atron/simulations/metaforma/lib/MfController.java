@@ -7,6 +7,7 @@ import java.util.Map;
 
 import ussr.model.debugging.ControllerInformationProvider;
 import ussr.model.debugging.DebugInformationProvider;
+import ussr.samples.atron.simulations.metaforma.gen.ObstacleAvoidanceController.Mod;
 import ussr.samples.atron.simulations.metaforma.lib.NeighborSet;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 import ussr.util.Pair;
@@ -64,6 +65,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 			module().discover();
 			delay();
 		}
+		
 		meta().releaseRegion();
 		meta().disable();
 		meta().resetVars();
@@ -71,6 +73,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		module().setMetaID(0);
 		module().setPart(getMetaPart());
 		stateMngr.goToInit();
+		
 	}
 	
 	
@@ -127,10 +130,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 		scheduler.enable("meta.broadcastVars");	
 		
 		
-		for (int i=0; i<5; i++) {
-			scheduler.invokeNowDiscover();
-			delay();
-		}
+		stateMngr.discover();
 		
 		while (true) {
 			// To make sure it will remain at correct pos
@@ -150,8 +150,8 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 			if (freqLimit("colorize",0.5f)) {		
 				visual.colorize();
 			}
-			if (freqLimit("active",3f)) {		
-//				System.out.println(getID() + ".active at " + time());
+			if (freqLimit("packstats",5f)){
+				printPacketStats();
 			}
 			
 		}
@@ -432,7 +432,7 @@ public abstract class MfController extends MfApi implements ControllerInformatio
 //		visual.print(".send " + p);
 		
 		
-		sendMessage(p.serialize(), (byte) p.serialize().length, context.rel2abs(connector),p.getClass().getSimpleName());
+		sendMessage(p.serialize(), (byte) p.serialize().length, context.rel2abs(connector),p.getClass().getSimpleName().replace("Packet", ""));
 	}
 	
 

@@ -71,46 +71,24 @@ public class MfBuilder {
 	public ArrayList<ModulePosition> buildGrid(IModEnum mod) {
 		ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
 		int height = -5;
-//		
-//		if (set.getLadderWidth() == 2) {
-//			for (int i=1; i< set.getLadderLength()+1; i++) {
-//				buildClover(mod, mPos, aPos(i*2,height,4-i*2),i-1*4);
-//			}
-//		}
-//		
-//		for (int i=0; i< set.getLadderLength(); i++) {
-//			buildClover(mod, mPos, aPos(i*2,height,-i*2),set.getLadderLength()*4+i*4);
-//		}
-//		
-//		
-//		if (set.getLadderBegin()) {
-//			buildClover(mod, mPos, aPos(-2,height,-2),set.getLadderLength()*8+4);
-//		}
+		
+		if (set.getLadderWidth() == 2) {
+			for (int i=1; i< set.getLadderLength()+1; i++) {
+				buildClover(mod, mPos, aPos(i*2,height,4-i*2),i-1*4);
+			}
+		}
+		
+		for (int i=0; i< set.getLadderLength(); i++) {
+			buildClover(mod, mPos, aPos(i*2,height,-i*2),set.getLadderLength()*4+i*4);
+		}
+		
+		
+		if (set.getLadderBegin()) {
+			buildClover(mod, mPos, aPos(-2,height,-2),set.getLadderLength()*8+4);
+		}
 		
 	
-		buildClover(mod, mPos, aPos(2,height,2),0);
-		buildClover(mod, mPos, aPos(0,height,0),4);
-		buildClover(mod, mPos, aPos(-2,height,2),8);
-		
-		buildClover(mod, mPos, aPos(2,height,2),0);
-		buildClover(mod, mPos, aPos(0,height,0),4);
-		buildClover(mod, mPos, aPos(-2,height,-2),8);
-		
-//		buildClover(mod, mPos, aPos(4,height,8),12);
-//		buildClover(mod, mPos, aPos(8,height,8),16);
-//		buildClover(mod, mPos, aPos(6,height,10),20);
-		
-//		buildClover(mod, mPos, aPos(0,height,4),8);
-//		buildClover(mod, mPos, aPos(4,height,0),12);
-//		buildClover(mod, mPos, aPos(2,height,-2),16);
-//		buildClover(mod, mPos, aPos(0,height,-4),20);
-//		buildClover(mod, mPos, aPos(-2,height,-6),24);
-
-//		buildClover(mod, mPos, aPos(6,height,-2),20);
-//		buildClover(mod, mPos, aPos(8,height,-4),32);
-//		buildClover(mod, mPos, aPos(-2,height,6),24);
-//		buildClover(mod, mPos, aPos(-4,height,8),28);
-//		
+	
 		
 		
         return mPos;
@@ -147,16 +125,17 @@ public class MfBuilder {
         return mPos;
 	}
 	
-	 public ArrayList<ModulePosition> buildEight(VectorDescription position) {
-		 ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>(); 
-        mPos.add(new ModulePosition("F_0", aPos(0,0,0,position), ATRON.ROTATION_NS_BROKEN));
-        mPos.add(new ModulePosition("F_1", aPos(1,0,1,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("F_2", aPos(1,0,-1,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("F_3", aPos(2,0,0,position), ATRON.ROTATION_NS_BROKEN));
-        mPos.add(new ModulePosition("F_4", aPos(3,0,1,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("F_5", aPos(3,0,-1,position), ATRON.ROTATION_EW));
-        mPos.add(new ModulePosition("F_6", aPos(4,0,0,position), ATRON.ROTATION_NS_BROKEN));
-        return mPos;
+	 public ArrayList<ModulePosition> buildEight(IModEnum mod) {
+		 ArrayList<ModulePosition> mPos = new ArrayList<ModulePosition>();
+		VectorDescription position = new VectorDescription();
+		mPos.add(new ModulePosition(mod + "_0", aPos(0,0,0,position), ATRON.ROTATION_NS_BROKEN));
+		mPos.add(new ModulePosition(mod + "_1", aPos(1,0,-1,position), ATRON.ROTATION_EW));
+		mPos.add(new ModulePosition(mod + "_2", aPos(1,0,1,position), ATRON.ROTATION_EW));
+		mPos.add(new ModulePosition(mod + "_3", aPos(2,0,0,position), ATRON.ROTATION_NS_BROKEN));
+		mPos.add(new ModulePosition(mod + "_4", aPos(3,0,-1,position), ATRON.ROTATION_EW));
+		mPos.add(new ModulePosition(mod + "_5", aPos(3,0,1,position), ATRON.ROTATION_EW));
+		mPos.add(new ModulePosition(mod + "_6", aPos(4,0,0,position), ATRON.ROTATION_NS_BROKEN));
+		return mPos;
     }
 	    
 	

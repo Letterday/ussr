@@ -97,9 +97,14 @@ public class MfActuation  {
 				connection(nb,connect);
 			}
 			
+			
+			
+			
 			if ( // Am I done?
-				ctrl.nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(!connect).isEmpty() && // WHY????: NO, 1 connection is enough!!
-				
+				((insideRegionOnly && ctrl.nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(!connect).isEmpty()) || // YES, 1 connection is not enough!!
+						// When connecting to a foreign region, we should only wait for male connectors, as the female connectors cannot wait for the foreign region to connect to!
+				(!insideRegionOnly && ctrl.nbs(MfController.MALE).nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(!connect).isEmpty())		
+		) &&
 				// At least one of the modules must take action, in case of a group and a module
 				!ctrl.nbs().nbsInRegion(insideRegionOnly).nbsIn(g2).nbsIsConnected(connect).isEmpty() 
 			) {
@@ -179,7 +184,7 @@ public class MfActuation  {
 		return ret.substring(0, ret.length()-1);
 	}
 
-	protected void connectPart (IModuleHolder g, int part) {
+	public void connectPart (IModuleHolder g, int part) {
 		connectionPart(g, part, true);
 	}
 	

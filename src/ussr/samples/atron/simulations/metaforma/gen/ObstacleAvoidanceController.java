@@ -38,7 +38,7 @@ class ObstacleAvoidanceSimulation extends MfSimulation {
     }
 	
 	protected ArrayList<ModulePosition> buildRobot() {
-		return new MfBuilder().buildCar(4,ObstacleAvoidanceController.Mod.F);
+		return new MfBuilder().buildCar(2,ObstacleAvoidanceController.Mod.F);
 	}
 	
 	protected void changeWorldHook(WorldDescription world) {
@@ -216,9 +216,6 @@ public class ObstacleAvoidanceController extends MfController implements Control
 	
 	public void handleStates () {
 		
-		if (getID().equals(Mod.AXIS_DRIVER) && freqLimit("PC",1f)){
-			printPacketStats();
-		}
 		
 		if (stateMngr.at(GenState.INIT)) {
 			if (stateMngr.doUntil(0)) {

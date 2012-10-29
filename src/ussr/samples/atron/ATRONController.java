@@ -29,6 +29,7 @@ import ussr.physics.PhysicsObserver;
 import ussr.physics.PhysicsParameters;
 import ussr.physics.PhysicsSimulation;
 import ussr.samples.atron.simulations.metaforma.lib.MfController;
+import ussr.util.Pair;
 
 /**
  * Controller class that provides the ATRON API
@@ -468,8 +469,7 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
     		//System.out.println("-- send from " + sourceModule + " to " + destModule + " over " + connector );
 			module.getTransmitters().get(connector).send(new Packet(message));
 			if(packetCountingActive)  {
-				incPacketsSentCount(packetName);
-				incPacketsSentBytes(packetName,message.length);
+				incPacketsSentCount(packetName,message.length);
 			}
 			return 1;
 		}
@@ -546,57 +546,42 @@ public abstract class ATRONController extends ControllerImpl implements PacketRe
 	 */
     public byte getTiltZ() { return read("TiltSensor:z"); }
     
-    private static ConcurrentHashMap<String,Long> packetsSentCount = new ConcurrentHashMap<String,Long>();
-    private static ConcurrentHashMap<String,Long> packetsSentBytes = new ConcurrentHashMap<String,Long>();
+    private static ConcurrentHashMap<String,Pair<Long,Long>> packetsSentCount = new ConcurrentHashMap<String,Pair<Long,Long>>();
+
     private static boolean packetCountingActive = false;
     
-    private synchronized static void incPacketsSentCount(String packetName) {
+    private synchronized static void incPacketsSentCount(String packetName,int length) {
     	long count = 0;
-    	if (packetsSentCount.containsKey(packetName)) {
-    		count = packetsSentCount.get(packetName);
-    	}
-        packetsSentCount.put(packetName,count+1);
-    }
-    private synchronized static void incPacketsSentBytes(String packetName,int length) {
     	long size = 0;
-    	if (packetsSentBytes.containsKey(packetName)) {
-    		size = packetsSentBytes.get(packetName);
+    	if (packetsSentCount.containsKey(packetName)) {
+    		count = packetsSentCount.get(packetName).fst();
+    		size = packetsSentCount.get(packetName).snd();
     	}
-    	packetsSentBytes.put(packetName,size+length);
+        packetsSentCount.put(packetName,new Pair<Long,Long>(count+1,size+length));
     }
-    
+      
     public static void activatePacketCounting() {
         packetCountingActive = true;
     }
+ 
     public static int getPacketsSentCount() {
     	long ret = 0;
-    	for (long c:packetsSentCount.values()) {
-    		ret += c;
+    	for (Pair<Long,Long> p:packetsSentCount.values()) {
+    		ret += p.fst();
     	}
         if(ret>Integer.MAX_VALUE) throw new Error("Count exceeds maxint");
         return (int)ret;
     }
     
     public static void printPacketStats() {
-    	System.out.println("##################################\nPacket counts:");
-    	for (Map.Entry<String,Long> e : packetsSentCount.entrySet()) {
-    		System.out.println(e.getKey() + ": " + e.getValue());
-    	}
-    	System.out.println("##################################\nPacket bytes:");
-    	for (Map.Entry<String,Long> e : packetsSentBytes.entrySet()) {
-    		System.out.println(e.getKey() + ": " + e.getValue());
+    	System.out.println("##################################\nPacket stats:");
+    	for (Map.Entry<String,Pair<Long,Long>> e : packetsSentCount.entrySet()) {
+    		System.out.println("	" + e.getKey() + "			& " + e.getValue().fst() + "			& " + e.getValue().snd() + "			\\\\");
     	}
     	System.out.println("##################################");
     }
     
-    public static int getPacketsSentBytes() {
-    	long ret = 0;
-    	for (long c:packetsSentBytes.values()) {
-    		ret += c;
-    	}
-        if(ret>Integer.MAX_VALUE) throw new Error("Bytes exceeds maxint");
-        return (int)ret;
-    }
+  
 
     public void sendMessageAll(byte[] msg, int length) {
         for(byte c=0; c<8; c++)

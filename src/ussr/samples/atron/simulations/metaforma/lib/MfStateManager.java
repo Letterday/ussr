@@ -82,8 +82,11 @@ public class MfStateManager {
 	}
 	
 	public void spend(float time) {
-		commitNotAutomatic(ctrl.getID());
-		stateTimeToSpend = time;
+		if (time != stateTimeToSpend) {
+			commitNotAutomatic(ctrl.getID());
+			ctrl.visual.print("@@ spend: " + time);
+			stateTimeToSpend = time;
+		}
 	}
 	
 	public BigInteger getConsensus() {
@@ -234,7 +237,7 @@ public class MfStateManager {
 			
 			ctrl.scheduler.invokeNowConsensus();
 			modified = true;
-			ctrl.visual.print(".commit("+reason+") count:" + consensus.bitCount() + " modified:" + modified + " " + Module.fromBits(consensus));
+			ctrl.visual.print("!!!!!!.commit("+reason+") count:" + consensus.bitCount() + " modified:" + modified + " " + Module.fromBits(consensus));
 		}
 	}
 	
@@ -246,11 +249,18 @@ public class MfStateManager {
 	
 	
 	public void nextState(State stateNew) {
-		boolean operationTrans = !stateNew.match(stateCurrent.getOperation());
+		boolean operationTrans = stateNew.getOperationCounter() != stateCurrent.getOperationCounter();
+		
+		
+		
 		ctrl.getVisual().printStatePost(operationTrans);
 		cleanForNew();
 		stateCurrent.merge(stateNew);
 		stateReceived.merge(stateNew); // So we will not see a state update message for this state from another module
+		if (operationTrans) {
+			MfStats.getInst().addStart(stateCurrent,ctrl);
+		}
+
 		ctrl.getVisual().printStatePre(operationTrans);
 //		ctrl.scheduler.invokeNowDiscover();
 	}
@@ -267,12 +277,14 @@ public class MfStateManager {
 		nextOperation(op,Orientation.BOTTOM_LEFT);
 	}
 	
+		
 	public void nextOperation (IStateOperation op,Orientation orient) {
 		if (stateCurrent.equals(op)){
 			ctrl.visual.error("OPERATION " + op + " equals " + stateCurrent.getOperation());
 		}
-		nextState(new State(stateCurrent).nextOperation(op,orient));
 		
+			
+		nextState(new State(stateCurrent).nextOperation(op,orient));
 	}
 	
 	
@@ -305,7 +317,7 @@ public class MfStateManager {
 	}
 			
 	
-	private void discover () {
+	void discover () {
 		for (int i=0; i<ctrl.settings.getStatePostTransitionDiscoverTime();i++) {
 			ctrl.getScheduler().invokeNowDiscover();
 			ctrl.delay();
@@ -315,7 +327,7 @@ public class MfStateManager {
 	private void checkForTimeSpent() {
 		if (stateTimeToSpend != 0 && timeSpentInState() > stateTimeToSpend) {
 //			commit("Spent " + timeToSpend + " in state!");
-			ctrl.visual.print("Spent " + stateTimeToSpend + " in state!");
+			ctrl.visual.print("@@@@ Spent " + stateTimeToSpend + " in state!");
 			nextInstruction();
 		}
 	}
@@ -333,7 +345,6 @@ public class MfStateManager {
 			ctrl.visual.print(".setAfterConsensus " + op + " " + orient);
 			stateOperationNext = op;
 			orientationNext = orient;
-			MfStats.getInst().addStart(op,orient,ctrl.module().metaID,ctrl.time(),ctrl);
 		}
 	}
 	

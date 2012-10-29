@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
+import ussr.samples.atron.simulations.metaforma.gen.BrandtController.StateOperation;
 import ussr.samples.atron.simulations.metaforma.lib.Packet.*;
 
 public abstract class BagMetaCore extends Bag implements IMetaBag {
@@ -98,13 +99,18 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 	}
 	
 	public void retractRegion () {
-		MfStats.getInst().addEnd(ctrl.stateMngr.getState().getOperation(),ctrl.stateMngr.getState().getOrientation(),regionID(),ctrl.stateMngr.timeSpentInSequence(),Finish.RETRACTED);
+		addStatsEnd(Finish.RETRACTED);
 	}
+
+	
+	public void addStatsEnd (Finish finish) {
+		MfStats.getInst().addEnd(ctrl.stateMngr.getState(),ctrl.module().getMetaID(),ctrl.stateMngr.timeSpentInSequence(),finish);
+	}
+	
 	
 	public void releaseRegion () {
 		ctrl.visual.print(".releaseRegion ");
 		
-		MfStats.getInst().addEnd(ctrl.stateMngr.getState().getOperation(),ctrl.stateMngr.getState().getOrientation(),regionID(),ctrl.stateMngr.timeSpentInSequence(),Finish.SUCCESS);
 		setRegionID((byte)0);
 		
 		setCountInRegion((byte) 1);
@@ -182,6 +188,24 @@ public abstract class BagMetaCore extends Bag implements IMetaBag {
 		
 		ctrl.stateMngr.commit("createRegion");
 	}
+	
+	
+	public void tryRegion(byte[] existing, byte[] notExisting, IStateOperation op, Orientation or) {
+		boolean ok = true;
+		for (byte nb: existing) {
+			if (nb == 0) {
+				ok = false;
+			}
+		}
+		for (byte nb: notExisting) {
+			if (nb != 0) {
+				ok = false;
+			}
+		}
+		if (ok) {
+			createRegion(existing,op,or);
+		}
+	}	
 
 	public boolean isCompleted() {
 		return completed == 1;
